@@ -1,0 +1,81 @@
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
+
+% The comment above tells emacs that this file is the only file in
+% this LaTeX project.
+
+\documentclass{article}
+
+% The following lines import a bunch of libraries that are useful if
+% you do the kinds of maths I do.
+
+\usepackage{amsmath}
+\usepackage{relsize}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{stmaryrd}
+\usepackage{cancel}
+\usepackage{wasysym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{proof}
+
+\usepackage{xr-hyper}
+\usepackage[colorlinks,urlcolor=MidnightBlue,linkcolor=MidnightBlue,citecolor=MidnightBlue,backref]{hyperref}
+
+% The next line imports an example library I wrote, which defines some
+% separation logic macros that I like to use. You should write your
+% own files like this, for your own work.
+\usepackage{separationlogic}
+
+\begin{document}
+
+\title{An Awesome THING}
+
+\author{Someone}
+
+\maketitle
+
+\begin{abstract}
+We're doing a really cool thing.
+\end{abstract}
+
+\section{Introduction}
+
+Things are cool. Let's do them.
+
+\subsection{A subsection}
+
+We can have subsections too.
+
+And maths:
+
+\[
+\frac{\{P\} \js{code} \{Q\}}
+{\{K \sep P\} \js{code} \{K \sep Q\}}
+\]
+\section{You can have citations}
+
+Here are some things that you might want to cite:
+
+\begin{itemize}
+\item O'Hearn, Reynolds and Yang invented separation logic~\cite{DBLP:conf/csl/OHearnRY01}.
+
+\item Gardner, Smith and Zarfaty started writing about DOM, and published in
+PODS~\cite{Gardner08DOM}.
+
+\item Smith's PhD thesis~\cite{Smith2010} (all about DOM).
+
+\item Gardner and Wheelhouse's work on segments~\cite{segments}.
+
+\item Gardner, Maffeis and Smith's POPL paper about JavaScript~\cite{gms-popl,gms-popl-proofs}.
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{bibliography}
+\end{document}
