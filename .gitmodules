@@ -1,0 +1,3 @@
+[submodule "es-lab"]
+	path = es-lab
+	url = git@github.com:edgemaster/es-lab.git
