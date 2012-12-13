@@ -1,0 +1,86 @@
+\documentclass[a4paper]{report}
+\usepackage{fullpage, titling, amsmath, footnote, listings, hyperref}
+%\usepackage{gds}
+\makesavenoteenv{tabular}
+
+\title{Interim Report}
+\author{Thomas Wood}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  % Summary of entire project, including conclusions
+  % About half a page
+\end{abstract}
+
+\chapter{Introduction}
+  In recent years with the development of the web, JavaScript has become an
+  increasingly-intensively used language. At its invention and for a
+  considerable length of time, JavaScript was only used for simple tasks such as
+  form validation
+  
+  The modern nature of web-programming
+
+  is that multiple different programs from different sources may be loaded and
+  executed in a single environment. This combination of different code poses some
+  interesting problems regarding code-correctness and security. JavaScript
+  provides no means to isolate different modules of code from one another, all
+  data stored in memory is accessible to any code loaded on the page, which must
+  be implicitly trusted.
+
+  Secure ECMAScript is a proposed extension to the ECMAScript 5 specification
+  that allows programs to be executed within a restricted context. Restricted
+  execution will ideally permit fine-grained control over the permissions
+  untrusted executing code has. It is possible for unrestricted code to interact
+  with code under restricted execution, it is in this situation that it is
+  envisaged that lapses in the encapsulation could occur inadvertantly.
+  % could still expand details on mixed execution - examples?
+
+  The language's structure already poses some interesting problems for researchers
+  producing formal models of programming languages due to its memory structure.
+  A formal logic for ECMAScript 3 has been recently developed by researchers at
+  Imperial College. This project aims to extend this program logic to
+  effectively model the restricted execution support proposed by the Secure
+  ECMAScript language specification. This will permit proofs asserting that the
+  language constructs are secure, and that programs written using the restricted
+  execution construct do not accidentally leak private data or permissions to
+  untrusted code, especially during interactions between two contexts.
+
+  The formal logic for ECMAScript 3 is based upon Separation Logic, an extension
+  of Hoare Logic which permits efficient reasoning about data contained within
+  heaps by splitting the heap into smaller discrete portions. However, to reason
+  about restricted execution, we need to reason about the \emph{entire}
+  heap. The first aim of the project is to extend Separation logic with a
+  backpointer operator to allow reasoning about which objects point to an
+  object of interest.
+
+  Using this new operator, we then aim to produce semantics for the restricted
+  \texttt{eval()} operation.
+
+  Finally, we prove the correctness of a contract host algorithm which permits
+  two mutually suspicious parties to execute an agreed contract on a mutually
+  trusted third-party.
+
+% What is the problem?
+
+% Why is it interesting?
+
+% What's the idea to solve it?
+
+\chapter{Background}
+\section{Hoare Logic}
+\section{Separation Logic}
+\section{Backpointers in Separation Logic}
+
+\chapter{Project Plan}
+% Project timetable, milestones, fall-back plans
+% Extensions?
+% Include parts already addressed - some idea of progress
+
+\chapter{Evaluation Plan}
+% What functionality needs to be demonstrated?
+% How has the project extended the state of the art?
+% 
+
+\end{document}
