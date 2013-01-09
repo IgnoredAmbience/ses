@@ -23,8 +23,8 @@
   The modern nature of web-programming
 
   is that multiple different programs from different sources may be loaded and
-  executed in a single environment. This combination of different code poses some
-  interesting problems regarding code-correctness and security. JavaScript
+  executed in a single environment. This combination of different code poses
+  some interesting problems regarding code-correctness and security. JavaScript
   provides no means to isolate different modules of code from one another, all
   data stored in memory is accessible to any code loaded on the page, which must
   be implicitly trusted.
@@ -37,15 +37,16 @@
   envisaged that lapses in the encapsulation could occur inadvertantly.
   % could still expand details on mixed execution - examples?
 
-  The language's structure already poses some interesting problems for researchers
-  producing formal models of programming languages due to its memory structure.
-  A formal logic for ECMAScript 3 has been recently developed by researchers at
-  Imperial College. This project aims to extend this program logic to
-  effectively model the restricted execution support proposed by the Secure
-  ECMAScript language specification. This will permit proofs asserting that the
-  language constructs are secure, and that programs written using the restricted
-  execution construct do not accidentally leak private data or permissions to
-  untrusted code, especially during interactions between two contexts.
+  The language's structure already poses some interesting problems for
+  researchers producing formal models of programming languages due to its memory
+  structure.  A formal logic for ECMAScript 3 has been recently developed by
+  researchers at Imperial College. This project aims to extend this program
+  logic to effectively model the restricted execution support proposed by the
+  Secure ECMAScript language specification. This will permit proofs asserting
+  that the language constructs are secure, and that programs written using the
+  restricted execution construct do not accidentally leak private data or
+  permissions to untrusted code, especially during interactions between two
+  contexts.
 
   The formal logic for ECMAScript 3 is based upon Separation Logic, an extension
   of Hoare Logic which permits efficient reasoning about data contained within
