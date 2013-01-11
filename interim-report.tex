@@ -1,7 +1,6 @@
 \documentclass[a4paper]{report}
-\usepackage{fullpage, titling, amsmath, footnote, listings, hyperref}
-%\usepackage{gds}
-\makesavenoteenv{tabular}
+\usepackage{fullpage, hyperref}
+\usepackage{separationlogic}
 
 \title{Interim Report}
 \author{Thomas Wood}
@@ -15,6 +14,7 @@
 \end{abstract}
 
 \chapter{Introduction}
+%Citations required
   In recent years with the development of the web, JavaScript has become an
   increasingly-intensively used language. At its invention and for a
   considerable length of time, JavaScript was only used for simple tasks such as
@@ -70,9 +70,95 @@
 % What's the idea to solve it?
 
 \chapter{Background}
-\section{Hoare Logic}
+\section{Hoare Reasoning}
+  This style of reasoning about the functionality and correctness of computer
+  programs was first presented in his 1969 paper ``An Axiomatic Basis for
+  Computer Programming''\cite{Hoare1969Axiom}, the principles presented were
+  based on earlier work by Floyd\cite{floyd1967assigning} for flowchart
+  representations of programs, and by others in other branches of mathematics;
+  Hoare developed the style of the reasoning to fit textual representation of
+  programs.
+
+  Hoare's reasoning depends on the basis that commands used in programming
+  languages should be well-defined and thus the consequences of a computer
+  program should be determinable directly from the program's text by deductive
+  means. Program proofs are deduced through the application of inference rules
+  to sets of axioms.
+
+  The main contribution of the paper was to introduce the notation, now known as
+  a Hoare triple:
+    \[ \{P\} C \{Q\} \]
+  $P$ and $Q$ are logical assertions and $C$ is some command or program. The
+  triple is interpreted by Hoare as ``if the assertion $P$ is true before
+  initiation of a program $C$, then the assertion $Q$ will be true on its
+  completion.'' Other interpretations of triples are possible, as will be shown
+  later.
+
+  The axioms selected for use in the reasoning alter the semantics of the system
+  being reasoned about. Hoare exemplifies this by presenting axioms that apply
+  to arithmetic under all sets of integers, followed by three alternative axioms
+  that describe different semantics for overflow in sets of finite integers.
+
+  A number of axioms and inference rules are universal or common to nearly all
+  imperitive languages, Hoare presents four of these:
+  \begin{display}{}
+    \stateaxiom{(Assign)}
+    {\tr{P[f/x]}{x := f}{P}} \qquad
+
+    \staterule{(Consequence)}
+    {\tr{P'}{C}{Q'} \quad P \impl P' \quad Q' \impl Q}
+    {\tr{P}{C}{Q}} \\
+    \\
+    \staterule{(Iteration)}
+    {P \quad \tr{B}{S}{P}}
+    {\tr{P}{\textbf{while } B \textbf{ do } S}{\lnot B \land P}} \qquad
+
+    \staterule{(Composition)}
+    {\tr{P}{C_1}{Q} \quad \tr{Q}{C_2}{R}}
+    {\tr{P}{C_1; C_2}{R}}
+  \end{display}
+
+  The consequence and composition rules are straight-forward. The iteration rule
+  is also reasonably simple once it is noted that the $P$ term is the loop
+  invariant. The assignment axiom is the most subtle of the set when not taken
+  in the context of a proof. The axiom asserts that the post-condition will hold
+  if the \emph{precondition} if the precondition has the variable replaced by
+  the assigned value. This axiom makes more sense if it is considered to be used
+  whilst reasoning backwards. For example, to prove $\tr{\true}{r := x; q :=
+  0}{x = r + y \times q}$:
+
+  \begin{tabular}{ll}
+    $\{\true \impl x = x + y \times 0 \}$ & Axiom \\
+    $\tr{x = x + y \times 0}{r:=x}{x = r + y \times 0}$ & Assignment \\
+    $\tr{x = r + y \times 0}{q:=0}{x = r + y \times q}$ & Assignment \\
+    $\tr{\true}{r:=x}{x = r + y \times 0}$ & Consequence \\
+    $\tr{\true}{r:=x; q:=0}{x = r + y \times q}$ & Composition\\
+  \end{tabular}
+
+  It is noted that proofs in this format are long and tedious, but it is
+  possible to derive more general rules from the given ones which would somewhat
+  reduce the length of these proofs. This is now the generally accepted method
+  of presenting proofs in Hoare's system, so the above proof could also be
+  presented as follows:
+
+  \begin{tabular}{l}
+    $\{\true\}$ \\
+    $\{x = x + y \times 0\}$ \\
+    $\ r:=x$ \\
+    $\{x = r + y \times 0\}$ \\
+    $\ q:=0$ \\
+    $\{x = r + y \times q\}$
+  \end{tabular}
+
+  Indeed, in his 1971 paper~\cite{Hoare1971proof}, Hoare presents a proof in
+  such a style for the non-trivial \textsc{Find} algorithm.
+
+  %Hoare closes his paper by reinforcing the need for formal proof and
+  %specification of computer programs and languages.
+
 \section{Separation Logic}
-\section{Backpointers in Separation Logic}
+\subsection{Backpointers in Separation Logic}
+\section{JavaScript}
 
 \chapter{Project Plan}
 % Project timetable, milestones, fall-back plans
@@ -83,5 +169,8 @@
 % What functionality needs to be demonstrated?
 % How has the project extended the state of the art?
 % 
+
+\bibliography{bibliography}
+\bibliographystyle{plain}
 
 \end{document}

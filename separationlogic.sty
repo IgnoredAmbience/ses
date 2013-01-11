@@ -1,0 +1,74 @@
+\newcommand{\V}[1]{{\ensuremath{\mathrm{#1}}}}
+\newcommand{\logconst}[1]{\V{#1}}
+\newcommand{\false}{\logconst{false}}
+\newcommand{\true}{\logconst{true}}
+
+% sep *
+\newcommand{\sep}{\mathbin{*}}
+% wand -*
+\newcommand{\wand}{\mathbin{-\mkern-6mu *}}
+\newcommand{\js}[1]{\mbox{\texttt{{\upshape #1}}}}
+
+\newcommand{\impl}{\Rightarrow}
+
+% Hoare triple {P}{C}{Q}
+\newcommand\tr[3]{\{#1\}#2\{#3\}}
+
+% --------------------------------------------------------------------- %
+% Proof rule.                                                           %
+% --------------------------------------------------------------------- %
+%\makeatletter
+%\newcommand{\addToLabel}[1]{%
+%  \protected@edef\@currentlabel{\@currentlabel#1}%
+%}
+%\makeatother
+%\newcounter{rule}
+%\renewcommand{\therule}{}
+
+% Axiom {(tag)}{def}{?}
+\newcommand{\stateaxiom}[3][]{%
+%  \refstepcounter{rule}%
+%  \addToLabel{#2}%
+  $\begin{array}[b]{@{}l}%
+    \mbox{#2#1}\\%
+    \begin{array}{c}
+      #3
+    \end{array}
+  \end{array}$}
+
+% Inference rule {(tag)}{top}{bottom}{?}
+\newcommand{\staterule}[4][]{%
+%  \refstepcounter{rule}%
+%  \addToLabel{#2}%
+  $\begin{array}[b]{@{}l}%
+    \mbox{#2#1}\\%
+    \begin{array}{l}
+      #3\\
+      \hline
+      \raisebox{0ex}[2.5ex]{\strut}#4%
+    \end{array}
+  \end{array}$}
+
+% Display environment preqs
+\let\smallish\small
+
+\newcommand{\hbra}{
+  %\hbox to \textwidth{\vrule width0.3mm height 1.8mm depth-0.3mm
+  \hbox to \linewidth{\vrule width0.3mm height 1.8mm depth-0.3mm
+    \leaders\hrule height1.8mm depth-1.5mm\hfill
+    \vrule width0.3mm height 1.8mm depth-0.3mm}}
+\newcommand{\hket}{
+  %\hbox to \textwidth{\vrule width0.3mm height1.5mm
+  \hbox to \linewidth{\vrule width0.3mm height1.5mm
+    \leaders\hrule height0.3mm\hfill
+    \vrule width0.3mm height1.5mm}}
+
+\newcommand{\ratio}{.375}
+
+\newenvironment{display}[1]{\vspace{-0.5ex}\smallish
+\begin{tabbing}
+    \hspace{1.5em} \= \hspace{\ratio\linewidth-1.5em} \= \hspace{1.5em} \= \kill
+    \textbf{#1}\\[-.2ex] % was -.8
+    \hbra\\[-.8ex]
+  }{\\[-.8ex]\hket
+  \end{tabbing}\vspace{-1ex}}
