@@ -157,6 +157,58 @@
   %specification of computer programs and languages.
 
 \section{Separation Logic}
+
+  Whilst Hoare's methodology is suitable for reasoning about programs which only
+  operate within the stack, it is not suitable for reasoning about programs that
+  use the heap. This is because that data structures within the heap are more
+  prone to being shared in some manner (for example, multiple pointers to the
+  same heap location, or even arbitrary pointer arithmetic).
+ 
+  Reasoning about these shared data structures has been attempted by a number of
+  researchers, but no solution was particularly adequate. The main issue with
+  verification of shared data structures was that a global view of the data, and
+  attempts to axiomatize use of the heap would result in assertions
+  that rapidly grew in complexity, both in terms of length, but also from
+  universal quantification, for the need to assert that the rest of the heap was
+  not modfified along with the location of interest.
+
+  Burstall considered a local approach to this reasoning in 1972
+  \cite{burstall1972some}, but the approach featured little further research and
+  was unable to reason about data structures such as doubly-linked lists
+  \cite{reynolds2000intuitionistic}. Reynolds began further research into the
+  use of a spatial logic to permit local reasoning about the heap and in
+  collaboration with O'Hearn, Ishtiaq, Yang produced Separation Logic, a
+  combination of the spatial Bunched Implication logic with Hoare's methods for
+  reasoning about programs
+  \cite{Ishtiaq2001BI,OHearn2001Local,reynolds2000intuitionistic,Reynolds2002Separation}.
+  
+  Separation Logic introduces the separating conjunction operator, $P \sep Q$,
+  which can be thought of as splitting the heap into two disjoint portions, in
+  which $P$ holds in one and $Q$ the other. To denote the contents of the
+  heap, the $\mapsto$ operator is also introduced to relate heap locations with
+  values, $(x \mapsto 4, y)$ denotes that the pair of the value $4$ and a pointer
+  to the heap location $y$ is stored in the heap location $x$.
+
+  The separating conjunction only enforces disjointedness of the storage
+  locations of values, it is permitted to point to other heap locations from
+  within the heap. For example $(x \mapsto 4, y) \sep (y \mapsto 3, x)$ is
+  permissable and required to be able to build complex data structures.
+
+  % diagram of (x -> 4, y) * (y -> 3, x) ?
+
+  The disjointedness enforced by the $\sep$ operator provides a very powerful
+  means of reasoning about operations made to the heap. Take for example the
+  assertion $x \mapsto 1 \sep P$ and the command $x := 2$, since we have $x$
+  explicitly defined on the left of the $\sep$, we know that it cannot occur
+  within $P$. We can therefore safely conclude that $P$ is not modified and that
+  the postcondition must be $x \mapsto 2 \sep P$.
+
+  A separating implication operator, $\wand$, also exists. The assertion $((x
+  \mapsto 7, 5) \wand P)$ has the meaning that if $x$ is updated to contain the
+  value $7, 5$, then $P$ will be true. This operator can thus, in effect, be
+  used to generate the weakest precondition for a command given a desired
+  postcondition.
+
 \subsection{Backpointers in Separation Logic}
 \section{JavaScript}
 
