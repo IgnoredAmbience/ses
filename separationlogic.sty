@@ -2,6 +2,13 @@
 \newcommand{\logconst}[1]{\V{#1}}
 \newcommand{\false}{\logconst{false}}
 \newcommand{\true}{\logconst{true}}
+\newcommand{\emp}{\texttt{emp}}
+\newcommand{\emptylist}{[\,]}
+
+\newcommand{\command}[1]{\ensuremath{\mathsf{#1}}\xspace}
+\newcommand{\domain}{\command{dom}}
+\newcommand{\fv}{\command{fv}}
+\newcommand{\env}{\epsilon}%{\command{env}}
 
 % sep *
 \newcommand{\sep}{\mathbin{*}}
@@ -10,6 +17,8 @@
 \newcommand{\js}[1]{\mbox{\texttt{{\upshape #1}}}}
 
 \newcommand{\impl}{\Rightarrow}
+\newcommand{\satisfies}{\models}
+\newcommand{\eval}[1]{\llbracket #1 \rrbracket}
 
 % Hoare triple {P}{C}{Q}
 \newcommand\tr[3]{\{#1\}#2\{#3\}}

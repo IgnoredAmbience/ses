@@ -181,6 +181,8 @@
   combination of the spatial Bunched Implication logic with Hoare's methods for
   reasoning about programs
   \cite{Ishtiaq2001BI,OHearn2001Local,reynolds2000intuitionistic,Reynolds2002Separation}.
+
+  \subsection{Semantics of Separating Operators}
   
   Separation Logic introduces the separating conjunction operator, $P \sep Q$,
   which can be thought of as splitting the heap into two disjoint portions, in
@@ -209,8 +211,26 @@
   used to generate the weakest precondition for a command given a desired
   postcondition.
 
-\subsection{Backpointers in Separation Logic}
+  \begin{display}{Assertion satisfaction rules: $s,h \satisfies P$}
+    %$s,h \satisfies E \mapsto E_1, E_2 \qquad \iff \{\eval{E} s \} = \domain(h)
+    %  \land h(\eval{E}) = \langle \eval{E_1}, \eval{E_2} \rangle \\
+    $s,h \satisfies \emp \qquad \iff h = \emptylist$ \\
+    $s,h \satisfies P \sep Q \qquad \iff \exists h_0, h_1.h_0 \# h_1, h_0 \cdot
+    h_1 = h, s, h_0 \satisfies P \land s,h_1 \satisfies Q$ \\
+    ...
+  \end{display}
+
+  \subsection{Inference Rules and Axioms}
+
+  Separation Logic extends the standard Hoare inference rules and axioms, the
+  rules for Consequence, Composition, and Simple Assignment are used without
+  modification.
+
+  \subsection{Backpointers in Separation Logic}
+
 \section{JavaScript}
+
+\section{Secure ECMAScript}
 
 \chapter{Project Plan}
 % Project timetable, milestones, fall-back plans
