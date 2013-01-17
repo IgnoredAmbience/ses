@@ -1,17 +1,14 @@
 \documentclass[a4paper]{report}
 \usepackage{fullpage, hyperref}
 \usepackage{separationlogic}
+\usepackage[english]{babel}
+\usepackage{babelbib}
 
 \title{Interim Report}
 \author{Thomas Wood}
 
 \begin{document}
 \maketitle
-
-\begin{abstract}
-  % Summary of entire project, including conclusions
-  % About half a page
-\end{abstract}
 
 \chapter{Introduction}
 %Citations required
@@ -21,13 +18,17 @@
   form validation
   
   The modern nature of web-programming
-
   is that multiple different programs from different sources may be loaded and
   executed in a single environment. This combination of different code poses
   some interesting problems regarding code-correctness and security. JavaScript
   provides no means to isolate different modules of code from one another, all
   data stored in memory is accessible to any code loaded on the page, which must
   be implicitly trusted.
+
+  Some attempts have been made to solve this problem, examples include AdSafe
+  \cite{AdSafe}, and Google's Caja language \cite{miller2008caja}. SES aims to
+  integrate some of these features into the core JavaScript language, to promote
+  safer web programming.
 
   Secure ECMAScript is a proposed extension to the ECMAScript 5 specification
   that allows programs to be executed within a restricted context. Restricted
@@ -59,7 +60,8 @@
   Using this new operator, we then aim to produce semantics for the restricted
   \texttt{eval()} operation.
 
-  Finally, we prove the correctness of a contract host algorithm which permits
+  Finally, we prove the correctness of a contract host algorithm
+  \cite{contract-host-algo} which permits
   two mutually suspicious parties to execute an agreed contract on a mutually
   trusted third-party.
 
@@ -198,6 +200,9 @@
 
   % diagram of (x -> 4, y) * (y -> 3, x) ?
 
+  $x \mapsto -$ is shorthand meaning that there is some value stored at heap
+  location $x$.
+
   The disjointedness enforced by the $\sep$ operator provides a very powerful
   means of reasoning about operations made to the heap. Take for example the
   assertion $x \mapsto 1 \sep P$ and the command $x := 2$, since we have $x$
@@ -215,34 +220,210 @@
     %$s,h \satisfies E \mapsto E_1, E_2 \qquad \iff \{\eval{E} s \} = \domain(h)
     %  \land h(\eval{E}) = \langle \eval{E_1}, \eval{E_2} \rangle \\
     $s,h \satisfies \emp \qquad \iff h = \emptylist$ \\
-    $s,h \satisfies P \sep Q \qquad \iff \exists h_0, h_1.h_0 \# h_1, h_0 \cdot
+    $s,h \satisfies P \sep Q \qquad \iff \exists h_0, h_1.h_0 \disj h_1, h_0 \cdot
     h_1 = h, s, h_0 \satisfies P \land s,h_1 \satisfies Q$ \\
+    $s,h \satisfies (E \mapsto E_1, E_2) \iff dom(h) = \{[E]_s\} \land h([E]_s)
+    = ([E_1]_s, [E_2]_s)$ \\
     ...
   \end{display}
 
-  \subsection{Inference Rules and Axioms}
+  \subsection{Program Reasoning}
+
+  Just as Hoare's reasoning was built atop of classical logic, we can extend
+  Hoare's reasoning to the spatial logic including the separating conjunction,
+  the combined system is known as Separation Logic.
+
+  The first concept to translate is that of the Hoare triple, $\tr{P}{C}{Q}$.
+  For the remainder of this report, we will consider Separation Logic to use
+  \emph{fault-avoiding} semantics for the triple. Under this semantics, then the
+  requirements for $C$ are strengthened, such that ``if $C$ is executed in a
+  state satisfying $P$, then it will \emph{not fault}, and if it terminates it
+  will do so in a state satisfying $Q$''.
 
   Separation Logic extends the standard Hoare inference rules and axioms, the
   rules for Consequence, Composition, and Simple Assignment are used without
   modification.
 
-  \subsection{Backpointers in Separation Logic}
+  The obvious new axioms to introduce are those for heap access and
+  modification, the following set are taken from \cite{OHearn2001Local}.
+
+  \begin{display}{Axioms for heap access}
+    $\begin{array}{ll}
+      \stateaxiom{(Update)}{\tr{x \mapsto -} {x := v} {x \mapsto v}} &
+      \stateaxiom{(Delete)}{\tr{x \mapsto -} {\js{delete}(x)} {\emp}} \\
+      \stateaxiom{(Allocate)}{\tr{x \doteq v'} {x := v} {x \mapsto v[v'/x]}} &
+      \stateaxiom{(Lookup)}{\tr{x \mapsto v} {y := [x]} {y = v \land x \mapsto v}} \\
+    \end{array}$
+  \end{display}
+
+  These axioms may be expressed in other ways, for example, in a form suitable
+  for backwards reasoning, or with use of existential quantifiers.
+
+  There is one important new inference rule, the frame rule: \\
+
+  $
+    \staterule{(Frame Rule)}
+    {\tr{P}{C}{Q}}
+    {\tr{P \sep R}{C}{Q \sep R}}
+    {\mathrm{modifies}(C) \disj \mathrm{free}(R)}
+  $\\
+
+  This rule is the prime reason why Separation Logic is suitable for local
+  reasoning. It allows assertions to be split down to the \emph{footprint} of
+  the command, those heap locations that the command touches. The side condition
+  guarantees that the command only touches the part of the assertion which is
+  kept, it guarantees that nothing in $R$ can be modified by $C$.
 
 \section{JavaScript}
 
-\section{Secure ECMAScript}
+  JavaScript is a dynamically-typed, prototype-oriented language. The
+  early development of the language was haphazard with rival implementations
+  produced by Netscape and Microsoft for their browsers. The language's
+  specification was later standardised as ECMA-262 and named ECMAScript.
+  The specification is unusual with respect to it permitting many
+  implementation-specific extensions to the language. Until recently, many
+  JavaScript implementations did not conform to the ECMAScript specification.
+
+  Although originally targeted to be a programming language that was easy to
+  learn and suitable for non-programmers to use, the language's variable scoping
+  rules and semantics of the \js{this} keyword and \js{with} syntax are unusual
+  and differ from most programmers' intuitions. In addition, the ability to
+  redefine, or \emph{monkey-patch} many primitives that define the semantics of
+  the language means that reasoning about programs can become impossible if
+  some unknown code can execute within the same execution environment as the
+  program under study.
+
+  There have been several efforts to formally specify the semantics of the
+  JavaScript language, notable mentions include Maffeis, Mitchell and Taly's
+  production of an operational semantics for a wide range of JavaScript
+  implementations \cite{maffeis-jsopsem}. The remainder of this section will
+  focus on Gardner, Maffeis, Smith's work \cite{gms-popl} into producing a
+  Program Logic for JavaScript which provides a language in which to reason
+  about JavaScript programs.
+
+  A unique feature of the
+  language is that the entire state is stored on the heap in a structure that
+  loosely resembles the variable store in conventional programming languages. It
+  thus follows that Separation Logic is likely to be a useful basis for the
+  JavaScript program logic. However,sizable modifications were required to
+  accurately model the variable store and scoping rules.
+
+  %diagram
+
+  The variable store structure consists of an ordered scope chain,
+  somewhat alike to
+  stack frames in other languages. Each scope entry in the chain is an object,
+  on which fields may be defined, as well as a pointer to the object's
+  prototype. To perform a variable lookup, the first object in the scope chain has
+  its fields, and the fields of its prototypes inspected for a name match, before
+  progressing to the next entry in the scope chain to repeat the search.
+
+  To perform a write to a variable, a similar lookup is performed, except the
+  field is modified on the scope object for the prototype chain in which the
+  variable was found -- this is so that the prototypical variable is overridden,
+  but not overwritten.
+
+  Once again, Hoare-style reasoning is adapted to suit the extensions of the
+  logic. The fault-avoiding semantics for the Hoare triple is maintained. The
+  basic set of Separation Logic axioms and inference rules (excluding those
+  referring directly to the C-style heap implementation) are used. One notable
+  difference is that the Frame rule loses its side condition as a result of all
+  variables now being on the heap -- the footprint of $C$ will be expressed in
+  the $P$ and $Q$ terms, so is necessarily disjoint from the framed $R$ portion of
+  the rule.
 
 \chapter{Project Plan}
 % Project timetable, milestones, fall-back plans
 % Extensions?
 % Include parts already addressed - some idea of progress
+  The project is split into broadly 4 sections, a formal description of Secure
+  ECMAScript, an investigation into the implementation of backpointers in
+  Separation Logic, using backpointers to produce a program logic for SES, and
+  finally producing proofs of algorithms implemented in SES.
+
+  \section{Formally Describe Secure ECMAScript}
+  To date, no complete specification of ECMAScript exists, the language is in an
+  embryonic state. A draft specification \cite{ses-spec} based upon ECMAScript 5.1 exists but,
+  as with all ECMAScript specification documents, is not written formally but in
+  English. This can lead to possible ambiguities of the specification and
+  doesn't lend itself particularly well towards formal proof of program
+  correctness. This specification is also not to be considered canonical, as it
+  has not been updated for several years, but the language has developed since.
+
+  The primary sources for information on the language should therefore be
+  intuitions recieved verbally from the creator, Mark Miller, via discussions
+  with my supervisor, Gareth Smith; implementations of algorithms developed for
+  SES \cite{contract-host-algo}; the SES library implementation \cite{ses-impl};
+  and other reference documentation regarding features, and differences from the
+  ECMAScript specification \cite{securable-es,ses-diffs,ses-caja-diffs}.
+
+  This portion of the project aims to produce a formal specification of the
+  language. The first step is the abstract syntax definition, followed by the
+  English description of each of the commands, focusing on non-standard
+  semantics. Finally, axioms and inference rules for each command should be
+  specified.
+  \\
+  \emph{Target completion: middle of week 4.}
+
+  \section{Investigation into Backpointers in Separation Logic}
+  One of the aims of the program proof logic for SES is the ability to reason
+  about the (non-)reachability of particular portions of the heap from
+  restricted execution contexts. For this we need to combine Separation Logic's
+  local reasoning methods with some means of global reasoning about the heap.
+  Backpointers are a suggested method of achieving this aim.
+
+  At the inception of the project, the concept of using backpointers in
+  Separation Logic was considered to be novel. However, during the production of
+  this report, a technical report \cite{KassiosKritikos12} discussing the
+  implementation of backpointers in the program verification tool, Chalice, with
+  the aim of proving a concurrent copy-on-write list algorithm.
+
+  The aim of this portion of this project remains to investigate the possiblity
+  of adding backpointers into Separation Logic, either by further formalising
+  the implementation given in this new paper, or by considering alternative
+  approaches to the problem.
+  \\
+  \emph{Target completion: end of week 6.}
+
+  \section{Production of a full SES logic}
+  This stage is to integrate the work into the specification of SES with the
+  backpointer implementation to permit a descriptive logic to be able to reason
+  about the desired properties of the language (heap reachability).
+  \\
+  \emph{Target completion: end of week 8.}
+
+  \section{Proofs of SES Algorithms}
+  This stage will attempt to prove the makeContractHost SES
+  algorithm\cite{contract-host-algo}. This will
+  require the functionality of a dependent library to be axiomatized. If time
+  permits, further proofs for SES algorithms will be attempted.
+  \\
+  \emph{Target completion: end of term.}
 
 \chapter{Evaluation Plan}
 % What functionality needs to be demonstrated?
 % How has the project extended the state of the art?
-% 
+  Since the work is largely based upon \cite{gms-popl} a detailed critique of
+  the work can be produced, it could include, but not be limited to a
+  discussion of how suited the logic is for proof of JavaScript programs,
+  suitability for extension. Any critiques made of the JavaScript logic should
+  also be contrasted with the SES logic to pick out improvements or limitations,
+  as appropriate.
+
+  Since the language is fairly loosely defined, a concrete specification of the
+  language is useful and is one of the items of work for the project. The
+  language's inventor, Mark Miller, is available to discuss and review a
+  formalised specification. Any work presented to him should be accessible to
+  someone not versed in formal semantics and logics of languages, yet still be
+  precise enough to be useful. A successful project would be to obtain a
+  reasonable match between the formalism and Mark's intuitions of his language.
+
+  Finally, being able to prove the desired security properties of the algorithms
+  under study would validate that the SES program logic is capable of achieving
+  its desired aim.
 
 \bibliography{bibliography}
-\bibliographystyle{plain}
+\selectbiblanguage{english}
+\bibliographystyle{babplain}
 
 \end{document}
