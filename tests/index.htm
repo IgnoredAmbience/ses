@@ -1,0 +1,11 @@
+<div id="log"></div>
+<script type="text/javascript">
+  function print(str) {
+    var log = document.getElementById("log");
+    var newDiv = document.createElement("div");
+    newDiv.innerText = str;
+    log.appendChild(newDiv);
+  }
+</script>
+<script type="text/javascript" src="scope.js"></script>
+<script type="text/javascript" src="eval.js"></script>
