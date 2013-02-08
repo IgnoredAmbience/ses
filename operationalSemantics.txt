@@ -1,0 +1,127 @@
+Syntax ::= v                  // Value
+         | x                  // Identifier
+         | {e1:v1, ...}       // Object construction
+         | e;e                // Sequence
+         | e (+) e            // Binary operator
+         | if(e){e}{e}        // Conditional
+         | while(e){e}        // Looping
+         | var e              // Variable declaration
+         | e = e              // Assignment
+         | e[e]               // Computed member access
+         | e.x                // Member access
+         | e(e)               // Function call
+         | this               // this
+         | function(e){e}     // Anonymous function construction
+         | function x(e){e}   // Named function declaration/construction
+         | new e(e)           // Object (prototypical) construction
+         | reval(e, e)        // Restricted evaluation
+         | freeze(e)          // Object.freeze (tbc)
+
+The majority of these act as in the POPL'12 paper. Only exceptions are noted.
+
+Notational notes:
+-(g)-> is -> overwritten with \gamma
+
+Scope resolution helper
+=======================
+
+scope(H,[],x) =def= null
+
+(l,x) \in dom(H)
+----------------------
+scope(H,l:L,x) =def= l
+
+(l,x) \not\in dom(H)
+---------------------------------
+scope(H,l:L,x) =def= scope(H,L,x)
+
+Differences: Scope resolution is redefined to ignore prototype chains.
+
+this
+====
+
+scope(H,L,@this) = l1
+H(l1,@this) = l'
+---------------------
+H,l,this -> H,l'
+
+This(H, l.x) =def= l        [(l,@this) \not\in dom(H)]
+This(H, r) =def= undefined  [otherwise]
+
+Also requre H(l_g,@this) = l_g
+
+Differences: dropped prototype resolution
+Swapped This(H,r) =def= l_g to undefined
+
+(Aside: I'm confused by ES5.1-11.1.1, 12.10.5, 10.2.1.2.6:
+ provideThis on with statements, this should get bound to new scope?, but
+ fx/v8/opera don't seem to do this?)
+
+
+reval(e,e)
+==========
+
+SES_lite semantics:
+
+v in Str
+Parse(v,x~) = s
+{x~} subseteq free(s)
+A1 = NewER(A)                   // New activation record put on *existing* chain
+A2 = setVD(A1,s)                // Define free variables on new AR
+K,B = setFD(H,A2,s,true)        // Define/bind function decls on new AR
+---------------------------------------
+H,A,reval(v,x~) -> K,B,s;ScopeChange(A)    // Execute in new AR, pop it off after
+
+
+
+My semantics:
+
+H,L,e1 -(g)-> H1,s              // Expect a string
+parse(s) = e                    // Parse string
+H2 = H1 * act(l1,_,_,e,l1) * fdefs(l1,e)
+H2,L,e2 -(g)-> H3,l2            // Evaluate second argument for an object
+H3,l2:l1,e -> H',v              // Execute parsed expr in a new scope chain
+------------------------        // rooted at second argument
+H,L,reval(e1,e2) -> H',v
+
+Difference: don't bother pinning new scope object onto existing chain -
+semantics shouldn't differ if free variable checks defined correctly.
+Two scope objects simplify definition, bottom holding var and func defs, top
+holding imports. The two could be merged.
+Not considered naming collisions here, if defs need priority over
+imports, need to flip the scope chain order over.
+
+@this is bound to act()'s last parameter, currently the base of the scope chain,
+this will ignore any imports as stands.
+
+*POSSIBLE BUG* consider cases when @this can be set on imports (prototypical
+object?) (test, compare with impl, SES_lite)
+
+Define fdefs as fetching named function definitions into scope (is this done
+anywhere in the POPL paper? Avoids named functions getting added to scope? I
+guess it's the named function expr/decl differences from ES5.1-13? And can be
+magiced away without sugar)
+
+This definition should be equivalent to the Google implementation's
+ses.compileExpr
+ses.confine can be expressed with copying in safe globals and def
+(transitive-freeze?) on them.
+
+Questions raised at previous meeting:
+* Can you specify the new global object using eval?
+  Yes
+
+* What happens if you don't?
+  In empty case - nothing bad.
+  Not at all - type err from undefined?
+
+* What are the knock-on effects?
+  We don't freeze the inputs, this is left to the program to do, there may be
+  useful cases when it is useful to modfiy the import object?
+  consider, reval("reval('stuff that modifies global', this)", newGlobal)
+
+freeze
+======
+
+A note that this will be required for proof of makeContractHost, not sure how to
+deal with this yet. Best on opsem or PL, probably /required/ on both?
