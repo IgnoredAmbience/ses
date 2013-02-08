@@ -80,7 +80,7 @@ H,L,e1 -(g)-> H1,s              // Expect a string
 parse(s) = e                    // Parse string
 H2 = H1 * act(l1,_,_,e,l1) * fdefs(l1,e)
 H2,L,e2 -(g)-> H3,l2            // Evaluate second argument for an object
-H3,l2:l1,e -> H',v              // Execute parsed expr in a new scope chain
+H3,l2:[l1],e -> H',v              // Execute parsed expr in a new scope chain
 ------------------------        // rooted at second argument
 H,L,reval(e1,e2) -> H',v
 
