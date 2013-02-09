@@ -28,3 +28,7 @@ Friday 8th Feb, 5pm
   * Simple annotation of objects possible, add checks to writing rules
   * Also implement def in syntax/semantics, as lang. impl using for is too messy
 * Stop worrying about implementation
+* We can drop normal arrows, make all gamma
+  * Mark Miller's intuitions are moving towards no references in ES spec -
+    introduced in early days as a COM implementation issue, dropped into early
+    spec, but now should be functionally eradicated!

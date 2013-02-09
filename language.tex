@@ -1,0 +1,69 @@
+\documentclass[a4paper]{article}
+\usepackage{fullpage}
+\usepackage{hyperref}
+\usepackage{separationlogic}
+
+\begin{document}
+
+\newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
+\begin{display}{Syntax of SES values and expressions, $v, e$}
+  $\begin{array}{rll}
+    \syntaxline[v ::=]{$n$}{Number}
+    \syntaxline{$s$}{String}
+    \syntaxline{undefined}{Undefined}
+    \syntaxline{null}{Null}
+    \syntaxline[e ::=]{$v$}{Value}
+    \syntaxline{$x$}{Identifier}
+    \syntaxline{\{$x_1$:$e_1$, $\ldots$, $x_n$:$e_n$\}}{Object construction}
+    \syntaxline{$e$; $e$}{Sequence}
+    \syntaxline{$e \oplus e$}{Binary operator}
+    \syntaxline{if($e$) \{$e$\} else \{$e$\}}{Conditional}
+    \syntaxline{while($e$) \{$e$\}}{Looping}
+    \syntaxline{var $e$}{Variable declaration}
+    \syntaxline{$e$ = $e$}{Assignment}
+    \syntaxline{$e$[$e$]}{Computed member access}
+    \syntaxline{$e$.$x$}{Member access}
+    \syntaxline{$e$($e$)}{Function call}
+    \syntaxline{this}{this}
+    \syntaxline{function($e$) \{$e$\}}{Anonymous function construction}
+    \syntaxline{function $x$($e$) \{$e$\}}{Named function construction}
+    \syntaxline{new $e$($e$)}{Object (prototypical) construction}
+    \syntaxline{reval($e$, $e$)}{Restricted evaluation}
+    \syntaxline{freeze($e$)}{Object freeze}
+    \syntaxline{def($e$)}{Transitive \js{freeze}}
+  \end{array}$
+\end{display}
+
+Describe \js{null} and \js{undefined} here.
+
+An object is a location in the heap, it contains a set of values indexed by
+fields. The Object Construction syntax produces a new object with fields named
+$x_1, \ldots, x_n$ which map to the values of expressions $e_1, \ldots, e_n$
+when evaluated at construction.
+
+The sequencing operator specifies that the expression on the left should be
+evaluated, followed by the expresion on the right.
+
+Binary operations are evaluated left-to-right, and includes standard
+mathematical and string operations. Formalisation of semantics for all of these
+are beyond the scope of this project, but will correspond closely to similar
+works on the JavaScript family of languages.
+
+The conditional expression evaluates the first sub-expression, if it evaluates
+to \js{true} under a boolean casting operation, the second sub-expression is
+evaluated and result returned, otherwise the third sub-expression is evaluated
+and result returned.
+
+The looping expression executes the body sub-expression whilst the condition
+sub-expression evaluates to true. The most-recently returned value of the body
+is returned.
+
+Variable declarations are used in parsing stages to determine free-variables
+when constructing a new scope. During evaluation, their subexpression is
+evaluated (for side-effects), and \js{undefined} is returned.
+
+
+
+\end{document}
+
+
