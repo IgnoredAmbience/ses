@@ -1,21 +1,3 @@
-Syntax ::= v                  // Value
-         | x                  // Identifier
-         | {e1:v1, ...}       // Object construction
-         | e;e                // Sequence
-         | e (+) e            // Binary operator
-         | if(e){e}{e}        // Conditional
-         | while(e){e}        // Looping
-         | var e              // Variable declaration
-         | e = e              // Assignment
-         | e[e]               // Computed member access
-         | e.x                // Member access
-         | e(e)               // Function call
-         | this               // this
-         | function(e){e}     // Anonymous function construction
-         | function x(e){e}   // Named function declaration/construction
-         | new e(e)           // Object (prototypical) construction
-         | reval(e, e)        // Restricted evaluation
-         | freeze(e)          // Object.freeze (tbc)
 
 The majority of these act as in the POPL'12 paper. Only exceptions are noted.
 

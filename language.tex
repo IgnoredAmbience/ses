@@ -1,9 +1,13 @@
 \documentclass[a4paper]{article}
+\usepackage{amsmath}
+\usepackage{xspace}
 \usepackage{fullpage}
 \usepackage{hyperref}
 \usepackage{separationlogic}
 
 \begin{document}
+
+\section{SES Syntax and Description}
 
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
 \begin{display}{Syntax of SES values and expressions, $v, e$}
@@ -14,56 +18,332 @@
     \syntaxline{null}{Null}
     \syntaxline[e ::=]{$v$}{Value}
     \syntaxline{$x$}{Identifier}
-    \syntaxline{\{$x_1$:$e_1$, $\ldots$, $x_n$:$e_n$\}}{Object construction}
+    \syntaxline{\{$x_1$:$e_1$, $\ldots$, $x_n$:$e_n$\}}{Object creation}
     \syntaxline{$e$; $e$}{Sequence}
     \syntaxline{$e \oplus e$}{Binary operator}
     \syntaxline{if($e$) \{$e$\} else \{$e$\}}{Conditional}
     \syntaxline{while($e$) \{$e$\}}{Looping}
-    \syntaxline{var $e$}{Variable declaration}
+    \syntaxline{var $x$}{Variable declaration}
     \syntaxline{$e$ = $e$}{Assignment}
-    \syntaxline{$e$[$e$]}{Computed member access}
     \syntaxline{$e$.$x$}{Member access}
+    \syntaxline{$e$[$e$]}{Computed member access}
     \syntaxline{$e$($e$)}{Function call}
     \syntaxline{this}{this}
-    \syntaxline{function($e$) \{$e$\}}{Anonymous function construction}
-    \syntaxline{function $x$($e$) \{$e$\}}{Named function construction}
-    \syntaxline{new $e$($e$)}{Object (prototypical) construction}
+    \syntaxline{function($e$) \{$e$\}}{Function creation}
+    \syntaxline{function $x$($e$) \{$e$\}}{Named function creation}
+    \syntaxline{new $e$($e$)}{Object construction}
     \syntaxline{reval($e$, $e$)}{Restricted evaluation}
     \syntaxline{freeze($e$)}{Object freeze}
-    \syntaxline{def($e$)}{Transitive \js{freeze}}
+    \syntaxline{def($e$)}{Recursive \js{freeze}}
   \end{array}$
 \end{display}
 
-Describe \js{null} and \js{undefined} here.
+An object is a location in the heap, it contains a set of
+values indexed by fields.
 
-An object is a location in the heap, it contains a set of values indexed by
-fields. The Object Construction syntax produces a new object with fields named
-$x_1, \ldots, x_n$ which map to the values of expressions $e_1, \ldots, e_n$
-when evaluated at construction.
+For the purposes of this semantics, \js{null} and \js{undefined} behave
+interchangably.
 
-The sequencing operator specifies that the expression on the left should be
+\textbf{Object creation}  The Object Construction syntax produces a new object
+with fields named $x_1, \ldots, x_n$ which map to the values of expressions
+$e_1, \ldots, e_n$ when evaluated in order at creation.
+
+\textbf{Sequence} The sequencing operator specifies that the expression on the left should be
 evaluated, followed by the expresion on the right.
 
-Binary operations are evaluated left-to-right, and includes standard
+\textbf{Binary operator} Binary operations are evaluated left-to-right, and includes standard
 mathematical and string operations. Formalisation of semantics for all of these
 are beyond the scope of this project, but will correspond closely to similar
 works on the JavaScript family of languages.
 
-The conditional expression evaluates the first sub-expression, if it evaluates
+\textbf{Conditional} The conditional expression evaluates the first sub-expression, if it evaluates
 to \js{true} under a boolean casting operation, the second sub-expression is
 evaluated and result returned, otherwise the third sub-expression is evaluated
 and result returned.
 
-The looping expression executes the body sub-expression whilst the condition
+\textbf{Looping} The looping expression executes the body sub-expression whilst the condition
 sub-expression evaluates to true. The most-recently returned value of the body
 is returned.
 
-Variable declarations are used in parsing stages to determine free-variables
-when constructing a new scope. During evaluation, their subexpression is
-evaluated (for side-effects), and \js{undefined} is returned.
+\textbf{Variable declaration} Variable declarations are used during activation
+record creation
+to determine free-variables when constructing a new scope. They are no-ops
+during evaluation.
 
+\textbf{Assignment} Assigns the value on the right hand side to the named field on the
+left.
 
+\textbf{Member access} Returns the value of the named field of the object referenced by
+the subexpression.
+
+\textbf{Computed member access} As Member access, but the field name is derived from
+the expression in \js{[]}.
+
+\textbf{Function creation} Creates a function object, assigning the body, parameter
+declarations and the current scope to internal fields. A new object is also
+created and assigned to the \js{prototype} field for use as the prototype of
+objects produced by using this function as a constructor (this permits
+emulation of a class-based language).
+
+\textbf{Named function creation} This syntax is the same as standard function creation,
+but also adds the name and a self-reference to the function to the function's
+scope record. This permits recursive functions to be created. \emph{Note:} the
+name of the function is not added to the current scope, it is permitted in the
+actual language, but is considered to be syntactic sugar, combining creation and
+assignment.
+
+\textbf{Function call} Executes the body of the function, using the passed expression
+as the value to bind to the parameter. The body of the function is executed in
+the scope stored with the function, any variables defined within the function
+body are defined on an activation record so that they are lexically scoped. 
+
+\textbf{Object construction} Constructs an object using the given function, an object
+is created as usual, it's prototype is assigned to that of the function's
+\js{prototype} field. The body of the function is then exectuted, commonly used
+to initialize the newly created object.
+
+\textbf{this} The \js{this} expression is context-dependent. When used outside of a
+function, it should evaluate to the most global accessible scope.
+When used within a function, it will evaluate to the object
+on which that function was called. The root of a scope chain should poin In
+other cases, \js{this} returns undefined. Note that this is particularly
+problematic because functions can easily be aliased off of the object on which
+they appear to be defined.
+
+\textbf{Restricted evaluation} Parse the first given expression as SES code. A new
+scope chain is prepared, its root is the object specified by the second
+parameter (the \emph{imports} to the restricted environment), an activation
+record is then appended which initializes any variables declared in the parsed
+source -- declared variables will hide imports of the same name. The return
+value of the restricted evaluation statement is the same as that of the final
+statement of the source to be executed.
+
+\textbf{Object freeze} Makes the provided object read-only, prevents field additions,
+modifications and deletions.
+
+\textbf{Recursive freeze} Recursively calls freeze on all objects reachable
+from the given object.
+
+\section{Operational Semantics}
+\begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
+  \stateaxiom{(Value)}
+    {H,L,v \evalsto H,v}
+\vg
+
+  \stateaxiom{(Variable declaration)}
+  {H,L,\js{var}\ x \evalsto H,\und}
+\vg
+
+  \staterule{(Object creation)}
+    {H_0 = H \sep \obj(l,\lop)\\
+     \forall i\in 1..n.\left(\begin{array}{l}
+      H_{i-1},L,\js{ei}\evalsto H_i',v_i \\ 
+      H_i = H_i' [ (l,\js{xi}) \pointsto v_i]\end{array}\right)}
+    {H,L,\{\js{x1:e1},\dots, \js{xn:en}\} \evalsto H_n,l}
+\vg
+
+  \staterule{(Sequence)}
+    {H,L,e_1 \evalsto H_1,v_1 \\
+     H_1,L,e_2 \evalsto H',v}
+    {H,L,e_1\js; e_2 \evalsto H',v}
+\vg
+
+  \staterule{(Binary operator)}
+    {H,L,e_1 \evalsto H_1,v_1 \\
+     H_1,L,e_2 \evalsto H',v_2\\
+     v_1 \oplus v_2 = v}
+    {H,L,e_1 \oplus e_2 \evalsto H',v}
+\vg
+
+  \staterule{(Conditional true)}
+  {H,L,e_1 \evalsto H'',v' \quad \istrue(v') \\
+   H'',L,e_2 \evalsto H',v}
+  {H,L,\js{if($e_1$)\{$e_2$\} else \{$e_3$\}} \evalsto H',v}
+\qquad
+
+  \staterule{(Conditional false)}
+  {H,L,e_1 \evalsto H'',v' \quad \isfalse(v') \\
+   H'',L,e_3 \evalsto H',v}
+  {H,L,\js{if($e_1$)\{$e_2$\} else \{$e_3$\}} \evalsto H',v}
+\vg
+
+  \staterule{(While true)}
+  {H,L,e_1 \evalsto H'', v \quad \istrue(v) \\
+   H'',L,e_2\js{; while($e_1$)\{$e_2$\}} \evalsto H', v''}
+  {H,L,\js{while($e_1$)\{$e_2$\}} \evalsto H',\und}
+\qquad
+
+  \staterule{(While false)}
+  {H,L,e_1 \evalsto H', v \quad \isfalse(v)}
+  {H,L,\js{while($e_1$)\{$e_2$\}} \evalsto H',\und}
+\vg
+
+  \staterule{(Variable)}
+    {\scope(H,L,x) = l'}
+    {H,L,\js x \evalsto H, \fld{l'}{x}}
+\vg
+  
+  \staterule{(Member access)}
+  {H,L,\js e \evalsto H',l' \\
+   l' \neq \nil}
+  {H,L,e\js{.}x \evalsto H', \fld{l'}{x}}
+\qquad
+
+  \staterule{(Computed member access)}
+  {H,L,e_1 \evalsto H'',l' \\
+   l' \neq \nil \\
+   H'',L,e_2 \evalsto H', x}
+  {H,L,e_1\js{[}e_2\js{]} \evalsto H',\fld{l'}{x}}
+\vg
+  
+  \staterule{(\emph{Implicit} Dereference)}
+  {\gamma(H,\fld{l}{x}) = v}
+  {H,L,\fld{l}{x} \evalsto H,v}
+\vg
+
+  \staterule{(Assignment)}
+  {H,L,e_1 \evalsto H_1,\fld{l}{x} \qquad
+   H_1(l, @frozen) \neq \true \\
+   H_1,L,e_2 \evalsto H_2, v \\
+   H' = H_2[(l,x) \pointsto v]}
+  {H,L,e_1\js = e_2 \evalsto H', v}
+\vg
+
+  \staterule{(Function creation)}
+  {H' = H \sep \obj(l,\lop) \sep \fun(l',L,x,e,l)}
+  {H,L,\js{function($x$)\{$e$\}} \evalsto H',l'}
+\vg
+
+  \staterule{(Named function creation)}
+  {H' = H \sep \obj(l,\lop) \sep \fun(l',l_1 \cons L,x,e,l) \sep l_1 \pointsto
+    \{@proto:\nil, y:l'\}}
+  {H,L,\js{function $y$($x$)\{$e$\}} \evalsto H',l'}
+\vg
+
+  \staterule{(Object construction)}
+  {H,L,\js{e1} \evalsto H_1,{l_1} \qquad
+   l_1\neq \nil\qquad
+   H_1(l_1,@body)=\lambda \js{x.e3}\\
+   H_1(l_1,@scope)= L'\qquad
+   H_1(l_1,\js{prototype})= v\\
+   H_1,L,\js{e2} \evalsto H_2,{v_1}  \qquad  
+   l_2 = \objOrGlob(v) \\
+   H_3 = H_2\sep \obj(l_3,l_2) \sep\act(l,\js x,v_1,\js{e3},l_3)\\ 
+   H_3,l \cons L',\js{e3} \evalsto H',v_2\qquad
+   \getBase(l_3,v_2) = l'}
+  {H,L,\js{new e1(e2)} \evalsto H',{l'}}
+\vg
+  
+  \staterule{(Function call)}
+  {H,L,\js{e1} \evalsto H_1,r_1\qquad
+   \pickThis(H_1,{r_1})=l_2\qquad
+   \getValue(H_1,r_1)=l_1\\
+   H_1(l_1,@body)=\lambda \js{x.e3}\qquad
+   H_1(l_1,@scope)= L'\\
+   H_1,L,\js{e2} \evalsto H_2,{v}\\
+   H_3 = H_2\sep\act(l,\js x,v,\js{e3},l_2) \\
+   H_3,l \cons L',\js{e3} \evalsto H',{v'}}
+  {H,L,\js{e1(e2)} \evalsto H',{v'}}
+\vg
+
+  \staterule{(This)}
+  {\scope(H,L,@this)=l_1 \\ \proto(H,l_1,@this)=l_2\\ H(l_2,@this)=l'}
+  {H,L,\js{this} \evalsto H,l'}
+\vg
+
+  \staterule{(Restricted evaluation)}
+  {H,L,e_1 \evalsto H_1,v \qquad
+   \parse(v) = e \\
+   H_2 = H_1 \sep l \pointsto \{@this:l, @proto:\nil\} * \defs(x, l, e) \\
+   H_2,L,e_2 \evalsto H_3, l' \\
+   H_3, l \cons [l'], e \evalsto H',v }
+  {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
+\vg
+
+  \staterule{(Object freeze)}
+  {H,L,e \evalsto H'', l\\
+   H' = H''[(l, @frozen) \pointsto \true]}
+  {H,L,\js{freeze($e$)} \evalsto H', l}
+\vg
+
+  \staterule{(Recursive freeze)}
+  {H,L,\js{freeze($e$)} \evalsto H_0, l \\
+  \forall l' \in \dom(H'', l).(H,L,\js{def($l'$)} \evalsto H_n, l'')}
+  {H,L,\js{def($e$)} \evalsto H', l}
+  TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
+\end{display}
+
+\section{Program Logic}
+
+\newcommand{\defline}[2]{#1 & \qquad & \text{#2}\\}
+\begin{display}{Definitions}
+  $\begin{array}{lll}
+    \defline{h,h_g \in}{Abstract heap}
+    \defline{h,h_g,L,\epsilon \satisfies P}{Satisfaction relation}
+  \end{array}$
+\end{display}
+
+\newcommand{\asrtline}[3][\pipe]{#1 & #2 & \text{#3}\\}
+\begin{display}{Assertions}
+  $\begin{array}{rll}
+    \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
+    \false}{Boolean formulae}
+    \asrtline{P \sep P}{Structural formulae (more tbd)}
+    \asrtline{(E,E) \pointsto E \pipe \emp}{}
+  \end{array}$
+\end{display}
+
+\begin{display}{Assertion satisfaction}
+  $\begin{array}{lcl}
+    h,h_g,L,\epsilon \satisfies P \land Q & \iff & (h,h_g,L,\epsilon \satisfies
+      P) \land (h,h_g,L,\epsilon \satisfies Q) \\
+    h,h_g,L,\epsilon \satisfies P \lor Q & \iff & (h,h_g,L,\epsilon \satisfies
+      P) \lor (h,h_g,L,\epsilon \satisfies Q) \\
+    h,h_g,L,\epsilon \satisfies \lnot P & \iff & \lnot(h,h_g,L,\epsilon
+      \satisfies P)\\
+    h,h_g,L,\epsilon \satisfies \true & & \text{always} \\
+    h,h_g,L,\epsilon \satisfies \false & & \text{never} \\
+    h,h_g,L,\epsilon \satisfies P \sep Q & \iff & \exists h_1,h_2. h \equiv h_1
+      \sep h_2 \land (h_1,h_g,L,\epsilon \satisfies P) \land (h_2,h_g,L,\epsilon
+      \satisfies Q) \\
+  \end{array}$
+\end{display}
+
+\section{Notes}
+The semantics presented here are based on the ES3 program logic paper. I've
+decided to use the scope chain as the scoping and heap accessibility model as I
+think it quite neatly captures the functions-as-closures semantics of the
+language.
+
+Prototype chain traversal has become more irrelevant with the removal of the
+\js{with} statement, the only place a normal object (with a prototype chain) is
+placed into the scope chain is at the root, either as the global object $l_g$,
+or as the `fake global' imports object during restricted execution. At all other
+times, objects placed into the scope chain are controlled by the language, and
+will \emph{never} have a prototype set.
+
+Dereferencing syntax has been modified to change the gamma arrows into a
+dereferencing rule, this is used implicitly in all cases except for assignment,
+where a reference is required to the object that holds the field. (It's a bit
+annoying, apart from that, it could be dropped entirely, but that's the way it
+is, even in the C++ languages also studied this year...)
+Progress was
+made between ES3 and ES5 to remove the need to represent references internally
+(they were originally specified only as the result of an implementation
+decision). According to Mark Miller, of the TC39 ES standardisation body,
+references should no longer be needed in the ES5 spec and later revisions. As a
+result of this information, they have been removed from this operational
+semantics for simplification purposes. 
+
+The \js{def} function is definable in the full SES language using the
+\js{for..each} construct. As this poses formalisation issues (non-determinism),
+it has been decided to not model \js{for..each}, but \js{def} directly in the
+operational semantics.
+
+SES permits more granular properties than we model here. We only model
+per-object freezing, SES permits this on a per-field basis. We also do not make
+the distinction between data and accessor properties, (SES permits values of
+accessor properties to be modified through the accessor after the object is
+frozen). This choice may need to be reviewed at a later point.
 
 \end{document}
-
-
