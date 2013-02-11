@@ -2,14 +2,33 @@
 \newcommand{\logconst}[1]{\V{#1}}
 \newcommand{\false}{\logconst{false}}
 \newcommand{\true}{\logconst{true}}
+\newcommand{\none}{\diameter}
 \newcommand{\emp}{\texttt{emp}}
 \newcommand{\emptylist}{[\,]}
 
+\newcommand\obj{\command{obj}}
+\newcommand\fun{\command{fun}}
+\newcommand\act{\command{act}}
+\newcommand\defs{\command{defs}}
+\newcommand\pickThis{\command{This}}
+\newcommand{\scope}{\ensuremath{\sigma}\xspace}
+\newcommand{\proto}{\ensuremath{\pi}\xspace}
+\newcommand{\getValue}{\ensuremath{\gamma}\xspace}
+
+\newcommand\istrue{\command{True}}
+\newcommand\isfalse{\command{False}}
+\newcommand\objOrGlob{\command{SelectProto}}
+\newcommand\getBase{\command{getBase}}
+\newcommand\parse{\command{parse}}
+\newcommand\lop{l_{op}}
+
 \newcommand{\command}[1]{\ensuremath{\mathsf{#1}}\xspace}
-\newcommand{\domain}{\command{dom}}
+\newcommand{\dom}{\command{dom}}
 \newcommand{\fv}{\command{fv}}
 \newcommand{\env}{\epsilon}%{\command{env}}
 \newcommand{\js}[1]{\mbox{\texttt{{\upshape #1}}}}
+\newcommand{\und}{\js{undefined}}
+\newcommand{\nil}{\js{null}\xspace}
 
 %%%%%%%%%%%%%
 % OPERATORS %
@@ -20,11 +39,19 @@
 \newcommand{\disj}{\mathbin{\#}}
 \newcommand{\impl}{\Rightarrow}
 \newcommand{\satisfies}{\models}
+\newcommand{\pointsto}{\mapsto}
+\newcommand{\cons}{{:}}
+\newcommand{\fld}[2]{#1\makebox[3pt]{$\cdot$}{#2}}
+
+\newcommand{\evalsto}{{\,\longrightarrow\,}}
 
 \newcommand{\eval}[1]{\llbracket #1 \rrbracket}
 
 % Hoare triple {P}{C}{Q}
 \newcommand\tr[3]{\{#1\}#2\{#3\}}
+
+% Formatting
+\newcommand{\vg}{\\[5pt]}
 
 % --------------------------------------------------------------------- %
 % Proof rule.                                                           %
