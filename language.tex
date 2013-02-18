@@ -44,65 +44,65 @@ values indexed by fields.
 For the purposes of this semantics, \js{null} and \js{undefined} behave
 interchangably.
 
-\textbf{Object creation}  The Object Construction syntax produces a new object
+\paragraph{Object creation}  The Object Construction syntax produces a new object
 with fields named $x_1, \ldots, x_n$ which map to the values of expressions
 $e_1, \ldots, e_n$ when evaluated in order at creation.
 
-\textbf{Sequence} The sequencing operator specifies that the expression on the left should be
+\paragraph{Sequence} The sequencing operator specifies that the expression on the left should be
 evaluated, followed by the expresion on the right.
 
-\textbf{Binary operator} Binary operations are evaluated left-to-right, and includes standard
+\paragraph{Binary operator} Binary operations are evaluated left-to-right, and includes standard
 mathematical and string operations. Formalisation of semantics for all of these
 are beyond the scope of this project, but will correspond closely to similar
 works on the JavaScript family of languages.
 
-\textbf{Conditional} The conditional expression evaluates the first sub-expression, if it evaluates
+\paragraph{Conditional} The conditional expression evaluates the first sub-expression, if it evaluates
 to \js{true} under a boolean casting operation, the second sub-expression is
 evaluated and result returned, otherwise the third sub-expression is evaluated
 and result returned.
 
-\textbf{Looping} The looping expression executes the body sub-expression whilst the condition
+\paragraph{Looping} The looping expression executes the body sub-expression whilst the condition
 sub-expression evaluates to true. The most-recently returned value of the body
 is returned.
 
-\textbf{Variable declaration} Variable declarations are used during activation
+\paragraph{Variable declaration} Variable declarations are used during activation
 record creation
 to determine free-variables when constructing a new scope. They are no-ops
 during evaluation.
 
-\textbf{Assignment} Assigns the value on the right hand side to the named field on the
+\paragraph{Assignment} Assigns the value on the right hand side to the named field on the
 left.
 
-\textbf{Member access} Returns the value of the named field of the object referenced by
+\paragraph{Member access} Returns the value of the named field of the object referenced by
 the subexpression.
 
-\textbf{Computed member access} As Member access, but the field name is derived from
+\paragraph{Computed member access} As Member access, but the field name is derived from
 the expression in \js{[]}.
 
-\textbf{Function creation} Creates a function object, assigning the body, parameter
+\paragraph{Function creation} Creates a function object, assigning the body, parameter
 declarations and the current scope to internal fields. A new object is also
 created and assigned to the \js{prototype} field for use as the prototype of
 objects produced by using this function as a constructor (this permits
 emulation of a class-based language).
 
-\textbf{Named function creation} This syntax is the same as standard function creation,
+\paragraph{Named function creation} This syntax is the same as standard function creation,
 but also adds the name and a self-reference to the function to the function's
 scope record. This permits recursive functions to be created. \emph{Note:} the
 name of the function is not added to the current scope, it is permitted in the
 actual language, but is considered to be syntactic sugar, combining creation and
 assignment.
 
-\textbf{Function call} Executes the body of the function, using the passed expression
+\paragraph{Function call} Executes the body of the function, using the passed expression
 as the value to bind to the parameter. The body of the function is executed in
 the scope stored with the function, any variables defined within the function
 body are defined on an activation record so that they are lexically scoped. 
 
-\textbf{Object construction} Constructs an object using the given function, an object
+\paragraph{Object construction} Constructs an object using the given function, an object
 is created as usual, it's prototype is assigned to that of the function's
 \js{prototype} field. The body of the function is then exectuted, commonly used
 to initialize the newly created object.
 
-\textbf{this} The \js{this} expression is context-dependent. When used outside of a
+\paragraph{\js{this}} The \js{this} expression is context-dependent. When used outside of a
 function, it should evaluate to the most global accessible scope.
 When used within a function, it will evaluate to the object
 on which that function was called. The root of a scope chain should poin In
@@ -110,7 +110,7 @@ other cases, \js{this} returns undefined. Note that this is particularly
 problematic because functions can easily be aliased off of the object on which
 they appear to be defined.
 
-\textbf{Restricted evaluation} Parse the first given expression as SES code. A new
+\paragraph{Restricted evaluation} Parse the first given expression as SES code. A new
 scope chain is prepared, its root is the object specified by the second
 parameter (the \emph{imports} to the restricted environment), an activation
 record is then appended which initializes any variables declared in the parsed
@@ -118,10 +118,10 @@ source -- declared variables will hide imports of the same name. The return
 value of the restricted evaluation statement is the same as that of the final
 statement of the source to be executed.
 
-\textbf{Object freeze} Makes the provided object read-only, prevents field additions,
+\paragraph{Object freeze} Makes the provided object read-only, prevents field additions,
 modifications and deletions.
 
-\textbf{Recursive freeze} Recursively calls freeze on all objects reachable
+\paragraph{Recursive freeze} Recursively calls freeze on all objects reachable
 from the given object.
 
 \section{Operational Semantics}
