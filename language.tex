@@ -4,6 +4,8 @@
 \usepackage{fullpage}
 \usepackage{hyperref}
 \usepackage{separationlogic}
+\usepackage[english]{babel}
+\usepackage[fixlanguage]{babelbib}
 
 \begin{document}
 
@@ -273,6 +275,43 @@ from the given object.
   TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
 \end{display}
 
+\subsection{Notes}
+The semantics presented here are based on the ES3 program logic paper. I've
+decided to use the scope chain as the scoping and heap accessibility model as I
+think it quite neatly captures the functions-as-closures semantics of the
+language.
+
+Prototype chain traversal has become more irrelevant with the removal of the
+\js{with} statement, the only place a normal object (with a prototype chain) is
+placed into the scope chain is at the root, either as the global object $l_g$,
+or as the `fake global' imports object during restricted execution. At all other
+times, objects placed into the scope chain are controlled by the language, and
+will \emph{never} have a prototype set.
+
+Dereferencing syntax has been modified to change the gamma arrows into a
+dereferencing rule, this is used implicitly in all cases except for assignment,
+where a reference is required to the object that holds the field. (It's a bit
+annoying, apart from that, it could be dropped entirely, but that's the way it
+is, even in the C++ languages also studied this year...)
+Progress was
+made between ES3 and ES5 to remove the need to represent references internally
+(they were originally specified only as the result of an implementation
+decision). According to Mark Miller, of the TC39 ES standardisation body,
+references should no longer be needed in the ES5 spec and later revisions. As a
+result of this information, they have been removed from this operational
+semantics for simplification purposes. 
+
+The \js{def} function is definable in the full SES language using the
+\js{for..each} construct. As this poses formalisation issues (non-determinism),
+it has been decided to not model \js{for..each}, but \js{def} directly in the
+operational semantics.
+
+SES permits more granular properties than we model here. We only model
+per-object freezing, SES permits this on a per-field basis. We also do not make
+the distinction between data and accessor properties, (SES permits values of
+accessor properties to be modified through the accessor after the object is
+frozen). This choice may need to be reviewed at a later point.
+
 \section{Program Logic}
 
 \newcommand{\defline}[2]{#1 & \qquad & \text{#2}\\}
@@ -309,41 +348,34 @@ from the given object.
   \end{array}$
 \end{display}
 
-\section{Notes}
-The semantics presented here are based on the ES3 program logic paper. I've
-decided to use the scope chain as the scoping and heap accessibility model as I
-think it quite neatly captures the functions-as-closures semantics of the
+\subsection{Notes}
+The existing backpointers paper\cite{KassiosKritikos12} is the first case in
+which we've seen the concept of a backpointer being used with separation logic
+to count references. However, these backpointers are implemented as \emph{ghost
+fields} as members of the data structures under examination in the Chalice
 language.
 
-Prototype chain traversal has become more irrelevant with the removal of the
-\js{with} statement, the only place a normal object (with a prototype chain) is
-placed into the scope chain is at the root, either as the global object $l_g$,
-or as the `fake global' imports object during restricted execution. At all other
-times, objects placed into the scope chain are controlled by the language, and
-will \emph{never} have a prototype set.
+Each object that is being tracked for pointers $o$, has a field, named $T.f^{-1}$
+which contains the set of objects of type $T$, whose $f$ field
+points to $o$.
 
-Dereferencing syntax has been modified to change the gamma arrows into a
-dereferencing rule, this is used implicitly in all cases except for assignment,
-where a reference is required to the object that holds the field. (It's a bit
-annoying, apart from that, it could be dropped entirely, but that's the way it
-is, even in the C++ languages also studied this year...)
-Progress was
-made between ES3 and ES5 to remove the need to represent references internally
-(they were originally specified only as the result of an implementation
-decision). According to Mark Miller, of the TC39 ES standardisation body,
-references should no longer be needed in the ES5 spec and later revisions. As a
-result of this information, they have been removed from this operational
-semantics for simplification purposes. 
+These ghost fields are updated by the program logic using the inference rules
+for assignment.
 
-The \js{def} function is definable in the full SES language using the
-\js{for..each} construct. As this poses formalisation issues (non-determinism),
-it has been decided to not model \js{for..each}, but \js{def} directly in the
-operational semantics.
+These sorts of backpointers are not suitable for our use for a number of
+reasons: explicit references to field name and object type on
+which references may be stored limit the flexibility of pointer tracking,
+although it is suitable for this case of reference counting, it is not suitable
+for more a general security analysis. Secondly, the set of pointers recorded is
+exactly those in existence, it may be useful for the logic to be more flexible
+about this definition, say for those objects in the set to be \emph{at least}
+those that point to the tracked object.
 
-SES permits more granular properties than we model here. We only model
-per-object freezing, SES permits this on a per-field basis. We also do not make
-the distinction between data and accessor properties, (SES permits values of
-accessor properties to be modified through the accessor after the object is
-frozen). This choice may need to be reviewed at a later point.
+Using the at least semantics allows for the rule of consequence to be used to
+add new items to the set at any time. \emph{Note: should probably consider the
+impact of this on reachability, as well as non-reachability analysis.}
+
+\bibliography{bibliography}
+\bibliographystyle{babplain}
 
 \end{document}
