@@ -1,5 +1,7 @@
 \documentclass[a4paper]{article}
 \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
 \usepackage{xspace}
 \usepackage{fullpage}
 \usepackage{hyperref}
@@ -138,7 +140,7 @@ from the given object.
 
   \staterule{(Object creation)}
     {H_0 = H \sep \obj(l,\lop)\\
-     \forall i\in 1..n.\left(\begin{array}{l}
+     \forall i\in 1..n \st \left(\begin{array}{l}
       H_{i-1},L,\js{ei}\evalsto H_i',v_i \\ 
       H_i = H_i' [ (l,\js{xi}) \pointsto v_i]\end{array}\right)}
     {H,L,\{\js{x1:e1},\dots, \js{xn:en}\} \evalsto H_n,l}
@@ -270,7 +272,7 @@ from the given object.
 
   \staterule{(Recursive freeze)}
   {H,L,\js{freeze($e$)} \evalsto H_0, l \\
-  \forall l' \in \dom(H'', l).(H,L,\js{def($l'$)} \evalsto H_n, l'')}
+  \forall l' \in \dom(H'', l) \st (H,L,\js{def($l'$)} \evalsto H_n, l'')}
   {H,L,\js{def($e$)} \evalsto H', l}
   TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
 \end{display}
@@ -318,7 +320,11 @@ frozen). This choice may need to be reviewed at a later point.
 \begin{display}{Definitions}
   $\begin{array}{lll}
     \defline{h,h_g \in}{Abstract heap}
-    \defline{h,h_g,L,\epsilon \satisfies P}{Satisfaction relation}
+    \defline{h,h_g,L,\env \satisfies P}{Satisfaction relation}
+    \defline{h[h']}{Heap $h$ updated to be consistent with heap $h'$}
+    \defline{h[h'](x) \triangleq h'(x)}{iff $x \in \dom(h')$}
+    \defline{h[h'](x) \triangleq h(x)}{otherwise}
+    \defline{\tr{P}{\js{x}}{Q}}{Hoare triple}
   \end{array}$
 \end{display}
 
@@ -327,26 +333,71 @@ frozen). This choice may need to be reviewed at a later point.
   $\begin{array}{rll}
     \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
     \false}{Boolean formulae}
-    \asrtline{P \sep P}{Structural formulae (more tbd)}
-    \asrtline{(E,E) \pointsto E \pipe \emp}{}
+    \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulae}
+    \asrtline{(E,E) \pointsto E \pipe \lemp}{SES formulae}
+    \asrtline{E \bp E}{Backpointer formula}
+    \asrtline{E = E}{Expression equality}
   \end{array}$
 \end{display}
 
 \begin{display}{Assertion satisfaction}
   $\begin{array}{lcl}
-    h,h_g,L,\epsilon \satisfies P \land Q & \iff & (h,h_g,L,\epsilon \satisfies
-      P) \land (h,h_g,L,\epsilon \satisfies Q) \\
-    h,h_g,L,\epsilon \satisfies P \lor Q & \iff & (h,h_g,L,\epsilon \satisfies
-      P) \lor (h,h_g,L,\epsilon \satisfies Q) \\
-    h,h_g,L,\epsilon \satisfies \lnot P & \iff & \lnot(h,h_g,L,\epsilon
+    h,h_g,L,\env \satisfies \true \\
+    h,h_g,L,\env \not\satisfies \false \\
+    h,h_g,L,\env \satisfies P \land Q & \iff & (h,h_g,L,\env \satisfies
+      P) \land (h,h_g,L,\env \satisfies Q) \\
+    h,h_g,L,\env \satisfies P \lor Q & \iff & (h,h_g,L,\env \satisfies
+      P) \lor (h,h_g,L,\env \satisfies Q) \\
+    h,h_g,L,\env \satisfies \lnot P & \iff & \lnot(h,h_g,L,\env
       \satisfies P)\\
-    h,h_g,L,\epsilon \satisfies \true & & \text{always} \\
-    h,h_g,L,\epsilon \satisfies \false & & \text{never} \\
-    h,h_g,L,\epsilon \satisfies P \sep Q & \iff & \exists h_1,h_2. h \equiv h_1
-      \sep h_2 \land (h_1,h_g,L,\epsilon \satisfies P) \land (h_2,h_g,L,\epsilon
+    h,h_g,L,\env \satisfies P \sep Q & \iff & \exists h_1,h_2 \st h \equiv h_1
+      \sep h_2 \land (h_1,h_g,L,\env \satisfies P) \land (h_2,h_g,L,\env
       \satisfies Q) \\
+    h,h_g,L,\env \satisfies P \wand Q & \iff & \forall h' \st
+      (h',h_g[h'],L,\env \satisfies P) \land h \disj h' \\
+      & & \impl (h \disju h', h_g[h'], L, \env \satisfies Q) \\
+    h,h_g,L,\env \satisfies P \sepish Q & \iff & \exists h_1,h_2,h_3 \st
+      h \equiv h_1 \disju h_2 \disju h_3 \land {} \\
+      && (h_1 \disju h_3, h_g, L, \env \satisfies P) \land
+      (h_2 \disju h_3, h_g, L, \env \satisfies Q) \\
+    h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
+      h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto \evalle{E_3} \\
+    h,h_g,L,\env \satisfies E_1 \bp E_2 & \iff & \forall (l,x) \in \dom(h_g) \st
+      h_g(l,x) = \evalle{E_1} \\
+      & & \impl (l,x) \in \evalle{E_2} \\
+    h,h_g,L,\env \satisfies \lemp & \iff & h = \emp
   \end{array}$
 \end{display}
+
+The definition of $\wand$ is awkward, by introducing the global view of the
+heap, we cannot keep both the property $P \sep Q \vdash R \iff P \vdash Q \wand
+R$ and maintain use of $\wand$ as the weakest precondition for a command.
+
+It is possible to introduce another semantics for $\wand$, where the global heap
+is not made consistent with the new portion of heap, this would maintain the
+first property, but break its use for weakest precondition. (sketch proof in
+handwritten notes).
+
+\subsection{Hoare Triples}
+Definition:
+\[ \tr{P}{\js{e}}{Q} \]
+Soundness:
+\[ (h, h \disju h_f, L, \env \satisfies P) \land h, L, \js{e} \leadsto h', v
+  \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
+Fault avoidance:
+\[ h, h_g, L, \env \satisfies P \impl h, L, \js{e} \not\leadsto \fault \]
+Safety monoticity:
+\[ (h, h_g, L, \env \satisfies P) \land h \disj h' \land h, L, \js{e} \not\leadsto
+  \fault \impl h \disju h', L, \js{e} \not\leadsto \fault \]
+Frame property:
+\[ (h, h_g, L, \env \satisfies P) \land h, L, \js{e} \not\leadsto \fault \land
+  h \disju h', L, \js{e} \leadsto h_2' \impl h, L, \js{e} \leadsto h_2 \land
+  h_2' = h_2 \disju h' \]
+
+An alternative formulation which emphasises the relationship between the global
+view of the heap and the framing property ($h_g = h \disju h_f$) can also be
+produced, it should be noted that the meaning is subtly different (in that $h'
+\neq h_g$ in all cases).
 
 \subsection{Notes}
 The existing backpointers paper\cite{KassiosKritikos12} is the first case in
