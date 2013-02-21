@@ -334,6 +334,7 @@ frozen). This choice may need to be reviewed at a later point.
     \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
     \false}{Boolean formulae}
     \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulae}
+    \asrtline{\upd P \pipe P \hysep Q}{Global hypothesis formulae}
     \asrtline{(E,E) \pointsto E \pipe \lemp}{SES formulae}
     \asrtline{E \bp E}{Backpointer formula}
     \asrtline{E = E}{Expression equality}
@@ -353,13 +354,15 @@ frozen). This choice may need to be reviewed at a later point.
     h,h_g,L,\env \satisfies P \sep Q & \iff & \exists h_1,h_2 \st h \equiv h_1
       \sep h_2 \land (h_1,h_g,L,\env \satisfies P) \land (h_2,h_g,L,\env
       \satisfies Q) \\
-    h,h_g,L,\env \satisfies P \wand Q & \iff & \forall h' \st
-      (h',h_g[h'],L,\env \satisfies P) \land h \disj h' \\
-      & & \impl (h \disju h', h_g[h'], L, \env \satisfies Q) \\
     h,h_g,L,\env \satisfies P \sepish Q & \iff & \exists h_1,h_2,h_3 \st
       h \equiv h_1 \disju h_2 \disju h_3 \land {} \\
       && (h_1 \disju h_3, h_g, L, \env \satisfies P) \land
       (h_2 \disju h_3, h_g, L, \env \satisfies Q) \\
+    h,h_g,L,\env \satisfies P \wand Q & \iff & \forall h' \st
+      (h',h_g,L,\env \satisfies P) \land h \disj h' \\
+      & & \impl (h \disju h', h_g, L, \env \satisfies Q) \\
+    h,h_g,L,\env \satisfies \upd P & \iff & h, h_g[h], L, \env \satisfies P \\
+    P \hysep Q & \triangleq & P \wand \upd Q \\
     h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
       h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto \evalle{E_3} \\
     h,h_g,L,\env \satisfies E_1 \bp E_2 & \iff & \forall (l,x) \in \dom(h_g) \st
@@ -370,13 +373,19 @@ frozen). This choice may need to be reviewed at a later point.
 \end{display}
 
 The definition of $\wand$ is awkward, by introducing the global view of the
-heap, we cannot keep both the property $P \sep Q \vdash R \iff P \vdash Q \wand
-R$ and maintain use of $\wand$ as the weakest precondition for a command.
+heap, we cannot keep both the adjunct property of $\sep$
+($P \sep Q \vdash R \iff P \vdash Q \wand R$)
+and maintain use of $\wand$ as the weakest precondition for a command.
 
-It is possible to introduce another semantics for $\wand$, where the global heap
-is not made consistent with the new portion of heap, this would maintain the
-first property, but break its use for weakest precondition. (sketch proof in
-handwritten notes).
+The definition of $\wand$ here is that which maintins the adjunct property. The
+ability to express weakest preconditions is enabled through the introduction
+of $\upd P$ to maintain consistency between local and global views of the heap.
+
+By using it in conjunction with the $\wand$ operator, it can be used to apply
+an \emph{hypothesis} about a future state of the heap to the global view of the
+heap. This maintains the ability to express conditions like ``if I make
+the heap look like P, then Q will hold''. This combined operator is written as
+$\hysep$ and pronounced \emph{blargh}.
 
 \subsection{Hoare Triples}
 Definition:
