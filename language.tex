@@ -419,6 +419,10 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 \neq h_g$ in all cases).
 
 \begin{display}{Inference Rules}
+  $\bpGen(V,\_,\_,\_) \triangleq V \notdotin \loc$ \\
+  $\bpGen(V,L,x,s) \triangleq V \dotin \loc \sep V \bp \{(L,x)\} \cup s$
+  \vg
+
   \stateaxiom{(Declaration)}
     {\tr {\lemp} {\js{var x}} {\rv \doteq \und}}
   \vg
@@ -464,42 +468,22 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {\tr P {\js{e1} \oplus \js{e2}} {Q \sep \rv \doteq V}}
   \vg
 
-  \staterule{(Assign Global Val)}
-    {
-      \tr P {\js{e1}} {R \sep \rv \doteq \fld{\nil}{X}} \\
-      \tr R {\js{e2}} {Q \sep (\gv,X) \pointsto \none \sep \rv \doteq V_1} \\
-      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(\gv) \sep V_2
-      \notdotin \loc
-    }
-    {\tr P {\js{e1 = e2}} {Q \sep (\gv, X) \pointsto V_2 \sep \rv \doteq V_2}}
-  \vg
-
-  \staterule{(Assign Local Val)}
-    {
-      \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
-      \tr R {\js{e2}} {Q \sep (L,X) \pointsto V_3 \sep \rv \doteq V_1} \\
-      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep V_2 \notdotin
-      \loc
-    }
-    {\tr P {\js{e1 = e2}} {Q = (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
-  \vg
-
-  \staterule{(Assign Global Loc)}
+  \staterule{(Assign Global)}
     {
       \tr P {\js{e1}} {R \sep \rv \doteq \fld{\nil}{X}} \\
       \tr R {\js{e2}} {Q \sep (\gv,X) \mapsto \none \sep \rv \doteq V_2} \\
-      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(\gv) \sep V_2 \dotin
-      \loc \sep V_2 \bp s \cup \{(\gv,X)\}
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(\gv) \sep
+      \bpGen(V_2, \gv, X, s)
     }
     {\tr P {\js{e1 = e2}} {Q \sep (\gv, X) \pointsto V_2 \sep \rv \doteq V_2}}
   \vg
 
-  \staterule{(Assign Local Loc)}
+  \staterule{(Assign Local)}
     {
       \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
       \tr R {\js{e2}} {Q \sep (L,X) \mapsto \none \sep \rv \doteq V_2} \\
-      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep V_2 \dotin
-      \loc \sep V_2 \bp s \cup \{(L,X)\}
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep
+      \bpGen(V_2, L, X, s)
     }
     {\tr P {\js{e1 = e2}} {Q \sep (L, X) \pointsto V_2 \sep \rv \doteq V_2}}
   \vg
@@ -559,10 +543,6 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \js{x1} \neq \dots \neq \js{xn} \qquad \rv \not\in \fv(P_n)
     }
     {\tr {P_0} {\js{\{x1:e1, ..., xn:en\}}} Q}
-  \vg
-
-  $\bpGen(V,\_,\_,\_) \triangleq V \notdotin \loc$ \\
-  $\bpGen(V,L,x,s) \triangleq V \dotin \loc \sep V \bp \{(L,x)\} \cup s$
   \vg
 
   \staterule{(Fun Call)}
