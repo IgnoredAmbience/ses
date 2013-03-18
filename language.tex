@@ -45,7 +45,6 @@
 
 An object is a location in the heap, it contains a set of
 values indexed by fields.
-
 For the purposes of this semantics, \js{null} and \js{undefined} behave
 interchangably.
 
@@ -544,13 +543,15 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Obj)}
     {
       \exists L \st \left(\begin{array}{l}
+        % FIXME: \bpGen repeated sepping will fail when footprint added to
+        %        backpointer, consider case when {x:O,y:O}
         \forall i \in 1..n \st \left(\begin{array}{l}
-          P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \\
+          P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \sep
+            \bpGen(X_i, L, \js{xi}, s_i) \\
           \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
-          \beta(X_i, L, \js{xi}, s_i)
         \end{array}\right) \\
         Q = P_n \sep \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep
-        (L_1, \js{xi}) \pointsto X_i \sep \dots \sep (L_n, \js{xn}) \pointsto
+        (L, \js{xi}) \pointsto X_i \sep \dots \sep (L, \js{xn}) \pointsto
         X_n \sep {} \\
         (L,@proto) \pointsto \lop \sep \rv \doteq L \sep L \bp \{\} \\
         P_0 = R \sep \lop \bp \{(L,@proto)\} \cup s_0
@@ -569,18 +570,18 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \tr P {\js{e1}} {R_1 \sep \rv \doteq F_1} \\
       R_1 = \left(\begin{array}{l}
           S_1 \sepish \pickThis(F_1, T) \sepish \getValue(Ls_1, F_1, F_2) \sep {} \\
-          (F_2, @body) \pointsto \lambda \js{x.e3} \sep (F_2, @scope) \pointsto
+          (F_2, @body) \pointsto \lambda X.\js{e3} \sep (F_2, @scope) \pointsto
           Ls_2
       \end{array}\right) \\
-      \tr {R_1} {\js{e2}} {R_2 \sep \ls \doteq Ls_3 \sep \rv = V_1} \\
+      \tr {R_1} {\js{e2}} {R_2 \sep \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
       R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
       R_3 = \left(\begin{array}{l}
-          R_2 \sep \exists L \st \ls \doteq L:Ls_2 \sep (L_1, X) \pointsto V_2
-          \sep (L_1, @this) \pointsto T \sep (L_1, @proto) \pointsto \nil \sep
+          R_2 \sep \exists L \st \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
+          \sep (L, @this) \pointsto T \sep (L, @proto) \pointsto \nil \sep
           \defs(X,L,\js{e3}) \sep {} \\
-          \newobj(L,@proto,@this,\js{x},\vardecls( %FIXME 
-          ) \sep L \bp \{\} \sep T \bp \{(L,@this)\} \cup s \sep V_2 \bp
-          \{(L,X)\} \cup s'
+          \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e3}) \sep
+          L \bp \{\} \sep T \bp \{(L,@this)\} \cup s \sep
+          \bpGen(V_2, L, X, s')
       \end{array}\right) \\
       \tr {R_3} {\js{e3}} {\exists L \st Q \sep \ls \doteq L:Ls_2} \qquad
       \ls \notin \fv(Q) \cup \fv(R_2)
