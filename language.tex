@@ -342,7 +342,7 @@ frozen). This choice may need to be reviewed at a later point.
   \end{array}$
 \end{display}
 
-\begin{display}{Assertion satisfaction}
+\begin{display}{Assertion satisfaction relation}
   $\begin{array}{lcl}
     h,h_g,L,\env \satisfies \true \\
     h,h_g,L,\env \not\satisfies \false \\
@@ -362,11 +362,17 @@ frozen). This choice may need to be reviewed at a later point.
     h,h_g,L,\env \satisfies P \wand Q & \iff & \forall h' \st
       (h',h_g,L,\env \satisfies P) \land h \disj h' \land h' \subseteq g  \\
       & & \impl (h \disju h', h_g, L, \env \satisfies Q) \\
-    h,h_g,L,\env \satisfies \upd P & \iff & h, h_g[h], L, \env \satisfies P \\
-    h,h_g,L,\env \satisfies P?Q & \iff & h, h_g[h], L, \env \satisfies P \\
-    P \hysep Q & \triangleq & P \wand P ? Q \\
+    %h,h_g,L,\env \satisfies \upd P & \iff & h, h_g[h], L, \env \satisfies P \\
+    %h,h_g,L,\env \satisfies P?Q & \iff & h, h_g[h], L, \env \satisfies P \\
+    %P \hysep Q & \triangleq & P \wand P ? Q \\
+    h,h_g,L,\env \satisfies P \hysep Q & \iff &
+      \forall h' \st (h',h_g[h'],L,\env \satisfies P) \land h \disj h' \\
+      & & \impl (h \disju h', h_g[h'], L, \env \satisfies Q) \\
+      & & \text{\emph{(Where $h_g[h']$ is function-update notation, to ensure
+          consistency)}} \\
     h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
       h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto \evalle{E_3} \\
+    % TODO: Give \bp a footprint to prevent contradictory assertions/implication
     h,h_g,L,\env \satisfies E_1 \bp E_2 & \iff & \forall (l,x) \in \dom(h_g) \st
       h_g(l,x) = \evalle{E_1} \\
       & & \impl (l,x) \in \evalle{E_2} \\
@@ -381,13 +387,16 @@ and maintain use of $\wand$ as the weakest precondition for a command.
 
 The definition of $\wand$ here is that which maintins the adjunct property. The
 ability to express weakest preconditions is enabled through the introduction
-of $\upd P$ to maintain consistency between local and global views of the heap.
+% of $\upd P$ to maintain consistency between local and global views of the heap.
+of $\hysep$, a modified version of $\wand$ that also updates the state of the
+global heap used for evaluation of sub-expressions.
 
-By using it in conjunction with the $\wand$ operator, it can be used to apply
+% By using it in conjunction with the $\wand$ operator,
+It can be used to apply
 an \emph{hypothesis} about a future state of the heap to the global view of the
 heap. This maintains the ability to express conditions like ``if I make
-the heap look like P, then Q will hold''. This combined operator is written as
-$\hysep$ and pronounced \emph{blargh}.
+the heap look like P, then Q will hold''.
+% This combined operator is written as $\hysep$ and pronounced \emph{blargh}.
 
 \subsection{Hoare Triples}
 Definition:
