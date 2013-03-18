@@ -1,3 +1,8 @@
+% Sorts
+\newcommand{\sortstyle}[1]{\ensuremath{\mathcal{#1}}}
+\newcommand{\loc}{\sortstyle{L}}
+
+% erm...
 \newcommand{\V}[1]{{\ensuremath{\mathrm{#1}}}}
 \newcommand{\logconst}[1]{\V{#1}}
 \newcommand{\fault}{{\command{fault}}}
@@ -5,24 +10,35 @@
 \newcommand{\true}{\logconst{true}}
 \newcommand{\none}{\diameter}
 \newcommand{\emp}{\texttt{emp}}
-\newcommand{\lemp}\oslash%{\E{emp}}
 \newcommand{\emptylist}{[\,]}
+
+\newcommand{\lemp}\oslash%{\E{emp}}
+\newcommand{\rv}{\V{\textbf{r}}}
+\newcommand{\gv}{\V{\textbf{g}}}
+\newcommand{\ls}{\textbf{l}}
+\newcommand{\dotin}{\mathbin{\dot\in}}
+\newcommand{\notdotin}{\mathbin{\not\!\!\dot{\in}}}
 
 \newcommand\obj{\command{obj}}
 \newcommand\fun{\command{fun}}
 \newcommand\act{\command{act}}
 \newcommand\defs{\command{defs}}
 \newcommand\pickThis{\command{This}}
+\newcommand{\vardecls}{\command{decls}}
 \newcommand{\scope}{\ensuremath{\sigma}\xspace}
 \newcommand{\proto}{\ensuremath{\pi}\xspace}
 \newcommand{\getValue}{\ensuremath{\gamma}\xspace}
+\newcommand{\ReadWrite}{\command{RW}}
+\newcommand{\ReadOnly}{\command{RO}}
 
 \newcommand\istrue{\command{True}}
 \newcommand\isfalse{\command{False}}
 \newcommand\objOrGlob{\command{SelectProto}}
 \newcommand\getBase{\command{getBase}}
+\newcommand{\newobj}{\command{newobj}}
 \newcommand\parse{\command{parse}}
 \newcommand\lop{l_{op}}
+\newcommand\lfp{l_{fp}}
 
 \newcommand{\command}[1]{\ensuremath{\mathsf{#1}}\xspace}
 \newcommand{\dom}{\command{dom}}
