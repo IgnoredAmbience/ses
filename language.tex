@@ -2,6 +2,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{stmaryrd}
+\usepackage{wasysym}
 \usepackage{xspace}
 \usepackage{fullpage}
 \usepackage{hyperref}
@@ -359,10 +360,11 @@ frozen). This choice may need to be reviewed at a later point.
       && (h_1 \disju h_3, h_g, L, \env \satisfies P) \land
       (h_2 \disju h_3, h_g, L, \env \satisfies Q) \\
     h,h_g,L,\env \satisfies P \wand Q & \iff & \forall h' \st
-      (h',h_g,L,\env \satisfies P) \land h \disj h' \\
+      (h',h_g,L,\env \satisfies P) \land h \disj h' \land h' \subseteq g  \\
       & & \impl (h \disju h', h_g, L, \env \satisfies Q) \\
     h,h_g,L,\env \satisfies \upd P & \iff & h, h_g[h], L, \env \satisfies P \\
-    P \hysep Q & \triangleq & P \wand \upd Q \\
+    h,h_g,L,\env \satisfies P?Q & \iff & h, h_g[h], L, \env \satisfies P \\
+    P \hysep Q & \triangleq & P \wand P ? Q \\
     h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
       h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto \evalle{E_3} \\
     h,h_g,L,\env \satisfies E_1 \bp E_2 & \iff & \forall (l,x) \in \dom(h_g) \st
@@ -407,6 +409,176 @@ An alternative formulation which emphasises the relationship between the global
 view of the heap and the framing property ($h_g = h \disju h_f$) can also be
 produced, it should be noted that the meaning is subtly different (in that $h'
 \neq h_g$ in all cases).
+
+\begin{display}{Inference Rules}
+  \stateaxiom{(Declaration)}
+    {\tr {\lemp} {\js{var x}} {\rv \doteq \und}}
+  \vg
+
+  \stateaxiom{(Value)}
+    {\tr {\lemp} {\js{v}} {\rv \doteq \js{v}}}
+  \vg
+
+  \staterule{(Variable)}
+    {P = \scope(Ls_1, \ls, \js{x}, L) \sepish \getValue(Ls_2, \fld{L}{\js{x}}, V)}
+    {\tr P {\js{x}} {P \sep \rv \doteq \fld{L}{\js{x}}}}
+  \vg
+
+  \staterule{(Variable Null)}
+    {P = \scope(Ls, \ls, \js{x}, \nil)}
+    {\tr P {\js{x}} {P \sep \rv \doteq \fld{\nil}{\js{x}}}}
+  \vg
+
+  \staterule{(Member Access)}
+    {\tr P {\js{e}} {Q \sep \rv \doteq V} \quad Q = R \sep \getValue(Ls, V, L)
+      \sep \not\doteq \nil}
+    {\tr P {\js{e.x}} {Q \sep \rv \doteq \fld{L}{\js{x}}}}
+  \vg
+
+  \staterule{(Computed Access)}
+    {
+      \tr {P} {\js{e1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep
+      \getValue(Ls_1, V_1, L) \sep L \not\doteq \nil \\
+      \tr {R} {\js{e2}} {Q \sep X \dotin curlyX^U \sep \rv \doteq V_2}
+      \quad Q = S_2 \sep \getValue(Ls_2, V_2, X)
+    }
+    {\tr {P} {\js{e1[e2]}} {Q \sep \rv \doteq \fld{L}{X}}}
+  \vg
+
+  \staterule{(Bin Op)}
+    {
+      \tr P {\js{e1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls,
+      V_1, V_3) \\
+      \tr R {\js{e2}} {Q \sep \rv \doteq V_2} \quad Q = S_2 \sep \getValue(Ls,
+      V_2, V_4) \\
+      V = V_3 \mathbin{\bar\oplus} V_4
+    }
+    {\tr P {\js{e1} \oplus \js{e2}} {Q \sep \rv \doteq V}}
+  \vg
+
+  \staterule{(Assign Global Val)}
+    {
+      \tr P {\js{e1}} {R \sep \rv \doteq \fld{\nil}{X}} \\
+      \tr R {\js{e2}} {Q \sep (\gv,X) \pointsto \none \sep \rv \doteq V_1} \\
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(\gv) \sep V_2
+      \notdotin \loc
+    }
+    {\tr P {\js{e1 = e2}} {Q \sep (\gv, X) \pointsto V_2 \sep \rv \doteq V_2}}
+  \vg
+
+  \staterule{(Assign Local Val)}
+    {
+      \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
+      \tr R {\js{e2}} {Q \sep (L,X) \pointsto V_3 \sep \rv \doteq V_1} \\
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep V_2 \notdotin
+      \loc
+    }
+    {\tr P {\js{e1 = e2}} {Q = (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
+  \vg
+
+  \staterule{(Assign Global Loc)}
+    {
+      \tr P {\js{e1}} {R \sep \rv \doteq \fld{\nil}{X}} \\
+      \tr R {\js{e2}} {Q \sep (\gv,X) \mapsto \none \sep \rv \doteq V_2} \\
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(\gv) \sep V_2 \dotin
+      \loc \sep V_2 \bp s \cup \{(\gv,X)\}
+    }
+    {\tr P {\js{e1 = e2}} {Q \sep (\gv, X) \pointsto V_2 \sep \rv \doteq V_2}}
+  \vg
+
+  \staterule{(Assign Local Loc)}
+    {
+      \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
+      \tr R {\js{e2}} {Q \sep (L,X) \mapsto \none \sep \rv \doteq V_2} \\
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep V_2 \dotin
+      \loc \sep V_2 \bp s \cup \{(L,X)\}
+    }
+    {\tr P {\js{e1 = e2}} {Q \sep (L, X) \pointsto V_2 \sep \rv \doteq V_2}}
+  \vg
+
+  \staterule{(This)}
+  { P = \scope(Ls, \ls, @this, L_1) \sepish \proto(Ls_2, L_1, @this, L_2)
+    \sepish (L_2,@this) \pointsto V }
+  {\tr P {\js{this}} {P \sep \rv \doteq V}}
+  \vg
+
+  \staterule{(Fun)}
+  {
+    Q = \exists L_1,L_2 \st \newobj(L_1,@proto) \sep (L_1,@proto) \pointsto \lop
+    \sep \newobj(L_2,@proto, \js{prototype}, @scope, @body) \sep {}\\ 
+    L_2 \bp \{\} \sep \fun(L_2, \ls, x, e, L_1) \sep \rv \doteq L_2 \sep
+    P \sep L_1 \bp \{(L_2, \js{prototype})\} \\
+
+    P = \lop \bp s_1 \cup \{(L_1,@proto)\} \sep \lfp \bp s_2 \cup
+    \{(L_2,@proto)\} \sep \forall l' \in elem(\ls) \st l' \bp \{(L_2,@scope)\}
+    \cup \exists s'
+  }
+  {\tr P {\js{function(x) \{e\}}} Q}
+  \vg
+
+  \staterule{(Named Fun)}
+    {
+      Q = \exists L_1, L_2, L_3 \st \newobj(L_1, @proto) \sep (L_1, @proto)
+      \pointsto \lop \sep \newobj(L_3,@proto,y) \sep (L_3, @proto) \pointsto
+      \nil \sep {} \\
+      (L_3,\js{y}) \pointsto L_2 \sep L_2 \bp \{(L_3,\js{y})\} \sep
+      L_3 \bp \{(L_2,@scope)\} \sep
+      \newobj(L_2,@proto,\js{prototype},@scope,@body) \sep {} \\
+      \fun(L_2,(L_3:\ls), \js{x}, \js{e}, L_1) \sep \rv \doteq L_2 \sep P \\
+      P = \lop \bp \{(L_1, @proto)\} \cup s_1 \sep \lfp \bp \{(L_2, @proto)\}
+      \cup s_2 \sep \forall l' \in elem(\ls) \st \exists s' \st l' \bp
+      \{(L_2,@scope)\} \cup s'
+    }
+    {\tr P {\js{function y(x) \{e\}}} Q}
+  \vg
+
+  \staterule{(Obj)}
+    {
+      \exists L \st \left(\begin{array}{l}
+        \forall i \in 1..n \st \left(\begin{array}{l}
+          P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \\
+          \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
+          \beta(X_i, L, \js{xi}, s_i)
+        \end{array}\right) \\
+        Q = P_n \sep \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep
+        (L_1, \js{xi}) \pointsto X_i \sep \dots \sep (L_n, \js{xn}) \pointsto
+        X_n \sep {} \\
+        (L,@proto) \pointsto \lop \sep \rv \doteq L \sep L \bp \{\} \\
+        P_0 = R \sep \lop \bp \{(L,@proto)\} \cup s_0
+      \end{array}\right) \\
+      \js{x1} \neq \dots \neq \js{xn} \qquad \rv \not\in \fv(P_n)
+    }
+    {\tr {P_0} {\js{\{x1:e1, ..., xn:en\}}} Q}
+  \vg
+
+  $\beta(V,\_,\_,\_) \triangleq V \notdotin \loc$ \\
+  $\beta(V,L,x,s) \triangleq V \dotin \loc \sep V \bp \{(L,x)\} \cup s$
+  \vg
+
+  \staterule{(Fun Call)}
+    {
+      \tr P {\js{e1}} {R_1 \sep \rv \doteq F_1} \\
+      R_1 = \left(\begin{array}{l}
+          S_1 \sepish \pickThis(F_1, T) \sepish \getValue(Ls_1, F_1, F_2) \sep {} \\
+          (F_2, @body) \pointsto \lambda \js{x.e3} \sep (F_2, @scope) \pointsto
+          Ls_2
+      \end{array}\right) \\
+      \tr {R_1} {\js{e2}} {R_2 \sep \ls \doteq Ls_3 \sep \rv = V_1} \\
+      R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
+      R_3 = \left(\begin{array}{l}
+          R_2 \sep \exists L \st \ls \doteq L:Ls_2 \sep (L_1, X) \pointsto V_2
+          \sep (L_1, @this) \pointsto T \sep (L_1, @proto) \pointsto \nil \sep
+          \defs(X,L,\js{e3}) \sep {} \\
+          \newobj(L,@proto,@this,\js{x},\vardecls( %FIXME 
+          ) \sep L \bp \{\} \sep T \bp \{(L,@this)\} \cup s \sep V_2 \bp
+          \{(L,X)\} \cup s'
+      \end{array}\right) \\
+      \tr {R_3} {\js{e3}} {\exists L \st Q \sep \ls \doteq L:Ls_2} \qquad
+      \ls \notin \fv(Q) \cup \fv(R_2)
+    }
+    {\tr P {\js{e1(e2)}} {\exists L \st Q \sep \ls \doteq Ls_3}}
+
+\end{display}
 
 \subsection{Notes}
 The existing backpointers paper\cite{KassiosKritikos12} is the first case in
