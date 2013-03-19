@@ -1,9 +1,23 @@
-% Sorts
-\newcommand{\sortstyle}[1]{\ensuremath{\mathcal{#1}}}
-\newcommand{\loc}{\sortstyle{L}}
-
-% erm...
+%% Types
+% Logical variable
 \newcommand{\V}[1]{{\ensuremath{\mathrm{#1}}}}
+% Logical expression
+\newcommand{\E}[1]{{\ensuremath{\mathit{#1}}}}
+% ?
+\newcommand{\T}[1]{{\mbox{\textsc{#1}}}}
+
+%% Sorts
+\newcommand{\sortstyle}[1]{\ensuremath{\mathcal{#1}}}
+% Locations
+\newcommand{\loc}{\sortstyle{L}}
+% Variables
+\newcommand{\vars}{\sortstyle{X}}
+% User variables
+\newcommand{\uvars}{\vars^{\T u}}
+% Internal variables
+\newcommand{\ivars}{\vars^{\T i}}
+
+%% erm...
 \newcommand{\logconst}[1]{\V{#1}}
 \newcommand{\fault}{{\command{fault}}}
 \newcommand{\false}{\logconst{false}}
