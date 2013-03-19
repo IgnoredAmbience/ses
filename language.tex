@@ -82,12 +82,14 @@ is returned.
 \gds{...or \js{undefined}}
 
 \paragraph{Variable declaration} Variable declarations are used during activation
-record creation
-to determine free-variables when constructing a new scope. They are no-ops
-during evaluation.
+record creation to determine free-variables when constructing a new scope. They
+are no-ops during evaluation. For simplicity of this specification, combined
+declaration/assignment instructions are forbidden (they may be desugared to two
+separate instructions during parsing).
 
-\paragraph{Assignment} Assigns the value on the right hand side to the named field on the
-left.
+\paragraph{Assignment} Assigns the value on the right hand side to the named
+field on the left. Assignments to undeclared variables are forbidden (enforced
+by the Variable rule), this is consistent with ES5-strict.
 
 \paragraph{Member access} Returns the value of the named field of the object referenced by
 the subexpression.
@@ -197,8 +199,10 @@ from the given object.
   {H,L,\js{while($e_1$)\{$e_2$\}} \evalsto H',\und}
 \vg\gds{\\This doesn't match your description of loops. You said it returned the last value, not always \und.}\vg
 
+  % l' \neq \nil comdition given in ES5-8.7.2.3.a Strict-mode null SetValue (and
+  % all-mode GetValue)
   \staterule{(Variable)}
-    {\scope(H,L,x) = l'}
+    {\scope(H,L,x) = l' \quad l' \neq \nil}
     {H,L,\js x \evalsto H, \fld{l'}{x}}
 \vg
 
