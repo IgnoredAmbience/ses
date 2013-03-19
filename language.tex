@@ -402,11 +402,11 @@ frozen). This choice may need to be reviewed at a later point.
 \end{display}
 
 The definition of $\wand$ is awkward, by introducing the global view of the
-heap, we cannot keep both the adjunct property of $\sep$
+heap, we cannot keep both the right-adjoint property of $\sep$
 ($P \sep Q \vdash R \iff P \vdash Q \wand R$)
 and maintain use of $\wand$ as the weakest precondition for a command.
 
-The definition of $\wand$ here is that which maintins the adjunct property. The
+The definition of $\wand$ here is that which maintins the right-adjoint property. The
 ability to express weakest preconditions is enabled through the introduction
 % of $\upd P$ to maintain consistency between local and global views of the heap.
 of $\hysep$, a modified version of $\wand$ that also updates the state of the
