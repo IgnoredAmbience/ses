@@ -99,7 +99,7 @@ assignment.
 \paragraph{Function call} Executes the body of the function, using the passed expression
 as the value to bind to the parameter. The body of the function is executed in
 the scope stored with the function, any variables defined within the function
-body are defined on an activation record so that they are lexically scoped. 
+body are defined on an activation record so that they are lexically scoped.
 
 \paragraph{Object construction} Constructs an object using the given function, an object
 is created as usual, it's prototype is assigned to that of the function's
@@ -186,7 +186,7 @@ from the given object.
     {\scope(H,L,x) = l'}
     {H,L,\js x \evalsto H, \fld{l'}{x}}
 \vg
-  
+
   \staterule{(Member access)}
   {H,L,\js e \evalsto H',l' \\
    l' \neq \nil}
@@ -199,7 +199,7 @@ from the given object.
    H'',L,e_2 \evalsto H', x}
   {H,L,e_1\js{[}e_2\js{]} \evalsto H',\fld{l'}{x}}
 \vg
-  
+
   \staterule{(\emph{Implicit} Dereference)}
   {\gamma(H,\fld{l}{x}) = v}
   {H,L,\fld{l}{x} \evalsto H,v}
@@ -301,7 +301,7 @@ made between ES3 and ES5 to remove the need to represent references internally
 decision). According to Mark Miller, of the TC39 ES standardisation body,
 references should no longer be needed in the ES5 spec and later revisions. As a
 result of this information, they have been removed from this operational
-semantics for simplification purposes. 
+semantics for simplification purposes.
 
 The \js{def} function is definable in the full SES language using the
 \js{for..each} construct. As this poses formalisation issues (non-determinism),
@@ -513,7 +513,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Fun)}
   {
     Q = \exists L_1,L_2 \st \newobj(L_1,@proto) \sep (L_1,@proto) \pointsto \lop
-    \sep \newobj(L_2,@proto, \js{prototype}, @scope, @body) \sep {}\\ 
+    \sep \newobj(L_2,@proto, \js{prototype}, @scope, @body) \sep {}\\
     L_2 \bp \{\} \sep \fun(L_2, \ls, x, e, L_1) \sep \rv \doteq L_2 \sep
     P \sep L_1 \bp \{(L_2, \js{prototype})\} \\
 
