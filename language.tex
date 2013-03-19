@@ -502,16 +502,6 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {\tr P {\js{e1 = e2}} {Q \sep (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
   \vg
 
-  \staterule{(Assign Loc)}
-    {
-      \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
-      \tr R {\js{e2}} {Q \sep (L,X) \mapsto \none \sep \rv \doteq V_2} \\
-      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep
-      \bpGen(V_2, L, X, s)
-    }
-    {\tr P {\js{e1 = e2}} {Q \sep (L, X) \pointsto V_2 \sep \rv \doteq V_2}}
-  \vg
-
   \staterule{(This)}
   { P = \scope(Ls, \ls, @this, L_1) \sepish \proto(Ls_2, L_1, @this, L_2)
     \sepish (L_2,@this) \pointsto V }
