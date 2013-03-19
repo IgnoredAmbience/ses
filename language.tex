@@ -426,13 +426,13 @@ Soundness:
 \[ (h, h \disju h_f, L, \env \satisfies P) \land h, L, \js{e} \leadsto h', v
   \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
 Fault avoidance:
-\[ h, h_g, L, \env \satisfies P \impl h, L, \js{e} \not\leadsto \fault \]
+\[ h, h_g, L, \env \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
 Safety monoticity:
 \[ (h, h_g, L, \env \satisfies P) \land h \disj h' \land h, L, \js{e} \not\leadsto
-  \fault \impl h \disju h', L, \js{e} \not\leadsto \fault \]
+  \fault \land h\subseteq h_g \impl h \disju h', L, \js{e} \not\leadsto \fault \]
 Frame property:
 \[ (h, h_g, L, \env \satisfies P) \land h, L, \js{e} \not\leadsto \fault \land
-  h \disju h', L, \js{e} \leadsto h_2' \impl h, L, \js{e} \leadsto h_2 \land
+  h \disju h', L, \js{e} \leadsto h_2' \land h\subseteq h_g\impl h, L, \js{e} \leadsto h_2 \land
   h_2' = h_2 \disju h' \]
 
 An alternative formulation which emphasises the relationship between the global
