@@ -488,7 +488,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep V_2 \notdotin
       \loc
     }
-    {\tr P {\js{e1 = e2}} {Q = (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
+    {\tr P {\js{e1 = e2}} {Q \sep (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
   \vg
 
   \staterule{(Assign Loc)}
