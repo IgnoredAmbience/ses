@@ -362,7 +362,7 @@ frozen). This choice may need to be reviewed at a later point.
     \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
     \false}{Boolean formulae}
     \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulae}
-    \asrtline{\upd P \pipe P \hysep Q}{Global hypothesis formulae}
+    \asrtline{\upd P \pipe P \boxwand Q}{Global hypothesis formulae}
     \asrtline{(E,E) \pointsto E \pipe \lemp}{SES formulae}
     \asrtline{E \bp E}{Backpointer formula}
     \asrtline{E = E}{Expression equality}
@@ -391,10 +391,11 @@ frozen). This choice may need to be reviewed at a later point.
       & & \impl (h \disju h', h_g, L, \env \satisfies Q) \\
     %h,h_g,L,\env \satisfies \upd P & \iff & h, h_g[h], L, \env \satisfies P \\
     %h,h_g,L,\env \satisfies P?Q & \iff & h, h_g[h], L, \env \satisfies P \\
-    %P \hysep Q & \triangleq & P \wand P ? Q \\
-    h,h_g,L,\env \satisfies P \hysep Q & \iff &
+    %P \boxwand Q & \triangleq & P \wand P ? Q \\
+    h,h_g,L,\env \satisfies P \boxwand Q & \iff &
       \forall h' \st (h',h_g[h'],L,\env \satisfies P) \land h \disj h' \\
       & & \impl (h \disju h', h_g[h'], L, \env \satisfies Q) \\
+    % TODO: Pull this line out to definitions
       & & \text{\emph{(Where $h_g[h']$ is function-update notation, to ensure
           consistency)}} \\
     h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
@@ -415,15 +416,14 @@ and maintain use of $\wand$ as the weakest precondition for a command.
 The definition of $\wand$ here is that which maintins the right-adjoint property. The
 ability to express weakest preconditions is enabled through the introduction
 % of $\upd P$ to maintain consistency between local and global views of the heap.
-of $\hysep$, a modified version of $\wand$ that also updates the state of the
-global heap used for evaluation of sub-expressions.
+of box-wand, $\boxwand$, a modified version of $\wand$ that also updates the
+state of the global heap used for evaluation of sub-expressions.
 
 % By using it in conjunction with the $\wand$ operator,
 It can be used to apply
 a \emph{hypothesis} about a future state of the heap to the global view of the
 heap. This maintains the ability to express conditions like ``if I make
 the heap look like P, then Q will hold''.
-% This combined operator is written as $\hysep$ and pronounced \emph{blargh}.
 
 \subsection{Hoare Triples}
 Definition:
