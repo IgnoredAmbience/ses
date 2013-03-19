@@ -200,6 +200,8 @@ from the given object.
   {H,L,e_1\js{[}e_2\js{]} \evalsto H',\fld{l'}{x}}
 \vg
   
+  % FIXME: This is probably broken, we still need gammas...
+  % Provable wrt. Hoare triples?
   \staterule{(\emph{Implicit} Dereference)}
   {\gamma(H,\fld{l}{x}) = v}
   {H,L,\fld{l}{x} \evalsto H,v}
@@ -274,7 +276,7 @@ from the given object.
   {H,L,\js{freeze($e$)} \evalsto H_0, l \\
   \forall l' \in \dom(H'', l) \st (H,L,\js{def($l'$)} \evalsto H_n, l'')}
   {H,L,\js{def($e$)} \evalsto H', l}
-  TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
+  % TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
 \end{display}
 
 \subsection{Notes}
@@ -534,6 +536,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
             \bpGen(X_i, L, \js{xi}, s_i) \\
           \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
         \end{array}\right) \\
+        % Big sep here?
         Q = P_n \sep \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep
         (L, \js{xi}) \pointsto X_i \sep \dots \sep (L, \js{xn}) \pointsto
         X_n \sep {} \\
@@ -596,6 +599,24 @@ those that point to the tracked object.
 Using the at least semantics allows for the rule of consequence to be used to
 add new items to the set at any time. \emph{Note: should probably consider the
 impact of this on reachability, as well as non-reachability analysis.}
+
+\section{Proofs}
+\subsection{Revocable Reference}
+Used to provide a restricted execution context with a reference to an object
+that may be revoked by the provider.
+\emph{Note: By itself, this is not safe, since accessed references are returned
+  raw. See next section, Membrane, for solution.}
+
+\begin{verbatim}
+var RevocableRef = function(ref) {
+  var protected = ref;
+  var access = function(field) { return protected[field]; }
+  var kill = function() { protected = null; }
+  return {access: access, kill: kill};
+}
+\end{verbatim}
+
+Proof derivations are given for the declaration, and each function call.
 
 \bibliography{bibliography}
 \bibliographystyle{babplain}
