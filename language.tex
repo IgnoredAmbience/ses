@@ -456,7 +456,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Member Access)}
     {\tr P {\js{e}} {Q \sep \rv \doteq V} \quad Q = R \sep \getValue(Ls, V, L)
-      \sep \not\doteq \nil}
+      \sep L \not\doteq \nil \sep L\dotin\loc}
     {\tr P {\js{e.x}} {Q \sep \rv \doteq \fld{L}{\js{x}}}}
   \vg
 
