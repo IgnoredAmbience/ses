@@ -15,8 +15,8 @@
 \section{SES Syntax and Description}
 
 \newcommand{\gds}[1]{\ifmmode \textbf{**** gds: }\textrm{#1}\textbf{****}\else
-  \textbf{\\************************************\\
-    gds: }#1\\\textbf{************************************}
+  \\\textbf{************************************}\\
+  \textbf{gds: }#1\\\textbf{************************************}\\
   \fi}
 
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
@@ -151,7 +151,7 @@ from the given object.
 
   \stateaxiom{(Variable declaration)}
   {H,L,\js{var}\ x \evalsto H,\und}
-\vg
+  \vg
 
   \staterule{(Object creation)}
     {H_0 = H \sep \obj(l,\lop)\\
@@ -215,6 +215,8 @@ from the given object.
   {H,L,e_1\js{[}e_2\js{]} \evalsto H',\fld{l'}{x}}
 \vg
 
+  % FIXME: This is probably broken, we still need gammas...
+  % Provable wrt. Hoare triples?
   \staterule{(\emph{Implicit} Dereference)}
   {\gamma(H,\fld{l}{x}) = v}
   {H,L,\fld{l}{x} \evalsto H,v}
@@ -290,7 +292,7 @@ from the given object.
   {H,L,\js{freeze($e$)} \evalsto H_0, l \\
   \forall l' \in \dom(H'', l) \st (H,L,\js{def($l'$)} \evalsto H_n, l'')}
   {H,L,\js{def($e$)} \evalsto H', l}
-  TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
+  % TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
 \end{display}
 
 \subsection{Notes}
@@ -441,6 +443,10 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 \neq h_g$ in all cases).
 
 \begin{display}{Inference Rules}
+  $\bpGen(V,\_,\_,\_) \triangleq V \notdotin \loc$ \\
+  $\bpGen(V,L,x,s) \triangleq V \dotin \loc \sep V \bp \{(L,x)\} \cup s$
+  \vg
+
   \stateaxiom{(Declaration)}
     {\tr {\lemp} {\js{var x}} {\rv \doteq \und}}
   \vg
@@ -495,8 +501,8 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {
       \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
       \tr R {\js{e2}} {Q \sep (L,X) \mapsto \none \sep \rv \doteq V_2} \\
-      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep V_2 \dotin
-      \loc \sep V_2 \bp s \cup \{(L,X)\}
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep
+      \bpGen(V_2, L, X, s)
     }
     {\tr P {\js{e1 = e2}} {Q \sep (L, X) \pointsto V_2 \sep \rv \doteq V_2}}
   \vg
@@ -547,6 +553,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
             \bpGen(X_i, L, \js{xi}, s_i) \\
           \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
         \end{array}\right) \\
+        % Big sep here?
         Q = P_n \sep \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep
         (L, \js{xi}) \pointsto X_i \sep \dots \sep (L, \js{xn}) \pointsto
         X_n \sep {} \\
@@ -556,10 +563,6 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \js{x1} \neq \dots \neq \js{xn} \qquad \rv \not\in \fv(P_n)
     }
     {\tr {P_0} {\js{\{x1:e1, ..., xn:en\}}} Q}
-  \vg
-
-  $\bpGen(V,\_,\_,\_) \triangleq V \notdotin \loc$ \\
-  $\bpGen(V,L,x,s) \triangleq V \dotin \loc \sep V \bp \{(L,x)\} \cup s$
   \vg
 
   \staterule{(Fun Call)}
@@ -613,6 +616,24 @@ those that point to the tracked object.
 Using the ``at most'' semantics allows for the rule of consequence to be used to
 add new items to the set at any time. \emph{Note: should probably consider the
 impact of this on reachability, as well as non-reachability analysis.}
+
+\section{Proofs}
+\subsection{Revocable Reference}
+Used to provide a restricted execution context with a reference to an object
+that may be revoked by the provider.
+\emph{Note: By itself, this is not safe, since accessed references are returned
+  raw. See next section, Membrane, for solution.}
+
+\begin{verbatim}
+var RevocableRef = function(ref) {
+  var protected = ref;
+  var access = function(field) { return protected[field]; }
+  var kill = function() { protected = null; }
+  return {access: access, kill: kill};
+}
+\end{verbatim}
+
+Proof derivations are given for the declaration, and each function call.
 
 \bibliography{bibliography}
 \bibliographystyle{babplain}
