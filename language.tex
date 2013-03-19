@@ -14,6 +14,11 @@
 
 \section{SES Syntax and Description}
 
+\newcommand{\gds}[1]{\ifmmode \textbf{**** gds: }\textrm{#1}\textbf{****}\else
+  \textbf{\\************************************\\
+    gds: }#1\\\textbf{************************************}
+  \fi}
+
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
 \begin{display}{Syntax of SES values and expressions, $v, e$}
   $\begin{array}{rll}
@@ -47,6 +52,10 @@ An object is a location in the heap, it contains a set of
 values indexed by fields.
 For the purposes of this semantics, \js{null} and \js{undefined} behave
 interchangably.
+\gds{You say this, but then you don't mention \js{null} until you get to
+  inference rules (where it'd better not be just like \js{undefined}), and you
+  only mention \js{undefined} when talking about \js{this}. I think you just
+  don't need that last sentence.}
 
 \paragraph{Object creation}  The Object Construction syntax produces a new object
 with fields named $x_1, \ldots, x_n$ which map to the values of expressions
@@ -64,10 +73,13 @@ works on the JavaScript family of languages.
 to \js{true} under a boolean casting operation, the second sub-expression is
 evaluated and result returned, otherwise the third sub-expression is evaluated
 and result returned.
+\gds{Be prepared to defend the lack of object-level casting. At the moment our
+  simple semantics only cast primitive values.}
 
 \paragraph{Looping} The looping expression executes the body sub-expression whilst the condition
 sub-expression evaluates to true. The most-recently returned value of the body
 is returned.
+\gds{...or \js{undefined}}
 
 \paragraph{Variable declaration} Variable declarations are used during activation
 record creation
@@ -109,10 +121,11 @@ to initialize the newly created object.
 \paragraph{\js{this}} The \js{this} expression is context-dependent. When used outside of a
 function, it should evaluate to the most global accessible scope.
 When used within a function, it will evaluate to the object
-on which that function was called. The root of a scope chain should poin In
+on which that function was called. The root of a scope chain should poin In % <---- GDSGDSGDS
 other cases, \js{this} returns undefined. Note that this is particularly
 problematic because functions can easily be aliased off of the object on which
 they appear to be defined.
+\gds{``poin''?}
 
 \paragraph{Restricted evaluation} Parse the first given expression as SES code. A new
 scope chain is prepared, its root is the object specified by the second
@@ -127,6 +140,8 @@ modifications and deletions.
 
 \paragraph{Recursive freeze} Recursively calls freeze on all objects reachable
 from the given object.
+\gds{Reachable through user-accessible fields. Closure internal-fields are
+  exempted.}
 
 \section{Operational Semantics}
 \begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
@@ -141,10 +156,10 @@ from the given object.
   \staterule{(Object creation)}
     {H_0 = H \sep \obj(l,\lop)\\
      \forall i\in 1..n \st \left(\begin{array}{l}
-      H_{i-1},L,\js{ei}\evalsto H_i',v_i \\ 
+      H_{i-1},L,\js{ei}\evalsto H_i',v_i \\
       H_i = H_i' [ (l,\js{xi}) \pointsto v_i]\end{array}\right)}
     {H,L,\{\js{x1:e1},\dots, \js{xn:en}\} \evalsto H_n,l}
-\vg
+\vg\gds{\\You need to define \obj somewhere. You might also want it to add a default value for @frozen}\vg
 
   \staterule{(Sequence)}
     {H,L,e_1 \evalsto H_1,v_1 \\
@@ -169,7 +184,7 @@ from the given object.
   {H,L,e_1 \evalsto H'',v' \quad \isfalse(v') \\
    H'',L,e_3 \evalsto H',v}
   {H,L,\js{if($e_1$)\{$e_2$\} else \{$e_3$\}} \evalsto H',v}
-\vg
+\vg\gds{\\You need to define \istrue and \isfalse somewhere.}\vg
 
   \staterule{(While true)}
   {H,L,e_1 \evalsto H'', v \quad \istrue(v) \\
@@ -180,7 +195,7 @@ from the given object.
   \staterule{(While false)}
   {H,L,e_1 \evalsto H', v \quad \isfalse(v)}
   {H,L,\js{while($e_1$)\{$e_2$\}} \evalsto H',\und}
-\vg
+\vg\gds{\\This doesn't match your description of loops. You said it returned the last value, not always \und.}\vg
 
   \staterule{(Variable)}
     {\scope(H,L,x) = l'}
@@ -203,7 +218,8 @@ from the given object.
   \staterule{(\emph{Implicit} Dereference)}
   {\gamma(H,\fld{l}{x}) = v}
   {H,L,\fld{l}{x} \evalsto H,v}
-\vg
+  \vg\gds{\\Hm - this is a small-step technique. To see why it won't work in a big step setting, try drawing\\
+    out the full derivation tree for an execution of \js{x=y} in the state ${\{(l,x)\pointsto3\sep(l,y)\pointsto4\},[l]}$}\vg
 
   \staterule{(Assignment)}
   {H,L,e_1 \evalsto H_1,\fld{l}{x} \qquad
@@ -230,14 +246,14 @@ from the given object.
    H_1(l_1,@body)=\lambda \js{x.e3}\\
    H_1(l_1,@scope)= L'\qquad
    H_1(l_1,\js{prototype})= v\\
-   H_1,L,\js{e2} \evalsto H_2,{v_1}  \qquad  
+   H_1,L,\js{e2} \evalsto H_2,{v_1}  \qquad
    l_2 = \objOrGlob(v) \\
-   H_3 = H_2\sep \obj(l_3,l_2) \sep\act(l,\js x,v_1,\js{e3},l_3)\\ 
+   H_3 = H_2\sep \obj(l_3,l_2) \sep\act(l,\js x,v_1,\js{e3},l_3)\\
    H_3,l \cons L',\js{e3} \evalsto H',v_2\qquad
    \getBase(l_3,v_2) = l'}
   {H,L,\js{new e1(e2)} \evalsto H',{l'}}
 \vg
-  
+
   \staterule{(Function call)}
   {H,L,\js{e1} \evalsto H_1,r_1\qquad
    \pickThis(H_1,{r_1})=l_2\qquad
@@ -262,7 +278,7 @@ from the given object.
    H_2,L,e_2 \evalsto H_3, l' \\
    H_3, l \cons [l'], e \evalsto H',v }
   {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
-\vg
+\vg\gds{\\I think you want to evaluate $e$ in the scope chain $l'\cons[l]$}\vg
 
   \staterule{(Object freeze)}
   {H,L,e \evalsto H'', l\\
@@ -289,6 +305,12 @@ placed into the scope chain is at the root, either as the global object $l_g$,
 or as the `fake global' imports object during restricted execution. At all other
 times, objects placed into the scope chain are controlled by the language, and
 will \emph{never} have a prototype set.
+\gds{\\
+  \js{var super=\{x:1\} ; }\\
+  \js{var f = function()\{\} ; }\\
+  \js{f.prototype = super ; }\\
+  \js{var ob = new f() ; } \\
+  \js{ob.x ; // The prototype chain is traversed here}}
 
 Dereferencing syntax has been modified to change the gamma arrows into a
 dereferencing rule, this is used implicitly in all cases except for assignment,
