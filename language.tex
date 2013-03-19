@@ -381,7 +381,7 @@ frozen). This choice may need to be reviewed at a later point.
       && (h_1 \disju h_3, h_g, L, \env \satisfies P) \land
       (h_2 \disju h_3, h_g, L, \env \satisfies Q) \\
     h,h_g,L,\env \satisfies P \wand Q & \iff & \forall h' \st
-      (h',h_g,L,\env \satisfies P) \land h \disj h' \land h' \subseteq g  \\
+      (h',h_g,L,\env \satisfies P) \land h \disj h' \land h' \subseteq h_g  \\
       & & \impl (h \disju h', h_g, L, \env \satisfies Q) \\
     %h,h_g,L,\env \satisfies \upd P & \iff & h, h_g[h], L, \env \satisfies P \\
     %h,h_g,L,\env \satisfies P?Q & \iff & h, h_g[h], L, \env \satisfies P \\
