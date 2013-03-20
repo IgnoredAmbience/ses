@@ -1,4 +1,5 @@
 \documentclass[a4paper]{article}
+\usepackage{color}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{stmaryrd}
@@ -18,6 +19,8 @@
   \\\textbf{************************************}\\
   \textbf{gds: }#1\\\textbf{************************************}\\
   \fi}
+\newcommand{\FIXME}[1]{~\vg\colorbox{red}{\textbf{FIXME:}}\textrm{ #1}\vg}
+\newcommand{\TODO}[1]{~\vg\colorbox{yellow}{\textbf{TODO:}}\textrm{ #1}\vg}
 
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
 \begin{display}{Syntax of SES values and expressions, $v, e$}
@@ -134,9 +137,9 @@ they appear to be defined.
 \paragraph{Restricted evaluation} Parse the first given expression as SES code.
 A new scope chain is prepared, its root is an activation record which
 initializes any variables declared in the parsed source.
-% FIXME: This isn't safe for our no-prototype chain requirement. Also, the
-% imports aren't present in the restricted-global this expression.
-% TODO: Consider change to copy fields across to AR
+\FIXME{This isn't safe for our no-prototype chain requirement. Also, the
+  imports aren't present in the restricted-global this expression. Consider
+  change to copy fields across to AR}
 The object specified by the second parameter (the \emph{imports} to the
 restricted environment) is then appended.
 The return value of the restricted evaluation statement is the same as that of
@@ -168,12 +171,13 @@ via user-defined fields from the given object.
   \auxf{\act(l,\js{x},v,\js{e},l'')}{l\pointsto\{\js{x}:
     v,@this: l'',@proto: \nil\}\sep \defs(\js{x},l,\js{e})}\\
   \auxf{\auxDef(H,l,s)}{H \qquad l \in s \lor l \not\in \loc}\\
-  % TODO: Some way of looping through (only user-def) fields.
   \auxf{\auxDef(H,l,s)}{\auxDef(H,,s \cup\{l\})[(l,@frozen) \mapsto \true]}
   \end{array}$
 \end{display}
+  \TODO{Some way of looping through (only user-def) fields on \auxDef}
 
 \begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
+  \FIXME{Use $\gevalsto$}
   Dereferencing notation: $H,L,\js{e} \gevalsto H',v \triangleq \exists r. (H,L,\js{e} \evalsto H',r \wedge \getValue(H',r) = v)$.
 \vg
 
@@ -249,11 +253,6 @@ via user-defined fields from the given object.
   {H,L,e_1\js{[}e_2\js{]} \evalsto H',\fld{l'}{x}}
 \vg
 
-  % FIXME: This is probably broken, we still need gammas...
-  % Provable wrt. Hoare triples?
-  \gds{Fix $\gamma$\\Hm - this is a small-step technique. To see why it won't work in a big step setting, try drawing\\
-    out the full derivation tree for an execution of \js{x=y} in the state ${\{(l,x)\pointsto3\sep(l,y)\pointsto4\},[l]}$}\vg
-
   \staterule{(Assignment)}
   {H,L,e_1 \evalsto H_1,\fld{l}{x} \qquad
    H_1(l, @frozen) \neq \true \\
@@ -299,13 +298,13 @@ via user-defined fields from the given object.
   {H,L,\js{e1(e2)} \evalsto H',{v'}}
 \vg
 
-  % FIXME: Probably broken against definition
+  \FIXME{Probably broken against definition}
   \staterule{(This)}
   {\scope(H,L,@this)=l_1 \\ \proto(H,l_1,@this)=l_2\\ H(l_2,@this)=l'}
   {H,L,\js{this} \evalsto H,l'}
 \vg
 
-  % FIXME: See description comment
+  \FIXME{See description comment}
   \staterule{(Restricted evaluation)}
   {H,L,e_1 \evalsto H_1,v \qquad
    \parse(v) = e \\
@@ -313,7 +312,7 @@ via user-defined fields from the given object.
    H_2,L,e_2 \evalsto H_3, l' \\
    H_3, l' \cons [l], e \evalsto H',v }
   {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
-\vg\gds{\\I think you want to evaluate $e$ in the scope chain $l'\cons[l]$}\vg
+\vg
 
   \staterule{(Freeze)}
   {H,L,e \gevalsto H'', l\\
@@ -423,18 +422,19 @@ frozen). This choice may need to be reviewed at a later point.
     h,h_g,L,\env \satisfies P \boxwand Q & \iff &
       \forall h' \st (h',h_g[h'],L,\env \satisfies P) \land h \disj h' \\
       & & \impl (h \disju h', h_g[h'], L, \env \satisfies Q) \\
-    % TODO: Pull this line out to definitions
+    \TODO{Pull this line out to definitions}
       & & \text{\emph{(Where $h_g[h']$ is function-update notation, to ensure
           consistency)}} \\
     h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
       h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto \evalle{E_3} \\
-    % FIXME: Give \bp a footprint to prevent contradictory assertions/implication
     h,h_g,L,\env \satisfies E_1 \bp E_2 & \iff & \forall (l,x) \in \dom(h_g) \st
       h_g(l,x) = \evalle{E_1} \\
       & & \impl (l,x) \in \evalle{E_2} \\
     h,h_g,L,\env \satisfies \lemp & \iff & h = \emp
   \end{array}$
 \end{display}
+
+\FIXME{Give $\bp$ a footprint to prevent contradictory assertions/implication}
 
 The definition of $\wand$ is awkward, by introducing the global view of the
 heap, we cannot keep both the right-adjoint property of $\sep$
@@ -519,7 +519,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {\tr P {\js{e1} \oplus \js{e2}} {Q \sep \rv \doteq V}}
   \vg
 
-  % FIXME: Look at bp closer - need to remove V_3?
+  \FIXME{Look at bp closer - need to remove $V_3$?}
   \staterule{(Assign)}
     {
       \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
@@ -569,14 +569,14 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Object)}
     {
       \exists L \st \left(\begin{array}{l}
-        % FIXME: \bpGen repeated sepping will fail when footprint added to
-        %        backpointer, consider case when {x:O,y:O}
+        \FIXME{\bpGen repeated sepping will fail when footprint added to
+          backpointer, consider case when \{x:O,y:O\}}
         \forall i \in 1..n \st \left(\begin{array}{l}
           P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \sep
             \bpGen(X_i, L, \js{xi}, s_i) \\
           \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
         \end{array}\right) \\
-        % Big sep here?
+        \TODO{Big sep here?}
         Q = P_n \sep \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep
         (L, \js{xi}) \pointsto X_i \sep \dots \sep (L, \js{xn}) \pointsto
         X_n \sep {} \\
@@ -734,7 +734,7 @@ Revocable Reference, all returned objects are also wrapped in a Revocable
 Reference that shares its kill switch with its parent. All references to the
 parent object and anything it created are removed simultaneously.
 
-% TODO: Find a more elegant solution
+\TODO{Find a more elegant solution}
 \begin{verbatim}
 var Membrane = function(ref) {
   var killSwitch = false;
