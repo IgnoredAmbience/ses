@@ -640,18 +640,26 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \vg
 
   \staterule{(If True)}
-    {}
-    {}
+    {\tr P {\js{e1}}{S\sep \istrue(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
+     S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
+     \tr {S}{\js{e2}} Q}
+    {\tr P {\js{if(e1)\{e2\}\{e3\}}} Q}
   \vg
 
   \staterule{(If False)}
-    {}
-    {}
+    {\tr P {\js{e1}}{S\sep \isfalse(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
+     S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
+     \tr {S}{\js{e3}} Q}
+    {\tr P {\js{if(e1)\{e2\}\{e3\}}} Q}
   \vg
 
   \staterule{(While)}
-    {}
-    {}
+    {\tr P {\js{e1}} {S\sep\rv\doteq\E{V_1}} \qquad
+    S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
+     \tr {S \sep \istrue(\E{V_2})} {\js{e2}} P\\
+     Q = S \sep \isfalse(\E{V_2})\sep\rv\doteq\und\qquad
+     \rv\not\in \fv(R)}
+    {\tr P {\js{while(e1)\{e2\}}} Q}
   \vg
 
   % Standard
