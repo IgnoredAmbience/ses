@@ -43,8 +43,8 @@
     \syntaxline{function $x$($e$) \{$e$\}}{Named function creation}
     \syntaxline{new $e$($e$)}{Object construction}
     \syntaxline{reval($e$, $e$)}{Restricted evaluation}
-    \syntaxline{freeze($e$)}{Object freeze}
-    \syntaxline{def($e$)}{Recursive \js{freeze}}
+    \syntaxline{freeze($e$)}{Freeze}
+    \syntaxline{def($e$)}{Recursive freeze}
   \end{array}$
 \end{display}
 
@@ -120,40 +120,70 @@ is created as usual, it's prototype is assigned to that of the function's
 \js{prototype} field. The body of the function is then exectuted, commonly used
 to initialize the newly created object.
 
-\paragraph{\js{this}} The \js{this} expression is context-dependent. When used outside of a
+% ES5-Strict definition, plus reval global - matches caja impl (and intuition).
+\paragraph{\js{this}} The \js{this} expression is context-dependent. When used
+outside of a
 function, it should evaluate to the most global accessible scope.
-When used within a function, it will evaluate to the object
-on which that function was called. The root of a scope chain should poin In % <---- GDSGDSGDS
-other cases, \js{this} returns undefined. Note that this is particularly
+When used within a function, if the function is called using Member Access, it
+will evaluate to the object on which that function was called. Otherwise
+(most likely function call directly via scope),
+\js{this} returns undefined. Note that this is particularly
 problematic because functions can easily be aliased off of the object on which
 they appear to be defined.
-\gds{``poin''?}
 
-\paragraph{Restricted evaluation} Parse the first given expression as SES code. A new
-scope chain is prepared, its root is the object specified by the second
-parameter (the \emph{imports} to the restricted environment), an activation
-record is then appended which initializes any variables declared in the parsed
-source -- declared variables will hide imports of the same name. The return
-value of the restricted evaluation statement is the same as that of the final
-statement of the source to be executed.
+\paragraph{Restricted evaluation} Parse the first given expression as SES code.
+A new scope chain is prepared, its root is an activation record which
+initializes any variables declared in the parsed source.
+% FIXME: This isn't safe for our no-prototype chain requirement. Also, the
+% imports aren't present in the restricted-global this expression.
+% TODO: Consider change to copy fields across to AR
+The object specified by the second parameter (the \emph{imports} to the
+restricted environment) is then appended.
+The return value of the restricted evaluation statement is the same as that of
+the final statement of the source to be executed.
 
-\paragraph{Object freeze} Makes the provided object read-only, prevents field additions,
+\paragraph{Freeze} Makes the provided object read-only, prevents field additions,
 modifications and deletions.
+Note that the ES5 spec has a bug, meaning that frozen fields on an object's
+prototype are not permitted to be overridden\footnote{See
+ses/repairES5.js\#makeTamperProof()}, some browsers opt to ``fix'' the spec bug.
+This bug does not occur in these semantics.
 
 \paragraph{Recursive freeze} Recursively calls freeze on all objects reachable
-from the given object.
-\gds{Reachable through user-accessible fields. Closure internal-fields are
-  exempted.}
+via user-defined fields from the given object.
 
 \section{Operational Semantics}
+\newcommand{\auxf}[2]{#1 & \triangleq & #2}
+\begin{display}{Auxillary Functions}
+  $\begin{array}{lcl}
+  \auxf{\obj(l,l')}{l \pointsto \{@proto: l', @frozen: \false\}}\\
+  \auxf{\istrue(v)}{v\not\in\{0,\emptystr,\nil,\und,\false\}}\\
+  \auxf{\isfalse(v)}{v\in   \{0,\emptystr,\nil,\und,\false\}}\\
+  \auxf{\fun(l',L,\js x,\js e,l)}{l'\mapsto\{@proto: \lfp, \js{prototype}:
+    l, @scope: L, @body: \lambda \js{x.e}, @frozen: \false\}}\\
+  \auxf{\objOrGlob(l)}{l}\\
+  \auxf{\objOrGlob(v)}{\lop \quad v\not\in\loc}\\
+  \auxf{\getBase(l,l')}{l'}\\
+  \auxf{\getBase(l,v)}{v \quad v\not\in\loc}\\
+  \auxf{\act(l,\js{x},v,\js{e},l'')}{l\pointsto\{\js{x}:
+    v,@this: l'',@proto: \nil\}\sep \defs(\js{x},l,\js{e})}\\
+  \auxf{\auxDef(H,l,s)}{H \qquad l \in s \lor l \not\in \loc}\\
+  % TODO: Some way of looping through (only user-def) fields.
+  \auxf{\auxDef(H,l,s)}{\auxDef(H,,s \cup\{l\})[(l,@frozen) \mapsto \true]}
+  \end{array}$
+\end{display}
+
 \begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
+  Dereferencing notation: $H,L,\js{e} \gevalsto H',v \triangleq \exists r. (H,L,\js{e} \evalsto H',r \wedge \getValue(H',r) = v)$.
+\vg
+
   \stateaxiom{(Value)}
     {H,L,v \evalsto H,v}
 \vg
 
   \stateaxiom{(Variable declaration)}
-  {H,L,\js{var}\ x \evalsto H,\und}
-  \vg
+  {H,L,\js{var x} \evalsto H,\und}
+\vg
 
   \staterule{(Object creation)}
     {H_0 = H \sep \obj(l,\lop)\\
@@ -161,7 +191,7 @@ from the given object.
       H_{i-1},L,\js{ei}\evalsto H_i',v_i \\
       H_i = H_i' [ (l,\js{xi}) \pointsto v_i]\end{array}\right)}
     {H,L,\{\js{x1:e1},\dots, \js{xn:en}\} \evalsto H_n,l}
-\vg\gds{\\You need to define \obj somewhere. You might also want it to add a default value for @frozen}\vg
+\vg
 
   \staterule{(Sequence)}
     {H,L,e_1 \evalsto H_1,v_1 \\
@@ -186,7 +216,7 @@ from the given object.
   {H,L,e_1 \evalsto H'',v' \quad \isfalse(v') \\
    H'',L,e_3 \evalsto H',v}
   {H,L,\js{if($e_1$)\{$e_2$\} else \{$e_3$\}} \evalsto H',v}
-\vg\gds{\\You need to define \istrue and \isfalse somewhere.}\vg
+\vg
 
   \staterule{(While true)}
   {H,L,e_1 \evalsto H'', v \quad \istrue(v) \\
@@ -221,10 +251,7 @@ from the given object.
 
   % FIXME: This is probably broken, we still need gammas...
   % Provable wrt. Hoare triples?
-  \staterule{(\emph{Implicit} Dereference)}
-  {\gamma(H,\fld{l}{x}) = v}
-  {H,L,\fld{l}{x} \evalsto H,v}
-  \vg\gds{\\Hm - this is a small-step technique. To see why it won't work in a big step setting, try drawing\\
+  \gds{Fix $\gamma$\\Hm - this is a small-step technique. To see why it won't work in a big step setting, try drawing\\
     out the full derivation tree for an execution of \js{x=y} in the state ${\{(l,x)\pointsto3\sep(l,y)\pointsto4\},[l]}$}\vg
 
   \staterule{(Assignment)}
@@ -272,31 +299,32 @@ from the given object.
   {H,L,\js{e1(e2)} \evalsto H',{v'}}
 \vg
 
+  % FIXME: Probably broken against definition
   \staterule{(This)}
   {\scope(H,L,@this)=l_1 \\ \proto(H,l_1,@this)=l_2\\ H(l_2,@this)=l'}
   {H,L,\js{this} \evalsto H,l'}
 \vg
 
+  % FIXME: See description comment
   \staterule{(Restricted evaluation)}
   {H,L,e_1 \evalsto H_1,v \qquad
    \parse(v) = e \\
    H_2 = H_1 \sep l \pointsto \{@this:l, @proto:\nil\} * \defs(x, l, e) \\
    H_2,L,e_2 \evalsto H_3, l' \\
-   H_3, l \cons [l'], e \evalsto H',v }
+   H_3, l' \cons [l], e \evalsto H',v }
   {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
 \vg\gds{\\I think you want to evaluate $e$ in the scope chain $l'\cons[l]$}\vg
 
-  \staterule{(Object freeze)}
-  {H,L,e \evalsto H'', l\\
+  \staterule{(Freeze)}
+  {H,L,e \gevalsto H'', l\\
    H' = H''[(l, @frozen) \pointsto \true]}
-  {H,L,\js{freeze($e$)} \evalsto H', l}
+  {H,L,\js{freeze(e)} \evalsto H', l}
 \vg
 
   \staterule{(Recursive freeze)}
-  {H,L,\js{freeze($e$)} \evalsto H_0, l \\
-  \forall l' \in \dom(H'', l) \st (H,L,\js{def($l'$)} \evalsto H_n, l'')}
-  {H,L,\js{def($e$)} \evalsto H', l}
-  % TODO: reformulate this to cope with cyclic heaps (and ordering of heap ops)!
+  {H,L,\js{e} \gevalsto H'', l \\
+   H' = \auxDef(H'', l, \{\})}
+  {H,L,\js{def(e)} \evalsto H', l}
 \end{display}
 
 \subsection{Notes}
@@ -400,7 +428,7 @@ frozen). This choice may need to be reviewed at a later point.
           consistency)}} \\
     h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
       h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto \evalle{E_3} \\
-    % TODO: Give \bp a footprint to prevent contradictory assertions/implication
+    % FIXME: Give \bp a footprint to prevent contradictory assertions/implication
     h,h_g,L,\env \satisfies E_1 \bp E_2 & \iff & \forall (l,x) \in \dom(h_g) \st
       h_g(l,x) = \evalle{E_1} \\
       & & \impl (l,x) \in \evalle{E_2} \\
@@ -508,7 +536,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   {\tr P {\js{this}} {P \sep \rv \doteq V}}
   \vg
 
-  \staterule{(Fun)}
+  \staterule{(Function)}
   {
     Q = \exists L_1,L_2 \st \newobj(L_1,@proto) \sep (L_1,@proto) \pointsto \lop
     \sep \newobj(L_2,@proto, \js{prototype}, @scope, @body) \sep {}\\
@@ -522,7 +550,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   {\tr P {\js{function(x) \{e\}}} Q}
   \vg
 
-  \staterule{(Named Fun)}
+  \staterule{(Named Function)}
     {
       Q = \exists L_1, L_2, L_3 \st \newobj(L_1, @proto) \sep (L_1, @proto)
       \pointsto \lop \sep \newobj(L_3,@proto,y) \sep (L_3, @proto) \pointsto
@@ -538,7 +566,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {\tr P {\js{function y(x) \{e\}}} Q}
   \vg
 
-  \staterule{(Obj)}
+  \staterule{(Object)}
     {
       \exists L \st \left(\begin{array}{l}
         % FIXME: \bpGen repeated sepping will fail when footprint added to
@@ -560,7 +588,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {\tr {P_0} {\js{\{x1:e1, ..., xn:en\}}} Q}
   \vg
 
-  \staterule{(Fun Call)}
+  \staterule{(Function Call)}
     {
       \tr P {\js{e1}} {R_1 \sep \rv \doteq F_1} \\
       R_1 = \left(\begin{array}{l}
@@ -582,6 +610,68 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \ls \notin \fv(Q) \cup \fv(R_2)
     }
     {\tr P {\js{e1(e2)}} {\exists L \st Q \sep \ls \doteq Ls_3}}
+  \vg
+
+  \staterule{(New)}
+    {}
+    {}
+  \vg
+
+  % SES-specific
+  \staterule{(Restricted evaluation)}
+    {}
+    {}
+  \vg
+
+  \staterule{(Freeze)}
+    {}
+    {}
+  \vg
+
+  \staterule{(Recusive freeze)}
+    {}
+    {}
+  \vg
+
+  % Control flow
+  \staterule{(Sequence)}
+    {\tr P {\js{e1}} R \quad \tr R {\js{e2}} Q}
+    {\tr P {\js{e1; e2}} Q}
+  \vg
+
+  \staterule{(If True)}
+    {}
+    {}
+  \vg
+
+  \staterule{(If False)}
+    {}
+    {}
+  \vg
+
+  \staterule{(While)}
+    {}
+    {}
+  \vg
+
+  % Standard
+  \staterule{(Frame)}
+    {\tr P {\js{e}} Q}
+    {\tr {P \sep R} {\js{e}} {Q \sep R}}
+
+  \staterule{(Consequence)}
+    {\tr {P'} {\js{e}} {Q'} \\
+     P \impl P' \quad Q' \impl Q}
+    {\tr P {\js{e}} Q}
+  \vg
+
+  \staterule{(Elimination)}
+    {\tr P {\js{e}} Q}
+    {\tr {\exists X \st P} {\js{e}} {\exists X \st Q}}
+
+  \staterule{(Disjunction)}
+    {\tr{P_1}{\js{e}}{Q_1} \quad \tr{P_2}{\js{e}}{Q_2}}
+    {\tr{P_1 \lor P_2}{\js{e}}{Q_1 \lor Q_2}}
 
 \end{display}
 

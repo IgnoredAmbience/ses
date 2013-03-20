@@ -17,6 +17,31 @@
 % Internal variables
 \newcommand{\ivars}{\vars^{\T i}}
 
+%% Operational Semantics
+\newcommand{\evalsto}{{\,\longrightarrow\,}}
+% Dereferencing evals-to
+\newcommand{\gevalsto}{\overset{\gamma}{\evalsto}}
+
+%% Auxiliaries
+% General (dual-defined)
+\newcommand{\ReadWrite}{\command{RW}}
+\newcommand{\ReadOnly}{\command{RO}}
+\newcommand\istrue{\command{True}}
+\newcommand\isfalse{\command{False}}
+\newcommand\objOrGlob{\command{SelectProto}}
+\newcommand\getBase{\command{getBase}}
+\newcommand\parse{\command{parse}}
+\newcommand\fun{\command{fun}}
+\newcommand\act{\command{act}}
+\newcommand\defs{\command{defs}}
+\newcommand\pickThis{\command{This}}
+% Operational Semantics only
+\newcommand\obj{\command{obj}}
+\newcommand\auxDef{\command{auxDef}}
+% Program logic only
+\newcommand{\newobj}{\command{newobj}}
+\newcommand{\vardecls}{\command{decls}}
+
 %% erm...
 \newcommand{\logconst}[1]{\V{#1}}
 \newcommand{\fault}{{\command{fault}}}
@@ -25,6 +50,7 @@
 \newcommand{\none}{\diameter}
 \newcommand{\emp}{\texttt{emp}}
 \newcommand{\emptylist}{[\,]}
+\newcommand\emptystr{\text{``\,"}}
 
 \newcommand{\lemp}\oslash%{\E{emp}}
 \newcommand{\rv}{\V{\textbf{r}}}
@@ -33,26 +59,11 @@
 \newcommand{\dotin}{\mathbin{\dot\in}}
 \newcommand{\notdotin}{\mathbin{\not\!\!\dot{\in}}}
 
-\newcommand\obj{\command{obj}}
-\newcommand\fun{\command{fun}}
-\newcommand\act{\command{act}}
-\newcommand\defs{\command{defs}}
-\newcommand\pickThis{\command{This}}
-\newcommand{\vardecls}{\command{decls}}
-\newcommand{\ReadWrite}{\command{RW}}
-\newcommand{\ReadOnly}{\command{RO}}
-
 \newcommand{\scope}{\ensuremath{\sigma}\xspace}
 \newcommand{\proto}{\ensuremath{\pi}\xspace}
 \newcommand{\getValue}{\ensuremath{\gamma}\xspace}
 \newcommand{\bpGen}{\ensuremath{\beta}\xspace}
 
-\newcommand\istrue{\command{True}}
-\newcommand\isfalse{\command{False}}
-\newcommand\objOrGlob{\command{SelectProto}}
-\newcommand\getBase{\command{getBase}}
-\newcommand{\newobj}{\command{newobj}}
-\newcommand\parse{\command{parse}}
 \newcommand\lop{l_{op}}
 \newcommand\lfp{l_{fp}}
 
@@ -86,8 +97,6 @@
 \newcommand{\cons}{{:}}
 \newcommand{\fld}[2]{#1\makebox[3pt]{$\cdot$}{#2}}
 \newcommand{\st}{\mathpunct{.}}
-
-\newcommand{\evalsto}{{\,\longrightarrow\,}}
 
 \newcommand{\eval}[1]{\llbracket #1 \rrbracket}
 \newcommand{\evalle}[1]{\eval{#1}^L_\env}
