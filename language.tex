@@ -175,6 +175,7 @@ via user-defined fields from the given object.
   \end{array}$
 \end{display}
   \TODO{Some way of looping through (only user-def) fields on \auxDef}
+  \FIXME{Need \scope, \proto, \getValue, \pickThis}
 
 \begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
   \FIXME{Use $\gevalsto$}
@@ -469,6 +470,7 @@ Frame property:
   h \disju h', L, \js{e} \leadsto h_2' \land h\subseteq h_g\impl h, L, \js{e} \leadsto h_2 \land
   h_2' = h_2 \disju h' \]
 
+\TODO{Bake-in safety and frame properties?}
 An alternative formulation which emphasises the relationship between the global
 view of the heap and the framing property ($h_g = h \disju h_f$) can also be
 produced, it should be noted that the meaning is subtly different (in that $h'
@@ -746,7 +748,7 @@ Revocable Reference, all returned objects are also wrapped in a Revocable
 Reference that shares its kill switch with its parent. All references to the
 parent object and anything it created are removed simultaneously.
 
-\TODO{Find a more elegant solution}
+\TODO{Check prototype chain for leaks? proxies/simpleMembrane.js}
 \begin{verbatim}
 var Membrane = function(ref) {
   var killSwitch = false;
