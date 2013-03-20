@@ -25,7 +25,9 @@
 %% Auxiliaries
 % General (dual-defined)
 \newcommand{\ReadWrite}{\command{RW}}
+\newcommand{\RW}{\ReadWrite}
 \newcommand{\ReadOnly}{\command{RO}}
+\newcommand{\RO}{\ReadOnly}
 \newcommand\istrue{\command{True}}
 \newcommand\isfalse{\command{False}}
 \newcommand\objOrGlob{\command{SelectProto}}
@@ -103,6 +105,15 @@
 
 % Hoare triple {P}{C}{Q}
 \newcommand\tr[3]{\{#1\}#2\{#3\}}
+
+% Proofs
+\newcommand{\logic}[1]{%
+  \left\{%
+    \begin{array}{l}%
+      #1%
+    \end{array}%
+  \right\}}
+\newcommand{\step}[1]{\text{[#1]}}
 
 % Formatting
 \newcommand{\vg}{\\[5pt]}

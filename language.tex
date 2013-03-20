@@ -476,6 +476,7 @@ view of the heap and the framing property ($h_g = h \disju h_f$) can also be
 produced, it should be noted that the meaning is subtly different (in that $h'
 \neq h_g$ in all cases).
 
+\TODO{Auxiliary predicates}
 \begin{display}{Inference Rules}
   $\bpGen(V,\_,\_,\_) \triangleq V \notdotin \loc$ \\
   $\bpGen(V,L,x,s) \triangleq V \dotin \loc \sep V \bp \{(L,x)\} \cup s$
@@ -730,13 +731,27 @@ var RevocableRef = function(ref) {
 
 \[
   \begin{array}{l}
-    \left\{
-      
-    \right\} \\
-    \js{var RevocableRef = function(x) \{$\lambda_R$\}} \\
-    \left\{
+    \logic{
+      P_1 = \scope(Ls_1, \ls, \js{RevocableRef}, L_1) \sepish \getValue(Ls_2,
+      \fld{L_1}{\js{RevocableRef}}, V_1) \\
+      \tr{P_1}{\js{RevocableRef}}{P_1 \sep \rv\doteq\fld{L_1}{\js{RevocableRef}}}\\
+      \\
+      P_2 = \exists L_3, L_4 \st \lop \bp s_1 \cup \{(L_3,@proto)\} \sep \lfp \bp s_2 \cup
+      \{(L_4,@proto)\} \sep \forall l' \in elem(\ls) \st l' \bp \{(L_4,@scope)\}
+      \cup s' \\
+      S = \exists L_3,L_4 \st \newobj(L_3,@proto) \sep (L_3,@proto) \pointsto \lop
+      \sep \newobj(L_4,@proto, \js{prototype}, @scope, @body) \sep {}\\
+      L_4 \bp \{\} \sep \fun(L_4, \ls, x, e, L_3) \sep \rv \doteq L_4 \sep 
+      P \sep L_3 \bp \{(L_4, \js{prototype})\} \\
 
-    \right\}
+      \tr{P_2}{\js{function(x) \{$b_r$\}}}{Q \sep (L_2,X) \mapsto V_4 \sep \rv
+        \doteq V_2} \\
+      Q = S \sep \getValue(Ls_3, V_2, V_3) \sep \RW(L_2) \sep \bpGen(V_3, L_2, X, s) \\
+    } \\
+    \js{var RevocableRef = function(x) \{$b_r$\}} \\
+    \logic{
+
+    }
   \end{array}
 \]
 
