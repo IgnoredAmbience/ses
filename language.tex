@@ -755,6 +755,90 @@ var RevocableRef = function(ref) {
   \end{array}
 \]
 
+\[
+  \begin{array}{l}
+    \js{var RevocableRef = function(ref) \{}\\
+    \logic{
+      % function
+      (R,@body) \mapsto \lambda\js{ref}.\{\dots\} \sep (R,@scope) \mapsto Ls
+        \sep {} \\
+      % ar
+      \exists L \st \ls \doteq L:Ls \sep (L,\js{ref}) \mapsto V \sep (L,@this)
+        \mapsto \_ \sep (L,@proto) \mapsto \nil \sep {} \\
+      % defs()
+      (L,\js{protected}) \mapsto \und \sep (L,\js{access}) \mapsto \und \sep
+        (L,\js{kill}) \mapsto \und \sep {} \\
+      % bp
+      L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\}
+    } \\
+    \step{Frame/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
+    \logic{
+      % var *2
+      (L, \js{protected}) \pointsto \_ \sep (L, \js{ref}) \pointsto V \sep {} \\
+      % assign
+      (L, @frozen) \pointsto \false \sep V \bp s_2 \cup \{(L, \js{protected})\}
+    } \\
+    \js{var protected = ref;} \\
+    \logic{
+      % var *2
+      (L, \js{protected}) \pointsto V \sep (L, \js{ref}) \pointsto V \sep {} \\
+      % assign
+      (L, @frozen) \pointsto \false \sep V \bp s_2 \cup \{(L, \js{protected})\}
+    } \\
+    \step{Frame(s)/cons} \\
+    \logic{
+      % var
+      (L, \js{access}) \pointsto \_ \sep {} \\
+      % fun pre
+      \FIXME{We need $A, A_p$ before we create them?}
+      \exists A, A_p \st \lop \bp s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_4
+        \cup \{(A, @proto)\} \sep {} \\
+      \forall l' \in \elem(\ls) \st \exists s' \st
+        l' \bp s' \cup \{(A,@scope)\} \sep {} \\
+      % assign
+      (L,@frozen) \pointsto \false
+    } \\
+    \js{var access = function(field) \{$b_a$\};} \\
+    \logic{
+      \exists A, A_p \st
+      % var
+      (L, \js{access}) \pointsto A \sep {} \\
+      % fun pre
+      \lop \bp s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_4
+        \cup \{(A, @proto)\} \sep {} \\
+      \forall l' \in \elem(\ls) \st \exists s' \st
+        l' \bp s' \cup \{(A,@scope)\} \sep {} \\
+      % fun post
+      \newobj(A_p,@proto) \sep (A_p,@proto) \pointsto \lop \sep {} \\
+      \newobj(A, @proto, \js{prototype}, @scope, @body) \sep {} \\
+      \fun(A, \ls, \js{field}, b_a, A_p) \sep %A \bp \{\} \sep % see below
+        A_p \bp \{(A, \js{prototype})\} \sep {} \\
+      % assign
+      (L,@frozen) \pointsto \false \sep A \bp \{(L, \js{access})\}
+    } \\
+    \step{} \\
+    \logic{
+
+    } \\
+    \js{var kill = function() \{$b_k$\};} \\
+    \logic{
+
+    } \\
+    \step{} \\
+    \logic{
+
+    } \\
+    \js{return \{access: access, kill: kill\};} \\
+    \logic{
+
+    } \\
+    \logic{
+
+    } \\
+    \js{\}}
+  \end{array}
+\]
+
 Proof derivations are given for the declaration, and each function call.
 
 \subsection{Membrane}
