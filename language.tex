@@ -983,6 +983,17 @@ Revocable Reference, all returned objects are also wrapped in a Revocable
 Reference that shares its kill switch with its parent. All references to the
 parent object and anything it created are removed simultaneously.
 
+\TODO{THIS}
+Introduce a predicate ProtectedLocation(Loc,Set,FuncP) which takes a
+Location Loc, and the set of things that point to it Set, and gives you a
+membrane function(thing) FuncP that protects it. (So the $\bp$ set will be
+increased by the closure in the FuncP).
+
+When you call access, it takes a ProtectedLocation and a location pointed to
+by the ProtectedLocation, and returns a new ProtectedLocation for the inner
+one.
+\TODO{THAT}
+
 \TODO{Check prototype chain for leaks? proxies/simpleMembrane.js}
 \begin{verbatim}
 var Membrane = function(ref) {
