@@ -791,7 +791,8 @@ var RevocableRef = function(ref) {
           \end{array}
         \right) \sep {} \\
       % bp
-      L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\}
+      L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
+        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'\sep \ls\doteq{L:Ls}
     } \\
     \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
     \logic{
