@@ -541,50 +541,57 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Function)}
   {
-    Q = \exists L_1,L_2 \st \newobj(L_1,@proto) \sep (L_1,@proto) \pointsto \lop
+    P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \forall l' \in \elem(\ls) \st \exists
+      s' \st l' \bp s' \\
+      Q = \left(\begin{array}{l}
+          \exists L_1,L_2 \st \newobj(L_1,@proto) \sep (L_1,@proto) \pointsto \lop
     \sep \newobj(L_2,@proto, \js{prototype}, @scope, @body) \sep {}\\
     L_2 \bp \{\} \sep \fun(L_2, \ls, x, e, L_1) \sep \rv \doteq L_2 \sep
-    P \sep L_1 \bp \{(L_2, \js{prototype})\} \\
-
-    P = \lop \bp s_1 \cup \{(L_1,@proto)\} \sep \lfp \bp s_2 \cup
-    \{(L_2,@proto)\} \sep \forall l' \in elem(\ls) \st l' \bp \{(L_2,@scope)\}
-    \cup s'
+    L_1 \bp \{(L_2, \js{prototype})\} \sep {} \\
+    \lop \bp s_1 \cup \{(L_1,@proto)\} \sep \lfp \bp s_2 \cup
+      \{(L_2,@proto)\} \sep \forall l' \in \elem(\ls) \st \exists s' \st
+      l' \bp \{(L_2,@scope)\} \cup s'
+    \end{array}\right)
   }
   {\tr P {\js{function(x) \{e\}}} Q}
   \vg
 
   \staterule{(Named Function)}
     {
-      Q = \exists L_1, L_2, L_3 \st \newobj(L_1, @proto) \sep (L_1, @proto)
+      P = \lop \bp s_1 \sep \lfp \bp s_2 \sep
+        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s' \\
+      Q = \left(\begin{array}{l}
+      \exists L_1, L_2, L_3 \st \newobj(L_1, @proto) \sep (L_1, @proto)
       \pointsto \lop \sep \newobj(L_3,@proto,y) \sep (L_3, @proto) \pointsto
       \nil \sep {} \\
       (L_3,\js{y}) \pointsto L_2 \sep L_2 \bp \{(L_3,\js{y})\} \sep
       L_3 \bp \{(L_2,@scope)\} \sep
       \newobj(L_2,@proto,\js{prototype},@scope,@body) \sep {} \\
-      \fun(L_2,(L_3:\ls), \js{x}, \js{e}, L_1) \sep \rv \doteq L_2 \sep P \\
-      P = \lop \bp \{(L_1, @proto)\} \cup s_1 \sep \lfp \bp \{(L_2, @proto)\}
-      \cup s_2 \sep \forall l' \in elem(\ls) \st \exists s' \st l' \bp
+      \fun(L_2,(L_3:\ls), \js{x}, \js{e}, L_1) \sep \rv \doteq L_2 \sep {} \\
+      \lop \bp \{(L_1, @proto)\} \cup s_1 \sep \lfp \bp \{(L_2, @proto)\}
+      \cup s_2 \sep \forall l' \in \elem(\ls) \st \exists s' \st l' \bp
       \{(L_2,@scope)\} \cup s'
+      \end{array}\right)
     }
     {\tr P {\js{function y(x) \{e\}}} Q}
   \vg
 
   \staterule{(Object)}
     {
+      \forall i \in 1..n \st \left(\begin{array}{l}
+        P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \sep
+          X_i \bp s_i \\
+        \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
+      \end{array}\right) \\
+      P_n = R \sep \lop \bp s_{op} \\
+      Q = R \sep
       \exists L \st \left(\begin{array}{l}
-        \FIXME{\bpGen repeated sepping will fail when footprint added to
-          backpointer, consider case when \{x:O,y:O\}}
-        \forall i \in 1..n \st \left(\begin{array}{l}
-          P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \sep
-            \bpGen(X_i, L, \js{xi}, s_i) \\
-          \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
-        \end{array}\right) \\
-        \TODO{Big sep here?}
-        Q = P_n \sep \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep
-        (L, \js{xi}) \pointsto X_i \sep \dots \sep (L, \js{xn}) \pointsto
-        X_n \sep {} \\
-        (L,@proto) \pointsto \lop \sep \rv \doteq L \sep L \bp \{\} \\
-        P_0 = R \sep \lop \bp \{(L,@proto)\} \cup s_0
+        \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep {} \\
+        (L, \js{x1}) \pointsto X_1 \sep X_1 \bp s_1 \cup \{(L,\js{x1})\} \sep
+          \dots \sep {} \\
+        (L, \js{xn}) \pointsto X_n \sep X_1 \bp s_1 \cup \{(L,\js{x1})\} \sep {} \\
+        (L,@proto) \pointsto \lop \sep \lop \bp s_{op} \cup \{(L,@proto)\} \sep {} \\
+        \rv \doteq L \sep L \bp \{\} \\
       \end{array}\right) \\
       \js{x1} \neq \dots \neq \js{xn} \qquad \rv \not\in \fv(P_n)
     }
@@ -795,19 +802,16 @@ var RevocableRef = function(ref) {
     \step{Frame(s)/cons} \\
     \logic{
       % var
-      (L, \js{access}) \pointsto \_ \sep {} \\
-      % fun pre
-      \FIXME{We need $A, A_p$ before we create them?}
-      \exists A, A_p \st \lop \bp s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_4
-        \cup \{(A, @proto)\} \sep {} \\
-      \forall l' \in \elem(\ls) \st \exists s' \st
-        l' \bp s' \cup \{(A,@scope)\} \sep {} \\
+      (L, \js{access}) \pointsto \_ \sep
       % assign
-      (L,@frozen) \pointsto \false
+      (L,@frozen) \pointsto \false \sep {} \\
+      % fun pre
+      \lop \bp s_3 \sep \lfp \bp s_4 \sep
+        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'
     } \\
     \js{var access = function(field) \{$b_a$\};} \\
     \logic{
-      \exists A, A_p \st
+      \exists A, A_p \st \left(\begin{array}{l}
       % var
       (L, \js{access}) \pointsto A \sep {} \\
       % fun pre
@@ -822,22 +826,22 @@ var RevocableRef = function(ref) {
         A_p \bp \{(A, \js{prototype})\} \sep {} \\
       % assign
       (L,@frozen) \pointsto \false \sep A \bp \{(L, \js{access})\}
+      \end{array}\right)
     } \\
     \step{} \\
     \logic{
       % var
-      (L, \js{kill}) \pointsto \_ \sep {} \\
-      % fun pre
-      \exists K, K_p \st \lop \bp s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
-        \cup \{(K, @proto)\} \sep {} \\
-      \forall l' \in \elem(\ls) \st \exists s' \st
-        l' \bp s' \cup \{(K,@scope)\} \sep {} \\
+      (L, \js{kill}) \pointsto \_ \sep
       % assign
-      (L,@frozen) \pointsto \false
+      (L,@frozen) \pointsto \false \sep {} \\
+      % fun pre
+      \lop \bp s_5 \sep \lfp \bp s_6 \sep
+        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'
     } \\
     \js{var kill = function() \{$b_k$\};} \\
     \logic{
       \exists K, K_p \st
+      \left(\begin{array}{l}
       % var
       (L, \js{kill}) \pointsto K \sep {} \\
       % fun pre
@@ -852,24 +856,24 @@ var RevocableRef = function(ref) {
         K_p \bp \{(K, \js{prototype})\} \sep {} \\
       % assign
       (L,@frozen) \pointsto \false \sep K \bp \{(L, \js{kill})\}
+      \end{array}\right)
     } \\
     \step{} \\
     \logic{
-      \FIXME{Again, need to create O in precondition, rule is broken.}
-      \exists O \st
       (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
-      A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
-        \sep \lop \bp s_9 \cup \{(O,@proto)\}
+      A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9
     } \\
     \js{return \{access: access, kill: kill\};} \\
     \logic{
       \exists O \st
+      \left(\begin{array}{l}
       (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
-      A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
-        \sep \lop \bp s_9 \cup \{(O,@proto)\} \sep {} \\
       \newobj(O, @proto, \js{access}, \js{kill}) \sep (O,\js{access}) \pointsto
         A \sep (O,\js{kill}) \pointsto K \sep {} \\
+      A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
+        \sep \lop \bp s_9 \cup \{(O,@proto)\} \sep {} \\
       (O,@proto) \pointsto \lop \sep O \bp \{\} \sep \rv \doteq O
+      \end{array}\right)
     } \\
     \step{} \\
     \logic{
