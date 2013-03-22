@@ -777,6 +777,7 @@ var RevocableRef = function(ref) {
 \[
   \begin{array}{l}
     \js{var RevocableRef = function(ref) \{}\\
+    \begin{array}{@{\qquad}l}
     \logic{
       % function
       (R,@body) \mapsto \lambda\js{ref}.\{\dots\} \sep (R,@scope) \mapsto Ls
@@ -886,7 +887,9 @@ var RevocableRef = function(ref) {
     \step{} \\
     \logic{
 
-    } \\
+    }
+  \end{array}
+\\
     \js{\}}
   \end{array}
 \]
