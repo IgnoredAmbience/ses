@@ -798,7 +798,7 @@ var RevocableRef = function(ref) {
       (L, \js{protected}) \pointsto \_ \sep (L, \js{ref}) \pointsto V \sep {} \\
       % assign
       (L, @frozen) \pointsto \false \sep
-        V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}
+        V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
     } \\
     \js{var protected = ref;} \\
     \logic{
@@ -806,7 +806,7 @@ var RevocableRef = function(ref) {
       (L, \js{protected}) \pointsto V \sep (L, \js{ref}) \pointsto V \sep {} \\
       % assign
       (L, @frozen) \pointsto \false \sep
-        V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}
+        V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
     } \\
     \step{Frame(s)/cons} \\
     \logic{
@@ -816,7 +816,7 @@ var RevocableRef = function(ref) {
       (L,@frozen) \pointsto \false \sep {} \\
       % fun pre
       \lop \bp s_3 \sep \lfp \bp s_4 \sep
-        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'
+        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'\sep \ls\doteq{L:Ls}
     } \\
     \js{var access = function(field) \{$b_a$\};} \\
     \logic{
@@ -835,7 +835,7 @@ var RevocableRef = function(ref) {
         A_p \bp \{(A, \js{prototype})\} \sep {} \\
       % assign
       (L,@frozen) \pointsto \false \sep A \bp \{(L, \js{access})\}
-      \end{array}\right)
+      \end{array}\right) \sep \ls\doteq{L:Ls}
     } \\
     \step{} \\
     \logic{
@@ -845,7 +845,7 @@ var RevocableRef = function(ref) {
       (L,@frozen) \pointsto \false \sep {} \\
       % fun pre
       \lop \bp s_5 \sep \lfp \bp s_6 \sep
-        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'
+        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s' \sep \ls\doteq{L:Ls}
     } \\
     \js{var kill = function() \{$b_k$\};} \\
     \logic{
@@ -865,7 +865,7 @@ var RevocableRef = function(ref) {
         K_p \bp \{(K, \js{prototype})\} \sep {} \\
       % assign
       (L,@frozen) \pointsto \false \sep K \bp \{(L, \js{kill})\}
-      \end{array}\right)
+      \end{array}\right)\sep \ls\doteq{L:Ls}
     } \\
     \step{} \\
     \logic{
