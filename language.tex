@@ -768,6 +768,13 @@ var RevocableRef = function(ref) {
 %  \end{array}
 %\]
 
+\begin{displaymath}
+  \begin{array}{rcl}
+  \fullobj_{E}(E_1:E_1',\dots,E_n:E_n') &\triangleq& \obj_{E}(E_1:E_1',\dots,E_n:E_n') \sep \newobj_{E}(E_1,\dots,E_n) \\
+  \newfun_{E}(E_1,E_2,E_3,E_4) &\triangleq& \fun_{E}(E_1,E_2,E_3,E_4) \sep \newobj_{E}(@proto, \js{prototype}, @scope, @body)
+\end{array}
+\end{displaymath}
+
 % RevocableRef body call
 %
 % I've generally unwrapped all \scope, \proto, \getValue operations down to
