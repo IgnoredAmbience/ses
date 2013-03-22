@@ -140,6 +140,10 @@ initializes any variables declared in the parsed source.
 \FIXME{This isn't safe for our no-prototype chain requirement. Also, the
   imports aren't present in the restricted-global this expression. Consider
   change to copy fields across to AR}
+\gds{I don't understand any of this fixme. I do think you've got the activation
+  records the wrong way around in the description below though. The imports
+  should be in the most global object. The untrusted code can choose to override
+  the imports if it wishes.}
 The object specified by the second parameter (the \emph{imports} to the
 restricted environment) is then appended.
 The return value of the restricted evaluation statement is the same as that of
@@ -749,7 +753,7 @@ var RevocableRef = function(ref) {
 %      \cup s' \\
 %      S = \exists L_3,L_4 \st \newobj(L_3,@proto) \sep (L_3,@proto) \pointsto \lop
 %      \sep \newobj(L_4,@proto, \js{prototype}, @scope, @body) \sep {}\\
-%      L_4 \bp \{\} \sep \fun(L_4, \ls, x, e, L_3) \sep \rv \doteq L_4 \sep 
+%      L_4 \bp \{\} \sep \fun(L_4, \ls, x, e, L_3) \sep \rv \doteq L_4 \sep
 %      P \sep L_3 \bp \{(L_4, \js{prototype})\} \\
 %
 %      \tr{P_2}{\js{function(x) \{$b_r$\}}}{Q \sep (L_2,X) \mapsto V_4 \sep \rv
@@ -880,7 +884,7 @@ var RevocableRef = function(ref) {
     } \\
     \step{} \\
     \logic{
-      
+
     } \\
     \js{\}}
   \end{array}
