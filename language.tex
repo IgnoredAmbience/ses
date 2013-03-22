@@ -527,6 +527,9 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \vg
 
   \FIXME{Look at bp closer - need to remove $V_3$?}
+  \gds{I don't think you \emph{need} to remove $V_3$. You maintain permission to\\
+    $(L,X)$ after the assignment, so you can use consequence to remove $V_3$\\
+    from the bp set then. Also, consider the case where $V_3$=$V_2$.}
   \staterule{(Assign)}
     {
       \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
