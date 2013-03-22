@@ -792,7 +792,7 @@ var RevocableRef = function(ref) {
         \right) \sep {} \\
       % bp
       L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
-        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'\sep \ls\doteq{L:Ls}
+        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)
     } \\
     \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
     \logic{
@@ -818,7 +818,7 @@ var RevocableRef = function(ref) {
       (L,@frozen) \pointsto \false \sep {} \\
       % fun pre
       \lop \bp s_3 \sep \lfp \bp s_4 \sep
-        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s'\sep \ls\doteq{L:Ls}
+        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)\sep \ls\doteq{L:Ls}
     } \\
     \js{var access = function(field) \{$b_a$\};} \\
     \logic{
@@ -828,8 +828,7 @@ var RevocableRef = function(ref) {
       % fun pre
       \lop \bp s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_4
         \cup \{(A, @proto)\} \sep {} \\
-      \forall l' \in \elem(\ls) \st \exists s' \st
-        l' \bp s' \cup \{(A,@scope)\} \sep {} \\
+      (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(A,@scope)\}) \sep {} \\
       % fun post
       \newobj(A_p,@proto) \sep (A_p,@proto) \pointsto \lop \sep {} \\
       \newobj(A, @proto, \js{prototype}, @scope, @body) \sep {} \\
@@ -847,7 +846,7 @@ var RevocableRef = function(ref) {
       (L,@frozen) \pointsto \false \sep {} \\
       % fun pre
       \lop \bp s_5 \sep \lfp \bp s_6 \sep
-        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s' \sep \ls\doteq{L:Ls}
+        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i) \sep \ls\doteq{L:Ls}
     } \\
     \js{var kill = function() \{$b_k$\};} \\
     \logic{
@@ -858,8 +857,7 @@ var RevocableRef = function(ref) {
       % fun pre
       \lop \bp s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
         \cup \{(K, @proto)\} \sep {} \\
-      \forall l' \in \elem(\ls) \st \exists s' \st
-        l' \bp s' \cup \{(K,@scope)\} \sep {} \\
+      (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(K,@scope)\}) \sep {} \\
       % fun post
       \newobj(K_p,@proto) \sep (K_p,@proto) \pointsto \lop \sep {} \\
       \newobj(K, @proto, \js{prototype}, @scope, @body) \sep {} \\
