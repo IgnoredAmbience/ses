@@ -736,32 +736,35 @@ var RevocableRef = function(ref) {
 }
 \end{verbatim}
 
-\[
-  \begin{array}{l}
-    \logic{
-      P_1 = \scope(Ls_1, \ls, \js{RevocableRef}, L_1) \sepish \getValue(Ls_2,
-      \fld{L_1}{\js{RevocableRef}}, V_1) \\
-      \tr{P_1}{\js{RevocableRef}}{P_1 \sep \rv\doteq\fld{L_1}{\js{RevocableRef}}}\\
-      \\
-      P_2 = \exists L_3, L_4 \st \lop \bp s_1 \cup \{(L_3,@proto)\} \sep \lfp \bp s_2 \cup
-      \{(L_4,@proto)\} \sep \forall l' \in elem(\ls) \st l' \bp \{(L_4,@scope)\}
-      \cup s' \\
-      S = \exists L_3,L_4 \st \newobj(L_3,@proto) \sep (L_3,@proto) \pointsto \lop
-      \sep \newobj(L_4,@proto, \js{prototype}, @scope, @body) \sep {}\\
-      L_4 \bp \{\} \sep \fun(L_4, \ls, x, e, L_3) \sep \rv \doteq L_4 \sep 
-      P \sep L_3 \bp \{(L_4, \js{prototype})\} \\
+% Proof for declaration of RevocableRef is incomplete, and possibly wrong
+%\[
+%  \begin{array}{l}
+%    \logic{
+%      P_1 = \scope(Ls_1, \ls, \js{RevocableRef}, L_1) \sepish \getValue(Ls_2,
+%      \fld{L_1}{\js{RevocableRef}}, V_1) \\
+%      \tr{P_1}{\js{RevocableRef}}{P_1 \sep \rv\doteq\fld{L_1}{\js{RevocableRef}}}\\
+%      \\
+%      P_2 = \exists L_3, L_4 \st \lop \bp s_1 \cup \{(L_3,@proto)\} \sep \lfp \bp s_2 \cup
+%      \{(L_4,@proto)\} \sep \forall l' \in elem(\ls) \st l' \bp \{(L_4,@scope)\}
+%      \cup s' \\
+%      S = \exists L_3,L_4 \st \newobj(L_3,@proto) \sep (L_3,@proto) \pointsto \lop
+%      \sep \newobj(L_4,@proto, \js{prototype}, @scope, @body) \sep {}\\
+%      L_4 \bp \{\} \sep \fun(L_4, \ls, x, e, L_3) \sep \rv \doteq L_4 \sep 
+%      P \sep L_3 \bp \{(L_4, \js{prototype})\} \\
+%
+%      \tr{P_2}{\js{function(x) \{$b_r$\}}}{Q \sep (L_2,X) \mapsto V_4 \sep \rv
+%        \doteq V_2} \\
+%      Q = S \sep \getValue(Ls_3, V_2, V_3) \sep \RW(L_2) \sep \bpGen(V_3, L_2, X, s) \\
+%    } \\
+%    \js{var RevocableRef = function(x) \{$b_r$\}} \\
+%    \logic{
+%
+%    }
+%  \end{array}
+%\]
 
-      \tr{P_2}{\js{function(x) \{$b_r$\}}}{Q \sep (L_2,X) \mapsto V_4 \sep \rv
-        \doteq V_2} \\
-      Q = S \sep \getValue(Ls_3, V_2, V_3) \sep \RW(L_2) \sep \bpGen(V_3, L_2, X, s) \\
-    } \\
-    \js{var RevocableRef = function(x) \{$b_r$\}} \\
-    \logic{
-
-    }
-  \end{array}
-\]
-
+% RevocableRef body call
+%
 % I've generally unwrapped all \scope, \proto, \getValue operations down to
 %   their requirements
 % Introduction of new elements into an existing backpointer set seems clumsy
@@ -882,6 +885,79 @@ var RevocableRef = function(ref) {
     \js{\}}
   \end{array}
 \]
+
+% RevocableRef#kill body call
+\[
+  \begin{array}{l}
+    \js{var kill = function() \{} \\
+    \logic{
+      (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
+      \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep {} \\
+      (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep L' \bp \{\}
+    } \\
+    \step{} \\
+    \logic{
+      % var
+      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+      (L, \js{protected}) \mapsto V \sep
+      % assign
+      (L,@frozen) \mapsto \false
+    } \\
+    \js{protected = null;} \\
+    \logic{
+      % var
+      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+      (L, \js{protected}) \mapsto \nil \sep
+      % assign
+      (L,@frozen) \mapsto \false \sep \rv \doteq \nil
+    } \\
+    \step{} \\
+    \logic{
+
+    } \\
+    \js{\}}
+  \end{array}
+\]
+
+% RevocableRef#access body call
+\[
+  \begin{array}{l}
+    \js{var access = function(field) \{} \\
+    \logic{
+      (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep (A, @scope) \mapsto L:Ls \sep {} \\
+      \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep
+      (L', \js{field}) \mapsto X \sep {} \\
+      (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep {} \\
+      L' \bp \{\} \sep X \bp s \cup \{(L', \js{field})\}
+    } \\
+    \step{} \\
+    \logic{
+      % var protected
+      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+      (L, \js{protected}) \mapsto P \sep
+      % comp access
+      P \not\doteq \nil \sep P \dotin \loc \sep {} \\
+      % var field
+      (L',\js{field}) \mapsto X \sep X \dotin \uvars
+    } \\
+    \js{return protected[field];} \\
+    \logic{
+      % var protected
+      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+      (L, \js{protected}) \mapsto P \sep
+      % comp access
+      P \not\doteq \nil \sep P \dotin \loc \sep {} \\
+      % var field
+      (L',\js{field}) \mapsto X \sep \rv \doteq \fld{P}{X}
+    } \\
+    \step{} \\
+    \logic{
+
+    } \\
+    \js{\}}
+  \end{array}
+\]
+
 
 Proof derivations are given for the declaration, and each function call.
 
