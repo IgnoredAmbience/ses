@@ -548,16 +548,14 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Function)}
   {
-    P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \forall l' \in \elem(\ls) \st \exists
-      s' \st l' \bp s' \\
+    P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \\
       Q = \left(\begin{array}{l}
           \exists L_1,L_2 \st \newobj(L_1,@proto) \sep (L_1,@proto) \pointsto \lop
     \sep \newobj(L_2,@proto, \js{prototype}, @scope, @body) \sep {}\\
     L_2 \bp \{\} \sep \fun(L_2, \ls, x, e, L_1) \sep \rv \doteq L_2 \sep
     L_1 \bp \{(L_2, \js{prototype})\} \sep {} \\
     \lop \bp s_1 \cup \{(L_1,@proto)\} \sep \lfp \bp s_2 \cup
-      \{(L_2,@proto)\} \sep \forall l' \in \elem(\ls) \st \exists s' \st
-      l' \bp \{(L_2,@scope)\} \cup s'
+      \{(L_2,@proto)\} \sep \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
     \end{array}\right)
   }
   {\tr P {\js{function(x) \{e\}}} Q}
@@ -566,7 +564,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Named Function)}
     {
       P = \lop \bp s_1 \sep \lfp \bp s_2 \sep
-        \forall l' \in \elem(\ls) \st \exists s' \st l' \bp s' \\
+        \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \\
       Q = \left(\begin{array}{l}
       \exists L_1, L_2, L_3 \st \newobj(L_1, @proto) \sep (L_1, @proto)
       \pointsto \lop \sep \newobj(L_3,@proto,y) \sep (L_3, @proto) \pointsto
@@ -576,8 +574,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \newobj(L_2,@proto,\js{prototype},@scope,@body) \sep {} \\
       \fun(L_2,(L_3:\ls), \js{x}, \js{e}, L_1) \sep \rv \doteq L_2 \sep {} \\
       \lop \bp \{(L_1, @proto)\} \cup s_1 \sep \lfp \bp \{(L_2, @proto)\}
-      \cup s_2 \sep \forall l' \in \elem(\ls) \st \exists s' \st l' \bp
-      \{(L_2,@scope)\} \cup s'
+      \cup s_2 \sep  \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
       \end{array}\right)
     }
     {\tr P {\js{function y(x) \{e\}}} Q}
