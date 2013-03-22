@@ -780,19 +780,20 @@ var RevocableRef = function(ref) {
     \begin{array}{@{\qquad}l}
     \logic{
       % function
-      (R,@body) \mapsto \lambda\js{ref}.\{\dots\} \sep (R,@scope) \mapsto Ls
+      \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls)
         \sep {} \\
       % ar
-      \exists L \st \ls \doteq L:Ls \sep (L,\js{ref}) \mapsto V \sep (L,@this)
-        \mapsto \_ \sep (L,@proto) \mapsto \nil \sep (L,@frozen) \mapsto \false
-        \sep {} \\
-      % defs()
-      (L,\js{protected}) \mapsto \und \sep (L,\js{access}) \mapsto \und \sep
-        (L,\js{kill}) \mapsto \und \sep {} \\
+        \exists L \st \ls \doteq L:Ls \sep {} \\
+        \obj_L\left(
+          \begin{array}{l}
+            \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
+            \js{protected}: \und,\js{access}: \und,\js{kill}: \und %  and defs()
+          \end{array}
+        \right) \sep {} \\
       % bp
       L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\}
     } \\
-    \step{Frame/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
+    \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
     \logic{
       % var *2
       (L, \js{protected}) \pointsto \_ \sep (L, \js{ref}) \pointsto V \sep {} \\
