@@ -827,7 +827,7 @@ var RevocableRef = function(ref) {
       % var
       (L, \js{access}) \pointsto A \sep {} \\
       % fun pre
-      \lop \bp s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_4
+      \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
         \cup \{(A, @proto)\} \sep {} \\
       (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(A,@scope)\}) \sep {} \\
       % fun post
