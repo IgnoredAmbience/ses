@@ -572,7 +572,8 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       (L_3,\js{y}) \pointsto L_2 \sep L_2 \bp \{(L_3,\js{y})\} \sep
       L_3 \bp \{(L_2,@scope)\} \sep
       \newobj(L_2,@proto,\js{prototype},@scope,@body) \sep {} \\
-      \fun(L_2,(L_3:\ls), \js{x}, \js{e}, L_1) \sep \rv \doteq L_2 \sep {} \\
+      \fun(L_2,(L_3:\ls), \js{x}, \js{e}, L_1) \sep \rv \doteq L_2 \sep
+      L_1 \bp \{(L_2, \js{prototype})\} \sep {} \\
       \lop \bp \{(L_1, @proto)\} \cup s_1 \sep \lfp \bp \{(L_2, @proto)\}
       \cup s_2 \sep  \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
       \end{array}\right)
