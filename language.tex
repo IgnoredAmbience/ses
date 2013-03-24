@@ -589,16 +589,24 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       Q = R \sep
       \exists L \st \left(\begin{array}{l}
         \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep {} \\
-        (L, \js{x1}) \pointsto X_1 \sep X_1 \bp s_1 \cup \{(L,\js{x1})\} \sep
-          \dots \sep {} \\
-        (L, \js{xn}) \pointsto X_n \sep X_1 \bp s_1 \cup \{(L,\js{x1})\} \sep {} \\
+        \bigsep_{1 \leq i \leq n} (
+          (L, \js{xi}) \pointsto X_i \sep \bpGen(X_i, L,\js{xi}, s_i)
+        ) \sep {} \\
         (L,@proto) \pointsto \lop \sep \lop \bp s_{op} \cup \{(L,@proto)\} \sep {} \\
         \rv \doteq L \sep L \bp \{\} \\
       \end{array}\right) \\
       \js{x1} \neq \dots \neq \js{xn} \qquad \rv \not\in \fv(P_n)
     }
     {\tr {P_0} {\js{\{x1:e1, ..., xn:en\}}} Q}
-  \vg\gds{Cool. Probably sound. Not perfect yet.}\vg
+  \TODO{Consider situations when $X_n = X_{n+1}$ for bp sets. Also consider if
+    subexpression \js{ei} modifies the $\lop$ bp set (eg, object creation,
+    assigns $\lop$ to $@proto$), since we expressly update
+    it again in $P_n$ (eg: \js{\{x:\{\}\}}). Must ensure we retain inclusion
+    relationships between $s_n$s during iteration}
+  \COMMENT{I \emph{think} the $\lop$ bp should work as specified here - we get
+    the $\lop$ bp set out of $P_n$ as $s_{op}$ - it may have been updated
+    multiple times in the precondition loop.}
+  \vg
 
   \staterule{(Function Call)}
     {
