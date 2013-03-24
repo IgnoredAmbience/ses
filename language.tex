@@ -17,10 +17,10 @@
 
 \newcommand{\gds}[1]{\ifmmode \textbf{**** gds: }\textrm{#1}\textbf{****}\else
   \\\textbf{************************************}\\
-  \textbf{gds: }#1\\\textbf{************************************}\\
+  \tabfill{\textbf{gds: }#1}\\\textbf{************************************}\\
   \fi}
-\newcommand{\FIXME}[1]{~\vg\colorbox{red}{\textbf{FIXME:}}\textrm{ #1}\vg}
-\newcommand{\TODO}[1]{~\vg\colorbox{yellow}{\textbf{TODO:}}\textrm{ #1}\vg}
+\newcommand{\FIXME}[1]{~\vg\colorbox{red}{\textbf{FIXME:}}\tabfill{\textrm{ #1}}\vg}
+\newcommand{\TODO}[1]{~\vg\colorbox{yellow}{\textbf{TODO:}}\tabfill{\textrm{ #1}}\vg}
 
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
 \begin{display}{Syntax of SES values and expressions, $v, e$}
