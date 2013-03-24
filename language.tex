@@ -776,8 +776,12 @@ var RevocableRef = function(ref) {
 
 \begin{displaymath}
   \begin{array}{rcl}
-  \fullobj_{E}(E_1:E_1',\dots,E_n:E_n') &\triangleq& \obj_{E}(E_1:E_1',\dots,E_n:E_n') \sep \newobj_{E}(E_1,\dots,E_n) \\
-  \newfun_{E}(E_1,E_2,E_3,E_4) &\triangleq& \fun_{E}(E_1,E_2,E_3,E_4) \sep \newobj_{E}(@proto, \js{prototype}, @scope, @body)
+  \fullobj_{E}(E_1:E_1',\dots,E_n:E_n') &\triangleq&
+    \obj_{E}(E_1:E_1',\dots,E_n:E_n') \sep \newobj_{E}(E_1,\dots,E_n) \\
+  \newfun_{E}(E_1,E_2,E_3,E_4) &\triangleq& \fun_{E}(E_1,E_2,E_3,E_4) \sep
+    \newobj_{E}(@proto, \js{prototype}, @scope, @body) \\
+  \scopePtrs(Ls, s, s', n) &\triangleq& \bigsep_{0\leq i<\length(Ls)}
+    \lstitem(i,Ls) \bp \lstitem(i,s') \sep \lstitem(i,s') \doteq \lstitem(i,s) \cup n
 \end{array}
 \end{displaymath}
 
@@ -806,97 +810,85 @@ var RevocableRef = function(ref) {
         % bp
           L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
           \lop \bp s_3 \sep \lfp \bp s_4 \sep
-          (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)
+          \scopePtrs(\ls, s', s', \{\})
       } \\
       \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
       \logic{
-        % var *2
-        (L, \js{protected}) \pointsto \_ \sep (L, \js{ref}) \pointsto V \sep {} \\
+        % var(protected,ref), assign(@frozen)
+          \obj_L(\js{protected}: \und, \js{ref}: V, @frozen: \false) \sep {} \\
         % assign
-        (L, @frozen) \pointsto \false \sep
           V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
       } \\
       \js{var protected = ref;} \\
       \logic{
         % var *2
-        (L, \js{protected}) \pointsto V \sep (L, \js{ref}) \pointsto V \sep {} \\
+          \obj_L(\js{protected}: V, \js{ref}: V, @frozen: \false) \sep {} \\
         % assign
-        (L, @frozen) \pointsto \false \sep
           V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
       } \\
       \step{Frame(s)/cons} \\
       \logic{
-        % var
-        (L, \js{access}) \pointsto \_ \sep
-        % assign
-        (L,@frozen) \pointsto \false \sep {} \\
+        % var(access), assign(@frozen)
+          \obj_L(\js{access}: \und, @frozen: \false) \sep {} \\
         % fun pre
         \lop \bp s_3 \sep \lfp \bp s_4 \sep
-          (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)\sep \ls\doteq{L:Ls}
+          \scopePtrs(\ls,s',s',\{\}) \sep \ls\doteq{L:Ls}
       } \\
       \js{var access = function(field) \{$b_a$\};} \\
       \logic{
         \exists A, A_p \st \left(\begin{array}{l}
-        % var
-        (L, \js{access}) \pointsto A \sep {} \\
-        % fun pre
-        \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
-          \cup \{(A, @proto)\} \sep {} \\
-        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(A,@scope)\}) \sep {} \\
-        % fun post
-        \newobj(A_p,@proto) \sep (A_p,@proto) \pointsto \lop \sep {} \\
-        \newobj(A, @proto, \js{prototype}, @scope, @body) \sep {} \\
-        \fun(A, \ls, \js{field}, b_a, A_p) \sep %A \bp \{\} \sep % see below
-          A_p \bp \{(A, \js{prototype})\} \sep {} \\
-        % assign
-        (L,@frozen) \pointsto \false \sep A \bp \{(L, \js{access})\}
+          % var, assign
+          \obj_L(\js{access}: A, @frozen: \false) \sep
+            A \bp \{(L, \js{access})\} \sep {} \\
+          % fun pre
+          \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
+            \cup \{(A, @proto)\} \sep {} \\
+            \scopePtrs(\ls, s', s'_1, \{(A,@scope)\}) \sep {} \\
+          % fun post
+          \fullobj_{A_p}(@proto: \lop) \sep A_p \bp \{(A, \js{prototype})\} \sep {}\\
+          \newfun_A(\ls, \js{field}, b_a, A_p)
         \end{array}\right) \sep \ls\doteq{L:Ls}
       } \\
-      \step{} \\
+      \step{Frames/cons} \\
       \logic{
-        % var
-        (L, \js{kill}) \pointsto \_ \sep
-        % assign
-        (L,@frozen) \pointsto \false \sep {} \\
+        % var(access), assign(@frozen)
+          \obj_L(\js{kill}: \und, @frozen: \false) \sep {} \\
         % fun pre
         \lop \bp s_5 \sep \lfp \bp s_6 \sep
-          (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i) \sep \ls\doteq{L:Ls}
+        \scopePtrs(\ls, s'_1, s'_1,\{\}) \sep \ls\doteq{L:Ls}
       } \\
       \js{var kill = function() \{$b_k$\};} \\
       \logic{
         \exists K, K_p \st
         \left(\begin{array}{l}
-        % var
-        (L, \js{kill}) \pointsto K \sep {} \\
-        % fun pre
-        \lop \bp s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
-          \cup \{(K, @proto)\} \sep {} \\
-        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(K,@scope)\}) \sep {} \\
-        % fun post
-        \newobj(K_p,@proto) \sep (K_p,@proto) \pointsto \lop \sep {} \\
-        \newobj(K, @proto, \js{prototype}, @scope, @body) \sep {} \\
-        \fun(K, \ls, \js{field}, b_k, K_p) \sep %K \bp \{\} \sep % see below
-          K_p \bp \{(K, \js{prototype})\} \sep {} \\
-        % assign
-        (L,@frozen) \pointsto \false \sep K \bp \{(L, \js{kill})\}
+          % var, assign
+          \obj_L(\js{kill}: K, @frozen: \false) \sep
+            K \bp \{(L, \js{kill})\} \sep {} \\
+          % fun pre
+          \lop \bp s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
+            \cup \{(K, @proto)\} \sep {} \\
+          \scopePtrs(\ls, s'_1, s'_2, \{(K,@scope)\}) \sep {} \\
+          % fun post
+          \fullobj_{K_p}(@proto: \lop) \sep K_p \bp \{(K, \js{prototype})\} \sep {} \\
+          \newfun_K(\ls, \js{field}, b_k, K_p)
         \end{array}\right)\sep \ls\doteq{L:Ls}
       } \\
-      \step{} \\
+      \step{Frame} \\
       \logic{
-        (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
-        A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9
+        \obj_L(\js{access}:A, \js{kill}:K) \sep
+        A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9 \sep \ls \doteq L : Ls
       } \\
       \js{return \{access: access, kill: kill\};} \\
       \logic{
         \exists O \st
         \left(\begin{array}{l}
-        (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
-        \newobj(O, @proto, \js{access}, \js{kill}) \sep (O,\js{access}) \pointsto
-          A \sep (O,\js{kill}) \pointsto K \sep {} \\
-        A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
-          \sep \lop \bp s_9 \cup \{(O,@proto)\} \sep {} \\
-        (O,@proto) \pointsto \lop \sep O \bp \{\} \sep \rv \doteq O
+          \obj_L(\js{access}:A, \js{kill}:K) \sep {} \\
+          \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
+          A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
+            \sep \lop \bp s_9 \cup \{(O,@proto)\} \sep {} \\
+          O \bp \{\} \sep \rv \doteq O
         \end{array}\right)
+        \sep \ls \doteq L : Ls
       } \\
       \step{} \\
       \logic{
