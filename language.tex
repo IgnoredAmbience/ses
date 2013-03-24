@@ -388,10 +388,12 @@ frozen). This choice may need to be reviewed at a later point.
     \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
     \false}{Boolean formulae}
     \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulae}
-    \asrtline{\upd P \pipe P \boxwand Q}{Global hypothesis formulae}
+    \asrtline{\bigsep_{x \in \T{S}} P(x)}{Iterative $\sep$}
+    \asrtline{P \boxwand Q}{Global `hypothesis' formulae}
     \asrtline{(E,E) \pointsto E \pipe \lemp}{SES formulae}
     \asrtline{E \bp E}{Backpointer formula}
     \asrtline{E = E}{Expression equality}
+    \asrtline{\forall X \st P \pipe \exists X \st P}{First-order formulae}
   \end{array}$
 \end{display}
 
@@ -426,6 +428,13 @@ frozen). This choice may need to be reviewed at a later point.
 \asssat{E_1 \bp E_2}{\forall (l,x) \in \dom(h_g) \st h_g(l,x) = \evalle{E_1}}
   {\impl (l,x) \in \evalle{E_2}}
 \asssat{\lemp}{h = \emp}{}
+\asssat{\exists\V X \st P}{\exists \V{v} \st h,h_g,L,[{\env} | \V X\takes \V{v}]
+  \satisfies P}{}
+\asssat{\forall\V X \st P}{\forall \V{v} \st h,h_g,L,[{\env} | \V X\takes \V{v}]
+  \satisfies P}{}
+\asssat{\bigsep_{x\in\{\}}P(x)}{h,h_g,L,{\env}\satisfies\lemp}{}
+\asssat{\bigsep_{x\in\T{set}}P(x)}{y\in\T{set} \land h,h_g,L,{\env} \satisfies
+  P(y)\sep(\bigsep_{x\in(\T{set}\setminus y)}P(x))}{}
 \end{display}
 
 \FIXME{Give $\bp$ a footprint to prevent contradictory assertions/implication}
