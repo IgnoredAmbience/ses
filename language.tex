@@ -1,5 +1,5 @@
 \documentclass[a4paper]{article}
-\usepackage{color}
+\usepackage[usenames,dvipsnames,svgnames,x11names]{xcolor}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{stmaryrd}
@@ -16,12 +16,11 @@
 
 \section{SES Syntax and Description}
 
-\newcommand{\gds}[1]{\ifmmode \textbf{**** gds: }\textrm{#1}\textbf{****}\else
-  \\\textbf{************************************}\\
-  \tabfill{\textbf{gds: }#1}\\\textbf{************************************}\\
-  \fi}
-\newcommand{\FIXME}[1]{~\vg\colorbox{red}{\textbf{FIXME:}}\tabfill{\textrm{ #1}}\vg}
-\newcommand{\TODO}[1]{~\vg\colorbox{yellow}{\textbf{TODO:}}\tabfill{\textrm{ #1}}\vg}
+\newcommand{\editlabel}[3]{~\vg\colorbox{#2}{\textbf{#1:}}\tabfill{\textrm{ #3}}\\}
+\newcommand{\FIXME}[1]{\editlabel{FIXME}{red}{#1}}
+\newcommand{\TODO}[1]{\editlabel{TODO}{yellow}{#1}}
+\newcommand{\COMMENT}[1]{\editlabel{COMMENT}{YellowGreen}{#1}}
+\newcommand{\gds}[1]{\editlabel{GDS}{Orange}{#1}}
 
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
 \begin{display}{Syntax of SES values and expressions, $v, e$}
