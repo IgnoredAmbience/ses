@@ -791,119 +791,118 @@ var RevocableRef = function(ref) {
   \begin{array}{l}
     \js{var RevocableRef = function(ref) \{}\\
     \begin{array}{@{\qquad}l}
-    \logic{
-      % function
-      \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls)
-        \sep {} \\
-      % ar
-        \exists L \st \ls \doteq L:Ls \sep {} \\
-        \obj_L\left(
-          \begin{array}{l}
-            \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
-            \js{protected}: \und,\js{access}: \und,\js{kill}: \und %  and defs()
-          \end{array}
-        \right) \sep {} \\
-      % bp
-        L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
+      \logic{
+        % function
+        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls)
+          \sep {} \\
+        % ar
+          \exists L \st \ls \doteq L:Ls \sep {} \\
+          \obj_L\left(
+            \begin{array}{l}
+              \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
+              \js{protected}: \und,\js{access}: \und,\js{kill}: \und %  and defs()
+            \end{array}
+          \right) \sep {} \\
+        % bp
+          L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
+          \lop \bp s_3 \sep \lfp \bp s_4 \sep
+          (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)
+      } \\
+      \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
+      \logic{
+        % var *2
+        (L, \js{protected}) \pointsto \_ \sep (L, \js{ref}) \pointsto V \sep {} \\
+        % assign
+        (L, @frozen) \pointsto \false \sep
+          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
+      } \\
+      \js{var protected = ref;} \\
+      \logic{
+        % var *2
+        (L, \js{protected}) \pointsto V \sep (L, \js{ref}) \pointsto V \sep {} \\
+        % assign
+        (L, @frozen) \pointsto \false \sep
+          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
+      } \\
+      \step{Frame(s)/cons} \\
+      \logic{
+        % var
+        (L, \js{access}) \pointsto \_ \sep
+        % assign
+        (L,@frozen) \pointsto \false \sep {} \\
+        % fun pre
         \lop \bp s_3 \sep \lfp \bp s_4 \sep
-        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)
-    } \\
-    \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
-    \logic{
-      % var *2
-      (L, \js{protected}) \pointsto \_ \sep (L, \js{ref}) \pointsto V \sep {} \\
-      % assign
-      (L, @frozen) \pointsto \false \sep
-        V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
-    } \\
-    \js{var protected = ref;} \\
-    \logic{
-      % var *2
-      (L, \js{protected}) \pointsto V \sep (L, \js{ref}) \pointsto V \sep {} \\
-      % assign
-      (L, @frozen) \pointsto \false \sep
-        V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
-    } \\
-    \step{Frame(s)/cons} \\
-    \logic{
-      % var
-      (L, \js{access}) \pointsto \_ \sep
-      % assign
-      (L,@frozen) \pointsto \false \sep {} \\
-      % fun pre
-      \lop \bp s_3 \sep \lfp \bp s_4 \sep
-        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)\sep \ls\doteq{L:Ls}
-    } \\
-    \js{var access = function(field) \{$b_a$\};} \\
-    \logic{
-      \exists A, A_p \st \left(\begin{array}{l}
-      % var
-      (L, \js{access}) \pointsto A \sep {} \\
-      % fun pre
-      \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
-        \cup \{(A, @proto)\} \sep {} \\
-      (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(A,@scope)\}) \sep {} \\
-      % fun post
-      \newobj(A_p,@proto) \sep (A_p,@proto) \pointsto \lop \sep {} \\
-      \newobj(A, @proto, \js{prototype}, @scope, @body) \sep {} \\
-      \fun(A, \ls, \js{field}, b_a, A_p) \sep %A \bp \{\} \sep % see below
-        A_p \bp \{(A, \js{prototype})\} \sep {} \\
-      % assign
-      (L,@frozen) \pointsto \false \sep A \bp \{(L, \js{access})\}
-      \end{array}\right) \sep \ls\doteq{L:Ls}
-    } \\
-    \step{} \\
-    \logic{
-      % var
-      (L, \js{kill}) \pointsto \_ \sep
-      % assign
-      (L,@frozen) \pointsto \false \sep {} \\
-      % fun pre
-      \lop \bp s_5 \sep \lfp \bp s_6 \sep
-        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i) \sep \ls\doteq{L:Ls}
-    } \\
-    \js{var kill = function() \{$b_k$\};} \\
-    \logic{
-      \exists K, K_p \st
-      \left(\begin{array}{l}
-      % var
-      (L, \js{kill}) \pointsto K \sep {} \\
-      % fun pre
-      \lop \bp s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
-        \cup \{(K, @proto)\} \sep {} \\
-      (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(K,@scope)\}) \sep {} \\
-      % fun post
-      \newobj(K_p,@proto) \sep (K_p,@proto) \pointsto \lop \sep {} \\
-      \newobj(K, @proto, \js{prototype}, @scope, @body) \sep {} \\
-      \fun(K, \ls, \js{field}, b_k, K_p) \sep %K \bp \{\} \sep % see below
-        K_p \bp \{(K, \js{prototype})\} \sep {} \\
-      % assign
-      (L,@frozen) \pointsto \false \sep K \bp \{(L, \js{kill})\}
-      \end{array}\right)\sep \ls\doteq{L:Ls}
-    } \\
-    \step{} \\
-    \logic{
-      (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
-      A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9
-    } \\
-    \js{return \{access: access, kill: kill\};} \\
-    \logic{
-      \exists O \st
-      \left(\begin{array}{l}
-      (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
-      \newobj(O, @proto, \js{access}, \js{kill}) \sep (O,\js{access}) \pointsto
-        A \sep (O,\js{kill}) \pointsto K \sep {} \\
-      A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
-        \sep \lop \bp s_9 \cup \{(O,@proto)\} \sep {} \\
-      (O,@proto) \pointsto \lop \sep O \bp \{\} \sep \rv \doteq O
-      \end{array}\right)
-    } \\
-    \step{} \\
-    \logic{
+          (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i)\sep \ls\doteq{L:Ls}
+      } \\
+      \js{var access = function(field) \{$b_a$\};} \\
+      \logic{
+        \exists A, A_p \st \left(\begin{array}{l}
+        % var
+        (L, \js{access}) \pointsto A \sep {} \\
+        % fun pre
+        \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
+          \cup \{(A, @proto)\} \sep {} \\
+        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(A,@scope)\}) \sep {} \\
+        % fun post
+        \newobj(A_p,@proto) \sep (A_p,@proto) \pointsto \lop \sep {} \\
+        \newobj(A, @proto, \js{prototype}, @scope, @body) \sep {} \\
+        \fun(A, \ls, \js{field}, b_a, A_p) \sep %A \bp \{\} \sep % see below
+          A_p \bp \{(A, \js{prototype})\} \sep {} \\
+        % assign
+        (L,@frozen) \pointsto \false \sep A \bp \{(L, \js{access})\}
+        \end{array}\right) \sep \ls\doteq{L:Ls}
+      } \\
+      \step{} \\
+      \logic{
+        % var
+        (L, \js{kill}) \pointsto \_ \sep
+        % assign
+        (L,@frozen) \pointsto \false \sep {} \\
+        % fun pre
+        \lop \bp s_5 \sep \lfp \bp s_6 \sep
+          (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i) \sep \ls\doteq{L:Ls}
+      } \\
+      \js{var kill = function() \{$b_k$\};} \\
+      \logic{
+        \exists K, K_p \st
+        \left(\begin{array}{l}
+        % var
+        (L, \js{kill}) \pointsto K \sep {} \\
+        % fun pre
+        \lop \bp s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
+          \cup \{(K, @proto)\} \sep {} \\
+        (\bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \cup \{(K,@scope)\}) \sep {} \\
+        % fun post
+        \newobj(K_p,@proto) \sep (K_p,@proto) \pointsto \lop \sep {} \\
+        \newobj(K, @proto, \js{prototype}, @scope, @body) \sep {} \\
+        \fun(K, \ls, \js{field}, b_k, K_p) \sep %K \bp \{\} \sep % see below
+          K_p \bp \{(K, \js{prototype})\} \sep {} \\
+        % assign
+        (L,@frozen) \pointsto \false \sep K \bp \{(L, \js{kill})\}
+        \end{array}\right)\sep \ls\doteq{L:Ls}
+      } \\
+      \step{} \\
+      \logic{
+        (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
+        A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9
+      } \\
+      \js{return \{access: access, kill: kill\};} \\
+      \logic{
+        \exists O \st
+        \left(\begin{array}{l}
+        (L, \js{access}) \pointsto A \sep (L, \js{kill}) \pointsto K \sep {} \\
+        \newobj(O, @proto, \js{access}, \js{kill}) \sep (O,\js{access}) \pointsto
+          A \sep (O,\js{kill}) \pointsto K \sep {} \\
+        A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
+          \sep \lop \bp s_9 \cup \{(O,@proto)\} \sep {} \\
+        (O,@proto) \pointsto \lop \sep O \bp \{\} \sep \rv \doteq O
+        \end{array}\right)
+      } \\
+      \step{} \\
+      \logic{
 
-    }
-  \end{array}
-\\
+      }
+    \end{array} \\
     \js{\}}
   \end{array}
 \]
@@ -912,31 +911,33 @@ var RevocableRef = function(ref) {
 \[
   \begin{array}{l}
     \js{var kill = function() \{} \\
-    \logic{
-      (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
-      \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep {} \\
-      (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep L' \bp \{\}
-    } \\
-    \step{} \\
-    \logic{
-      % var
-      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
-      (L, \js{protected}) \mapsto V \sep
-      % assign
-      (L,@frozen) \mapsto \false
-    } \\
-    \js{protected = null;} \\
-    \logic{
-      % var
-      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
-      (L, \js{protected}) \mapsto \nil \sep
-      % assign
-      (L,@frozen) \mapsto \false \sep \rv \doteq \nil
-    } \\
-    \step{} \\
-    \logic{
+    \begin{array}{@{\qquad}l}
+      \logic{
+        (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep {} \\
+        (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep L' \bp \{\}
+      } \\
+      \step{} \\
+      \logic{
+        % var
+        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+        (L, \js{protected}) \mapsto V \sep
+        % assign
+        (L,@frozen) \mapsto \false
+      } \\
+      \js{protected = null;} \\
+      \logic{
+        % var
+        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+        (L, \js{protected}) \mapsto \nil \sep
+        % assign
+        (L,@frozen) \mapsto \false \sep \rv \doteq \nil
+      } \\
+      \step{} \\
+      \logic{
 
-    } \\
+      } \\
+    \end{array} \\
     \js{\}}
   \end{array}
 \]
@@ -945,37 +946,39 @@ var RevocableRef = function(ref) {
 \[
   \begin{array}{l}
     \js{var access = function(field) \{} \\
-    \logic{
-      (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep (A, @scope) \mapsto L:Ls \sep {} \\
-      \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep
-      (L', \js{field}) \mapsto X \sep {} \\
-      (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep {} \\
-      L' \bp \{\} \sep X \bp s \cup \{(L', \js{field})\}
-    } \\
-    \step{} \\
-    \logic{
-      % var protected
-      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
-      (L, \js{protected}) \mapsto P \sep
-      % comp access
-      P \not\doteq \nil \sep P \dotin \loc \sep {} \\
-      % var field
-      (L',\js{field}) \mapsto X \sep X \dotin \uvars
-    } \\
-    \js{return protected[field];} \\
-    \logic{
-      % var protected
-      (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
-      (L, \js{protected}) \mapsto P \sep
-      % comp access
-      P \not\doteq \nil \sep P \dotin \loc \sep {} \\
-      % var field
-      (L',\js{field}) \mapsto X \sep \rv \doteq \fld{P}{X}
-    } \\
-    \step{} \\
-    \logic{
+    \begin{array}{@{\qquad}l}
+      \logic{
+        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep (A, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep
+        (L', \js{field}) \mapsto X \sep {} \\
+        (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep {} \\
+        L' \bp \{\} \sep X \bp s \cup \{(L', \js{field})\}
+      } \\
+      \step{} \\
+      \logic{
+        % var protected
+        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+        (L, \js{protected}) \mapsto P \sep
+        % comp access
+        P \not\doteq \nil \sep P \dotin \loc \sep {} \\
+        % var field
+        (L',\js{field}) \mapsto X \sep X \dotin \uvars
+      } \\
+      \js{return protected[field];} \\
+      \logic{
+        % var protected
+        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+        (L, \js{protected}) \mapsto P \sep
+        % comp access
+        P \not\doteq \nil \sep P \dotin \loc \sep {} \\
+        % var field
+        (L',\js{field}) \mapsto X \sep \rv \doteq \fld{P}{X}
+      } \\
+      \step{} \\
+      \logic{
 
-    } \\
+      } \\
+    \end{array} \\
     \js{\}}
   \end{array}
 \]
