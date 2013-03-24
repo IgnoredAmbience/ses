@@ -616,7 +616,8 @@ produced, it should be noted that the meaning is subtly different (in that $h'
           (F_2, @body) \pointsto \lambda X.\js{e3} \sep (F_2, @scope) \pointsto
           Ls_2
       \end{array}\right) \\
-      \tr {R_1} {\js{e2}} {R_2 \sep \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
+      \tr {R_1} {\js{e2}} {R_2 \sep T \bp s \sep \bpGen(V_2,\_,\_,s') \sep
+        \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
       R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
       R_3 = \left(\begin{array}{l}
           R_2 \sep \exists L \st \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
@@ -630,7 +631,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \ls \notin \fv(Q) \cup \fv(R_2)
     }
     {\tr P {\js{e1(e2)}} {\exists L \st Q \sep \ls \doteq Ls_3}}
-  \vg \gds{Do you want $T\bp s$ in the precondition?}
+  \vg
 
   \staterule{(New)}
     {}
