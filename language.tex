@@ -826,7 +826,7 @@ var RevocableRef = function(ref) {
         % assign
           V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
       } \\
-      \step{Frame(s)/cons} \\
+      \step{Frames/cons} \\
       \logic{
         % var(access), assign(@frozen)
           \obj_L(\js{access}: \und, @frozen: \false) \sep {} \\
@@ -873,7 +873,7 @@ var RevocableRef = function(ref) {
           \newfun_K(\ls, \js{field}, b_k, K_p)
         \end{array}\right)\sep \ls\doteq{L:Ls}
       } \\
-      \step{Frame} \\
+      \step{Frames} \\
       \logic{
         \obj_L(\js{access}:A, \js{kill}:K) \sep
         A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9 \sep \ls \doteq L : Ls
