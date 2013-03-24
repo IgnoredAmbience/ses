@@ -7,6 +7,7 @@
 \usepackage{xspace}
 \usepackage{fullpage}
 \usepackage{hyperref}
+\usepackage{etoolbox}
 \usepackage{separationlogic}
 \usepackage[english]{babel}
 \usepackage[fixlanguage]{babelbib}
@@ -394,42 +395,37 @@ frozen). This choice may need to be reviewed at a later point.
   \end{array}$
 \end{display}
 
+\newcommand{\assaxiom}[1]{\>$h,h_g,L,\env \satisfies #1$}
+\newcommand{\asssat}[3]{\assaxiom{#1}\>$\iff$\>$#2$\\%
+\ifblank{#3}{}{\>\>\>\quad$#3$\\}}
 \begin{display}{Assertion satisfaction relation}
-  $\begin{array}{lcl}
-    h,h_g,L,\env \satisfies \true \\
-    h,h_g,L,\env \not\satisfies \false \\
-    h,h_g,L,\env \satisfies P \land Q & \iff & (h,h_g,L,\env \satisfies
-      P) \land (h,h_g,L,\env \satisfies Q) \\
-    h,h_g,L,\env \satisfies P \lor Q & \iff & (h,h_g,L,\env \satisfies
-      P) \lor (h,h_g,L,\env \satisfies Q) \\
-    h,h_g,L,\env \satisfies \lnot P & \iff & \lnot(h,h_g,L,\env
-      \satisfies P)\\
-    h,h_g,L,\env \satisfies P \sep Q & \iff & \exists h_1,h_2 \st h \equiv h_1
-      \sep h_2 \land (h_1,h_g,L,\env \satisfies P) \land (h_2,h_g,L,\env
-      \satisfies Q) \\
-    h,h_g,L,\env \satisfies P \sepish Q & \iff & \exists h_1,h_2,h_3 \st
-      h \equiv h_1 \disju h_2 \disju h_3 \land {} \\
-      && (h_1 \disju h_3, h_g, L, \env \satisfies P) \land
-      (h_2 \disju h_3, h_g, L, \env \satisfies Q) \\
-    h,h_g,L,\env \satisfies P \wand Q & \iff & \forall h' \st
-      (h',h_g,L,\env \satisfies P) \land h \disj h' \land h' \subseteq h_g  \\
-      & & \impl (h \disju h', h_g, L, \env \satisfies Q) \\
-    %h,h_g,L,\env \satisfies \upd P & \iff & h, h_g[h], L, \env \satisfies P \\
-    %h,h_g,L,\env \satisfies P?Q & \iff & h, h_g[h], L, \env \satisfies P \\
-    %P \boxwand Q & \triangleq & P \wand P ? Q \\
-    h,h_g,L,\env \satisfies P \boxwand Q & \iff &
-      \forall h' \st (h',h_g[h'],L,\env \satisfies P) \land h \disj h' \\
-      & & \impl (h \disju h', h_g[h'], L, \env \satisfies Q) \\
-    \TODO{Pull this line out to definitions}
-      & & \text{\emph{(Where $h_g[h']$ is function-update notation, to ensure
-          consistency)}} \\
-    h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3 & \iff &
-      h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto \evalle{E_3} \\
-    h,h_g,L,\env \satisfies E_1 \bp E_2 & \iff & \forall (l,x) \in \dom(h_g) \st
-      h_g(l,x) = \evalle{E_1} \\
-      & & \impl (l,x) \in \evalle{E_2} \\
-    h,h_g,L,\env \satisfies \lemp & \iff & h = \emp
-  \end{array}$
+\hspace{1.5em} \= $h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3$ \= $\iff$ \= \kill
+
+\assaxiom{\true} \\
+%    h,h_g,L,\env \not\satisfies \false \\
+\asssat{P \land Q}{(h,h_g,L,\env \satisfies P) \land (h,h_g,L,\env \satisfies Q)}{}
+\asssat{P \lor Q}{(h,h_g,L,\env \satisfies P) \lor (h,h_g,L,\env \satisfies Q)}{}
+\asssat{\lnot P}{\lnot(h,h_g,L,\env \satisfies P)}{}
+\asssat{P \sep Q}{\exists h_1,h_2 \st h \equiv h_1 \sep h_2 \land{}}
+  {(h_1,h_g,L,\env \satisfies P) \land (h_2,h_g,L,\env \satisfies Q)}
+\asssat{P \sepish Q}{\exists h_1,h_2,h_3 \st
+    h \equiv h_1 \disju h_2 \disju h_3 \land{}}
+  {(h_1 \disju h_3, h_g, L, \env \satisfies P) \land
+    (h_2 \disju h_3, h_g, L, \env \satisfies Q)}
+\asssat{P \wand Q}{\forall h' \st (h',h_g,L,\env \satisfies P) \land h \disj h'
+    \land h' \subseteq h_g}
+  {\impl (h \disju h', h_g, L, \env \satisfies Q)}
+%h,h_g,L,\env \satisfies \upd P}{h, h_g[h], L, \env \satisfies P }\\
+%h,h_g,L,\env \satisfies P?Q}{h, h_g[h], L, \env \satisfies P }\\
+%P \boxwand Q & \triangleq & P \wand P ? Q }\\
+\asssat{P \boxwand Q}{\forall h' \st (h',h_g[h'],L,\env \satisfies P)
+    \land h \disj h'}
+  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)}
+\asssat{(E_1,E_2) \pointsto E_3}{h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto
+  \evalle{E_3}}{}
+\asssat{E_1 \bp E_2}{\forall (l,x) \in \dom(h_g) \st h_g(l,x) = \evalle{E_1}}
+  {\impl (l,x) \in \evalle{E_2}}
+\asssat{\lemp}{h = \emp}{}
 \end{display}
 
 \FIXME{Give $\bp$ a footprint to prevent contradictory assertions/implication}
