@@ -175,6 +175,7 @@
 
 \newcommand{\ratio}{.375}
 
+% TODO: Find a way to swap out the tabbing env - it's annoying/misused
 \newenvironment{display}[1]{\vspace{-0.5ex}\smallish
 \begin{tabbing}
     \hspace{1.5em} \= \hspace{\ratio\linewidth-1.5em} \= \hspace{1.5em} \= \kill
@@ -182,3 +183,14 @@
     \hbra\\[-.8ex]
   }{\\[-.8ex]\hket
   \end{tabbing}\vspace{-1ex}}
+
+% Command to wrap in tabbing/display environment
+% http://newsgroups.derkeiler.com/Archive/Comp/comp.text.tex/2006-02/msg00282.html
+\makeatletter
+\newcommand\tabfill[1]{%
+\dimen@\linewidth%
+\advance\dimen@\@totalleftmargin%
+\advance\dimen@-\dimen\@curtab%
+%\parbox[t]\dimen@{#1\ifhmode\strut\fi}%
+\parbox[t]\dimen@{\raggedright #1\ifhmode\strut\fi}%
+}
