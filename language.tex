@@ -135,17 +135,11 @@ problematic because functions can easily be aliased off of the object on which
 they appear to be defined.
 
 \paragraph{Restricted evaluation} Parse the first given expression as SES code.
-A new scope chain is prepared, its root is an activation record which
-initializes any variables declared in the parsed source.
-\FIXME{This isn't safe for our no-prototype chain requirement. Also, the
-  imports aren't present in the restricted-global this expression. Consider
-  change to copy fields across to AR}
-\gds{I don't understand any of this fixme. I do think you've got the activation
-  records the wrong way around in the description below though. The imports
-  should be in the most global object. The untrusted code can choose to override
-  the imports if it wishes.}
-The object specified by the second parameter (the \emph{imports} to the
-restricted environment) is then appended.
+A new scope chain is prepared, its root is the
+object specified by the second parameter, the \emph{imports} to the restricted
+environment.
+An activation record which initializes any variables declared in the parsed
+source is then appended. This may cause imported objects to be shadowed.
 The return value of the restricted evaluation statement is the same as that of
 the final statement of the source to be executed.
 
@@ -309,13 +303,12 @@ via user-defined fields from the given object.
   {H,L,\js{this} \evalsto H,l'}
 \vg
 
-  \FIXME{See description comment}
   \staterule{(Restricted evaluation)}
   {H,L,e_1 \evalsto H_1,v \qquad
    \parse(v) = e \\
    H_2 = H_1 \sep l \pointsto \{@this:l, @proto:\nil\} * \defs(x, l, e) \\
    H_2,L,e_2 \evalsto H_3, l' \\
-   H_3, l' \cons [l], e \evalsto H',v }
+   H_3, l \cons [l'], e \evalsto H',v }
   {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
 \vg
 
