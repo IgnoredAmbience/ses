@@ -906,28 +906,28 @@ var RevocableRef = function(ref) {
     \begin{array}{@{\qquad}l}
       \logic{
         (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
-        \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep {} \\
-        (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep L' \bp \{\}
+        \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
+        \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
+        \obj_L(\js{protected}: V, @frozen: \false)
       } \\
-      \step{} \\
+      \step{Frame/exists} \\
       \logic{
-        % var
-        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
-        (L, \js{protected}) \mapsto V \sep
-        % assign
-        (L,@frozen) \mapsto \false
+        obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
+        obj_L(\js{protected}: V, @frozen: \false) \sep {} \\
+        \ls \doteq L':L:Ls
       } \\
       \js{protected = null;} \\
       \logic{
-        % var
-        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
-        (L, \js{protected}) \mapsto \nil \sep
-        % assign
-        (L,@frozen) \mapsto \false \sep \rv \doteq \nil
+        obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
+        obj_L(\js{protected}: \nil, @frozen: \false) \sep {} \\
+        \ls \doteq L':L:Ls \sep \rv \doteq \nil
       } \\
-      \step{} \\
+      \step{Frame/exists} \\
       \logic{
-
+        (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
+        \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
+        \obj_L(\js{protected}: \nil, @frozen: \false) \sep \rv \doteq \nil
       } \\
     \end{array} \\
     \js{\}}
@@ -940,43 +940,49 @@ var RevocableRef = function(ref) {
     \js{var access = function(field) \{} \\
     \begin{array}{@{\qquad}l}
       \logic{
-        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep (A, @scope) \mapsto L:Ls \sep {} \\
-        \exists L' \st \ls \doteq L' : L : Ls \sep (L',@this) \mapsto \_ \sep
-        (L', \js{field}) \mapsto X \sep {} \\
-        (L',@proto) \mapsto \nil \sep (L',@frozen) \mapsto \false \sep {} \\
-        L' \bp \{\} \sep X \bp s \cup \{(L', \js{field})\}
+        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
+          (A, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep
+          L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
+        \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
+          \sep {} \\
+        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+          \sep X \dotin \uvars
       } \\
-      \step{} \\
+      \step{Frame/exists} \\
       \logic{
-        % var protected
-        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
-        (L, \js{protected}) \mapsto P \sep
-        % comp access
-        P \not\doteq \nil \sep P \dotin \loc \sep {} \\
-        % var field
-        (L',\js{field}) \mapsto X \sep X \dotin \uvars
+        \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
+        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+          \sep {} \\
+        X \dotin \uvars \sep \ls \doteq L':L:Ls
       } \\
       \js{return protected[field];} \\
       \logic{
-        % var protected
-        (L',\js{protected}) \mapsto \none \sep (L',@proto) \mapsto \nil \sep {} \\
+        \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
         (L, \js{protected}) \mapsto P \sep
-        % comp access
         P \not\doteq \nil \sep P \dotin \loc \sep {} \\
-        % var field
-        (L',\js{field}) \mapsto X \sep \rv \doteq \fld{P}{X}
+        X \dotin \uvars \sep \ls \doteq L':L:Ls \sep \rv \doteq \fld{P}{X}
       } \\
-      \step{} \\
+      \step{Frame/exists} \\
       \logic{
-
+        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
+          (A, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep
+          L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
+        \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
+          \sep {} \\
+        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+          \sep X \dotin \uvars \sep \rv \doteq \fld{P}{X}
       } \\
     \end{array} \\
     \js{\}}
   \end{array}
 \]
 
-
-Proof derivations are given for the declaration, and each function call.
+\TODO{Extend to writing to objects via the proxy. Take careful note of
+  \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
+{Nov-11 es-discuss thread} (theft of \js{protected} by using \js{\_\_proto\_\_}
+or through redefining/hiding a \emph{trusted prototypical} method (eg on Array))}
 
 \subsection{Membrane}
 A Membrane is a transitive Revocable Reference. In addition to the standard
