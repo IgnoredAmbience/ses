@@ -173,7 +173,25 @@ via user-defined fields from the given object.
   \end{array}$
 \end{display}
   \TODO{Some way of looping through (only user-def) fields on \auxDef}
-  \FIXME{Need \scope, \proto, \getValue, \pickThis}
+  \FIXME{Need \pickThis}
+
+  \begin{display}{Scope resolution: $\scope(H,l,x)$.}
+    \jaxiom{\scope(H,{\emptylist},\njs{x})}{\nil}{}\vg
+    \jrule{\scope(H,l\cons L,\njs{x})}{l}{\proto(H,l,\njs{x}) \neq \nil}\rsep
+    \jrule{\scope(H,l\cons L,\njs{x})}{\scope(H,L,\njs{x})}{\proto(H,l,\njs{x}) = \nil}
+  \end{display}
+  %
+  \begin{display}{Prototype resolution: $\proto(H,l,x)$.}
+    \jaxiom{\proto(H,\nil,\njs{x})}{\nil}{}\vg
+    \jrule{\proto(H,l,\njs{x})}{l}{(l,\njs{x}) \in\dom(H)}\rsep
+    \jrule{\proto(H,l,\njs{x})}{\proto(H,l',\njs{x})}{(l,\njs{x}) \not\in\dom(H) \qquad H(l,@proto) = l'}
+  \end{display}
+  %
+  \begin{display}{Dereferencing values: $\getValue(H,r)$.}
+    \jrule{\getValue(H,\njs{r})}{\njs{r}}{\njs{r}\neq \fld{l}{\js{x}}}~
+    \jrule{\getValue(H,\fld{l}{\js{x}})}{\und}{\proto(H,l,\js{x}) = \nil\\ l\neq \nil}~
+    \jrule{\getValue(H,\fld{l}{\js{x}})}{H(l',\js{x})}{\proto(H,l,\js{x}) = l'\\ l\neq \nil}
+  \end{display}
 
 \begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
   \FIXME{Use $\gevalsto$}
