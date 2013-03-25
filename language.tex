@@ -306,9 +306,9 @@ via user-defined fields from the given object.
   \staterule{(Restricted evaluation)}
   {H,L,e_1 \evalsto H_1,v \qquad
    \parse(v) = e \\
-   H_2 = H_1 \sep l \pointsto \{@this:l, @proto:\nil\} * \defs(x, l, e) \\
-   H_2,L,e_2 \evalsto H_3, l' \\
-   H_3, l \cons [l'], e \evalsto H',v }
+   H_1,L,e_2 \evalsto H_2, l \\
+   H_3 = H_2 \sep l' \pointsto \{@this:l, @proto:\nil\} * \defs(x, l', e) \\
+   H_3, l' \cons [l], e \evalsto H',v }
   {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
 \vg
 
@@ -623,7 +623,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
           R_2 \sep \exists L \st \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
           \sep (L, @this) \pointsto T \sep (L, @proto) \pointsto \nil \sep
           \defs(X,L,\js{e3}) \sep {} \\
-          \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e3}) \sep
+          \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e3})) \sep
           L \bp \{\} \sep T \bp \{(L,@this)\} \cup s \sep
           \bpGen(V_2, L, X, s')
       \end{array}\right) \\
@@ -636,12 +636,26 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(New)}
     {}
     {}
-  \vg
+%  \vg
 
   % SES-specific
+  \COMMENT{Work in progress}
   \staterule{(Restricted evaluation)}
-    {}
-    {}
+    {
+      \tr{P}{\js{e1}}{R_1 \sep \rv \doteq V_1} \\
+      R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \text{String} \\ %% FIXME: STRING
+      \parse(V_2) = \js{e3} \\
+      \tr{R_1}{\js{e2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls \sep \gv \doteq g} \\
+      R_2 = \left(\begin{array}{l}
+        S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep {} \\
+        \exists L \st R_3 \sep
+        \newobj_L(@proto,@this,\vardecls(...,\js{e3})) \sep {} \\
+        \obj_L(@this: V_2, @proto: \nil) \sep \defs(...,\js{e3}) \sep {} \\
+      \end{array}\right) \\
+      R_3 = \ls \sep L:[V_2] \sep \gv \doteq V_2 \\
+      \tr{R_2}{\js{e3}}{\exists L \st Q \sep R_3}
+    }
+    {\tr{P}{\js{reval(e1,e2)}}{\exists L \st Q \sep \ls \doteq Ls \sep \gv \doteq g}}
   \vg
 
   \staterule{(Freeze)}
@@ -748,33 +762,6 @@ var RevocableRef = function(ref) {
 \end{verbatim}
 
 Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
-
-% Proof for declaration of RevocableRef is incomplete, and possibly wrong
-%\[
-%  \begin{array}{l}
-%    \logic{
-%      P_1 = \scope(Ls_1, \ls, \js{RevocableRef}, L_1) \sepish \getValue(Ls_2,
-%      \fld{L_1}{\js{RevocableRef}}, V_1) \\
-%      \tr{P_1}{\js{RevocableRef}}{P_1 \sep \rv\doteq\fld{L_1}{\js{RevocableRef}}}\\
-%      \\
-%      P_2 = \exists L_3, L_4 \st \lop \bp s_1 \cup \{(L_3,@proto)\} \sep \lfp \bp s_2 \cup
-%      \{(L_4,@proto)\} \sep \forall l' \in elem(\ls) \st l' \bp \{(L_4,@scope)\}
-%      \cup s' \\
-%      S = \exists L_3,L_4 \st \newobj(L_3,@proto) \sep (L_3,@proto) \pointsto \lop
-%      \sep \newobj(L_4,@proto, \js{prototype}, @scope, @body) \sep {}\\
-%      L_4 \bp \{\} \sep \fun(L_4, \ls, x, e, L_3) \sep \rv \doteq L_4 \sep
-%      P \sep L_3 \bp \{(L_4, \js{prototype})\} \\
-%
-%      \tr{P_2}{\js{function(x) \{$b_r$\}}}{Q \sep (L_2,X) \mapsto V_4 \sep \rv
-%        \doteq V_2} \\
-%      Q = S \sep \getValue(Ls_3, V_2, V_3) \sep \RW(L_2) \sep \bpGen(V_3, L_2, X, s) \\
-%    } \\
-%    \js{var RevocableRef = function(x) \{$b_r$\}} \\
-%    \logic{
-%
-%    }
-%  \end{array}
-%\]
 
 \begin{displaymath}
   \begin{array}{rcl}
@@ -1013,6 +1000,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \label{rr-access}
 \end{figure}
 
+\FIXME{$L \bp \{\}$ conflicts with use of $\scopePtrs$ in overall precondition.}
 \TODO{Extend to writing to objects via the proxy. Take careful note of
   \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
 {Nov-11 es-discuss thread} (theft of \js{protected} by using \js{\_\_proto\_\_}
@@ -1034,7 +1022,6 @@ When you call access, it takes a ProtectedLocation and a location pointed to
 by the ProtectedLocation, and returns a new ProtectedLocation for the inner
 one.
 \TODO{THAT}
-
 \TODO{Check prototype chain for leaks? proxies/simpleMembrane.js}
 \begin{verbatim}
 var Membrane = function(ref) {
