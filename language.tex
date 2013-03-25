@@ -747,6 +747,8 @@ var RevocableRef = function(ref) {
 }
 \end{verbatim}
 
+Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
+
 % Proof for declaration of RevocableRef is incomplete, and possibly wrong
 %\[
 %  \begin{array}{l}
@@ -791,17 +793,17 @@ var RevocableRef = function(ref) {
 %   their requirements
 % Introduction of new elements into an existing backpointer set seems clumsy
 % There must be better ways of generating these proofs other than by hand?
+\begin{figure}
 \[
   \begin{array}{l}
     \js{var RevocableRef = function(ref) \{}\\
     \begin{array}{@{\qquad}l}
       \logic{
         % function
-        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls)
-          \sep {} \\
+        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
         % ar
           \exists L \st \ls \doteq L:Ls \sep {} \\
-          \obj_L\left(
+          \fullobj_L\left(
             \begin{array}{l}
               \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
               \js{protected}: \und,\js{access}: \und,\js{kill}: \und %  and defs()
@@ -810,6 +812,7 @@ var RevocableRef = function(ref) {
         % bp
           L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
           \lop \bp s_3 \sep \lfp \bp s_4 \sep
+          % L <- {} and L <- s'_1 through scopePtrs!
           \scopePtrs(\ls, s', s', \{\})
       } \\
       \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
@@ -839,7 +842,7 @@ var RevocableRef = function(ref) {
         \exists A, A_p \st \left(\begin{array}{l}
           % var, assign
           \obj_L(\js{access}: A, @frozen: \false) \sep
-            A \bp \{(L, \js{access})\} \sep {} \\
+            A \bp s_7 \sep s_7 \doteq \{(L, \js{access})\} \sep {} \\
           % fun pre
           \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
             \cup \{(A, @proto)\} \sep {} \\
@@ -863,14 +866,14 @@ var RevocableRef = function(ref) {
         \left(\begin{array}{l}
           % var, assign
           \obj_L(\js{kill}: K, @frozen: \false) \sep
-            K \bp \{(L, \js{kill})\} \sep {} \\
+            K \bp s_8 \sep s_8 \doteq \{(L, \js{kill})\} \sep {} \\
           % fun pre
-          \lop \bp s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
+          \lop \bp s_9 \sep s_9 \doteq s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
             \cup \{(K, @proto)\} \sep {} \\
           \scopePtrs(\ls, s'_1, s'_2, \{(K,@scope)\}) \sep {} \\
           % fun post
           \fullobj_{K_p}(@proto: \lop) \sep K_p \bp \{(K, \js{prototype})\} \sep {} \\
-          \newfun_K(\ls, \js{field}, b_k, K_p)
+          \newfun_K(\ls, \_, b_k, K_p)
         \end{array}\right)\sep \ls\doteq{L:Ls}
       } \\
       \step{Frames} \\
@@ -885,21 +888,45 @@ var RevocableRef = function(ref) {
           \obj_L(\js{access}:A, \js{kill}:K) \sep {} \\
           \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
           A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
-            \sep \lop \bp s_9 \cup \{(O,@proto)\} \sep {} \\
-          O \bp \{\} \sep \rv \doteq O
+            \sep {} \\
+          \lop \bp s_9 \cup \{(O,@proto)\} \sep O \bp \{\} \sep \rv \doteq O
         \end{array}\right)
         \sep \ls \doteq L : Ls
       } \\
-      \step{} \\
+      \step{Frames} \\
       \logic{
+        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
+        \exists L, A, A_p, K, K_p, O \st {} \\
+        \fullobj_L\left(\begin{array}{l}
+          \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
+          \js{protected}: V,\js{access}: A,\js{kill}: K
+        \end{array}\right) \sep {} \\
+        \fullobj_{A_p}(@proto: \lop) \sep \fullobj_{K_p}(@proto: \lop) \sep {} \\
+        \newfun_A(\ls,\js{field},b_a,A_p) \sep \newfun_K(\ls,\_,b_k,K_p) \sep {} \\
+        \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
 
+        \lop \bp s_3 \cup \{(A_p,@proto),(K_p,@proto),(O,@proto)\} \sep {} \\
+        \lfp \bp s_4 \cup \{(A,@proto),(K,@proto)\} \sep {} \\
+        A   \bp \{(L,\js{access}),(O,\js{access})\} \sep
+          A_p \bp \{(A,\js{prototype}) \sep {} \\
+        K   \bp \{(L,\js{kill}),(O,\js{kill})\} \sep
+          K_p \bp \{(K,\js{prototype}) \sep {} \\
+        V   \bp s_1 \cup \{(L,\js{ref}),(L,\js{protected})\} \sep
+          \scopePtrs(\ls,s'_2,s'_2,\{\}) \sep {} \\
+        O   \bp \{\} \sep
+
+        \rv \doteq O \sep \ls \doteq L : Ls
       }
     \end{array} \\
     \js{\}}
   \end{array}
 \]
+\caption{RevocableRef: Main body}
+\label{rr-main}
+\end{figure}
 
 % RevocableRef#kill body call
+\begin{figure}
 \[
   \begin{array}{l}
     \js{var kill = function() \{} \\
@@ -933,7 +960,11 @@ var RevocableRef = function(ref) {
     \js{\}}
   \end{array}
 \]
+\caption{RevocableReference kill function body}
+\label{rr-kill}
+\end{figure}
 
+\begin{figure}
 % RevocableRef#access body call
 \[
   \begin{array}{l}
@@ -978,6 +1009,9 @@ var RevocableRef = function(ref) {
     \js{\}}
   \end{array}
 \]
+\caption{RevocableReference access function body}
+\label{rr-access}
+\end{figure}
 
 \TODO{Extend to writing to objects via the proxy. Take careful note of
   \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
