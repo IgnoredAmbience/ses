@@ -175,6 +175,8 @@ via user-defined fields from the given object.
   \end{array}$
 \end{display}
   \TODO{Some way of looping through (only user-def) fields on \auxDef}
+  \TODO{Define H[update]}
+  \TODO{Requirements for minimal heap $H_\emptyset$ soundness $H(\lgo, @this)$}
 
   \begin{display}{Scope resolution: $\scope(H,l,x)$.}
     \jaxiom{\scope(H,{\emptylist},\njs{x})}{\nil}{}\vg
@@ -351,31 +353,27 @@ decided to use the scope chain as the scoping and heap accessibility model as I
 think it quite neatly captures the functions-as-closures semantics of the
 language.
 
-Prototype chain traversal has become more irrelevant with the removal of the
+Prototype chain traversal has become more less of an issue \emph{for scope
+resolution} with the removal of the
 \js{with} statement, the only place a normal object (with a prototype chain) is
 placed into the scope chain is at the root, either as the global object $l_g$,
-or as the `fake global' imports object during restricted execution. At all other
+or as the `fake global' imports object during restricted execution. For the case
+of \js{this} we ensure that the internal $@this$ field is always set on $\lgo$
+(to $\lgo$), and on the activation record for a restricted evaluation
+envrionment (to mask the imported object at the root). At all other
 times, objects placed into the scope chain are controlled by the language, and
 will \emph{never} have a prototype set.
-\gds{\\
-  \js{var super=\{x:1\} ; }\\
-  \js{var f = function()\{\} ; }\\
-  \js{f.prototype = super ; }\\
-  \js{var ob = new f() ; } \\
-  \js{ob.x ; // The prototype chain is traversed here}}
 
-Dereferencing syntax has been modified to change the gamma arrows into a
-dereferencing rule, this is used implicitly in all cases except for assignment,
-where a reference is required to the object that holds the field. (It's a bit
-annoying, apart from that, it could be dropped entirely, but that's the way it
-is, even in the C++ languages also studied this year...)
 Progress was
 made between ES3 and ES5 to remove the need to represent references internally
 (they were originally specified only as the result of an implementation
 decision). According to Mark Miller, of the TC39 ES standardisation body,
-references should no longer be needed in the ES5 spec and later revisions. As a
-result of this information, they have been removed from this operational
-semantics for simplification purposes.
+references should no longer be needed in the ES5 spec and later revisions.
+References remain in use by the ES5 spec for the purpose of simplifying the
+assignment rule, and because browser-extensions may internally use them. They
+should never be visible to executed code. We retain references, as they are a
+useful abstraction in this model of the language -- they greatly simplify the
+number of assignment rules required.
 
 The \js{def} function is definable in the full SES language using the
 \js{for..each} construct. As this poses formalisation issues (non-determinism),
