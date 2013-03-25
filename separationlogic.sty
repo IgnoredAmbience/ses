@@ -77,9 +77,11 @@
 \newcommand{\fv}{\command{fv}}
 \newcommand{\elem}{\command{elem}}
 \newcommand{\env}{\epsilon}%{\command{env}}
-\newcommand{\js}[1]{\mbox{\texttt{{\upshape #1}}}}
 \newcommand{\und}{\js{undefined}}
 \newcommand{\nil}{\js{null}\xspace}
+\newcommand{\js}[1]{\mbox{\texttt{{\upshape #1}}}}
+% What is this for?
+\newcommand{\njs}[1]{#1}
 
 %%%%%%%%%%%%%
 % OPERATORS %
@@ -123,8 +125,11 @@
   \right\}}
 \newcommand{\step}[1]{\text{[#1]}}
 
-% Formatting
+%%%%%%%%%%%%%%
+% Formatting %
+%%%%%%%%%%%%%%
 \newcommand{\vg}{\\[5pt]}
+\newcommand{\rsep}{\qquad}
 
 % --------------------------------------------------------------------- %
 % Proof rule.                                                           %
@@ -148,7 +153,7 @@
     \end{array}
   \end{array}$}
 
-% Inference rule {(tag)}{top}{bottom}{?}
+% Inference rule {(tag)}{top}{bottom}{sidecondition}
 \newcommand{\staterule}[4][]{%
 %  \refstepcounter{rule}%
 %  \addToLabel{#2}%
@@ -158,6 +163,18 @@
       #3\\
       \hline
       \raisebox{0ex}[2.5ex]{\strut}#4%
+    \end{array}
+  \end{array}$}
+
+% Definitions of opsem predicates
+\newcommand{\jaxiom}[2]{$#1{\;\triangleq\;}#2$}
+
+\newcommand{\jrule}[3]{%
+  $\begin{array}[b]{@{}l}%
+    \begin{array}{l}
+      #3\\
+      \hline
+      \raisebox{0ex}[2.5ex]{\strut}#1{\;\triangleq\;}#2%
     \end{array}
   \end{array}$}
 
