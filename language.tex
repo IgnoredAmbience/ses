@@ -1026,6 +1026,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 or through redefining/hiding a \emph{trusted prototypical} method (eg on Array))}
 
 \subsection{Membrane}
+\gds{Remember to protect arguments to function calls as well as return values. This may also apply to ``set'' thingamies.}
 A Membrane is a transitive Revocable Reference. In addition to the standard
 Revocable Reference, all returned objects are also wrapped in a Revocable
 Reference that shares its kill switch with its parent. All references to the
