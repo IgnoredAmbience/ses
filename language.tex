@@ -1026,6 +1026,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 or through redefining/hiding a \emph{trusted prototypical} method (eg on Array))}
 
 \subsection{Membrane}
+\label{sec:membrane}
 \gds{Remember to protect arguments to function calls as well as return values. This may also apply to ``set'' thingamies.}
 A Membrane is a transitive Revocable Reference. In addition to the standard
 Revocable Reference, all returned objects are also wrapped in a Revocable
@@ -1059,7 +1060,24 @@ var Membrane = function(ref) {
   return MembraneRef(ref);
 }
 \end{verbatim}
-\section{makeContractHost}
+
+\section{Abstraction Layers}
+\TODO{Add abstraction layers to cope with the intuitions in Mark's diagrams}
+
+\subsection{Eg: Membrane Proof Predicate}
+. (ProtectedLoc? See Section~\ref{sec:membrane})
+\subsection{Spiders}
+
+For user variables only, for internal variables also. Useful for reval code?
+
+\section{Future Work}
+\subsection{Uberchallenge}
+Page 13 of
+  \url{http://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/en/us/pubs/archive/40673.pdf}:
+  prove the program with a temporary variable for the updated balance. Find the
+  bug.  Not a concurrency issue. Ignore Q. Use the version from Mark's slides.
+
+\subsection{makeContractHost}
       It's not all about code equality. We actually want the mutually
       agreed contracts to have compatible specifications, not
       necessarily be equal.
