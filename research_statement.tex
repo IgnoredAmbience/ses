@@ -4,7 +4,11 @@
 \makesavenoteenv{tabular}
 \setlength{\droptitle}{-50pt}
 
+\title{PhD Research Proposal}
+\author{Thomas Wood}
+
 \begin{document}
+\maketitle
 
 \section{Research interests}
 \begin{itemize}
@@ -20,7 +24,7 @@ With a particular focus on:
 
 \subsection{JavaScript Background}
 Whilst JavaScript was once a small language for mere form validation on web
-pages, the growth of the internet in the pasdecade has pushed the web-browser
+pages, the growth of the internet in the past decade has pushed the web-browser
 and the language forward to be one of the most widely-deployed languages.
 Its large deployment has led developers to target the language and the web as a
 platform on which to build their software. % More here?
@@ -97,6 +101,8 @@ implementation correctness by comparing test results with another implementation
 % }
 % Other methods include passing code through a compile/decompile cycle. Also
 % used for perf testing implementation improvements.
+% For future reference/reading Microsoft SAGE, whitebox fuzzer -
+% http://research.microsoft.com/en-us/um/people/pg/public_psfiles/SAGE-in-one-slide.pdf
 
 % Appropriate? (to name my second reference)
 One previous effort towards semantic test generation was Allwood and Eisenbach's
@@ -151,23 +157,57 @@ distributed reasoning, combined with higher-order reasoning for contract
 agreement, and some means of representing a transferable notion of a user's
 `trust' in other parties participating in the transaction.
 % tentative? not descriptive enough?
+\\
 
 The implementation of SES as a layer on top of JavaScript also poses its own
 interesting problems. SES inherently depends upon the JavaScript specification
-to work, but the JavaScript specification process is also directed with
-maintaining the invariants required to enable SES to be implemented securely.
-(These invariants are usually very subtle, such as ensuring that the
+as its basis, but the JavaScript specification process is also directed to
+maintaining the properties required to enable SES to be implemented securely.
+(These properties are usually very subtle, such as ensuring that the
 language-defined data structures and primitives do not inadvertently allow for
 pointer leakage or covert channels of communication within the language.)
-% Where am I going with this?
+
+As a result of sharing the intuitions I developed about SES with the rest of the
+group, another researcher in the group has discovered a potential bug in the
+upcoming ECMAScript specification. This demonstrates that although the
+specification committee should now have a good insight into the security
+implications of the language's design decisions, errors are still being made as
+a result of a poor, informal description of the security properties that are to
+hold of the language. With a formal specification of the properties, the
+formally specified language could be proven to correctly hold those properties.
+% This ignores implementation-specific language extensions
+
+A proof that the SES implementation is correct is currently well beyond the
+capabilities of the JavaScript program logic, as the SES implementation reasons
+about the particular implementation-specific semantics of the JavaScript engine
+on which it is run, and attempts to fix any semantics that it deems unsafe.
+Program logics to date assume that there is one correct semantics for a language
+under which a program runs, JavaScript poses the unique possibility where a
+program may run under alike, but subtly different semantics. Research into
+extension of the existing JavaScript program logic to support variable semantics
+would be a novel research project.
 
 \section{Relevant experience}
-Work on automatic regression test generation for a duck-typed language (third
-year group project)
+My third-year group project focused on automated regression test generation for
+programs written in Ruby, a duck-typed language. The project was able to produce
+rudimentary test suites for programs that could detect regressions in simple
+programs. The project used mock objects to intercept method calls on objects
+passed to programs, in attempt to infer the expected input types.
+
+This project made me aware of the common challenges associated with test
+generation, such as the requirement to prune isomorphic tests, an exponential
+search space of test programs, and the desire for a `stable' set of produced
+tests when modifying the program under test.
+\\
 
 Research into SES, a secure subset of the JavaScript language, development of
-  a program logic capable of proving desired security properties of programs
-  written in SES / object-capability style languages.
+a program logic capable of proving desired security properties of programs
+written in SES / object-capability style languages.
+
+Through this project I gained a great deal of background knowledge on the
+JavaScript language semantics and the related security requirements. This
+project also gave me grounding in Separation Logic, a key tool in
+the construction of program logics used for the verification of software.
 
 \section{Funding}
 I am seeking a studentship with the department, I am unable to self-fund.
