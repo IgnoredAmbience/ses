@@ -4,7 +4,7 @@
 \makesavenoteenv{tabular}
 \setlength{\droptitle}{-50pt}
 
-\title{PhD Research Proposal}
+\title{PhD Research Statement}
 \author{Thomas Wood}
 
 \begin{document}
@@ -37,12 +37,15 @@ certain conditions.
 Another unusual aspect of JavaScript is that there are multiple competing
 implementations of the language, each with a significant share of the end users.
 JavaScript is an interpreted language, so the behaviour of a program written in
-the language is determined by the language specification, but also
+the language is determined by the language specification, but also by
 the particular implementation of the language on which the software is
-run.
+run. Thanks to the distributed nature of the web, the multiple implementations
+of JavaScript are forced to inter-operate and web software developers must
+ensure that they pick a subset of the language's features that are fully
+supported by their target users.
 
 JavaScript's specification is large and complex, it is common for
-different implementations of the language to be incorrect against the
+different implementations of the language to be incorrect with respect to the
 specification, or to interpret the specification in subtly different ways.
 Although this is very unlikely to happen for the language's core functionality,
 it is a regular occurrence for bugs to be detected in the lesser used `corners'
@@ -50,28 +53,29 @@ of the language. This may seem a small or insignificant issue, but
 deviations from the specification or differences in behaviour between
 implementations is an oft-used attack vector for malicious parties.
 
-The JsCert project, joint between Imperial and INRIA, are in the process of
+The JsCert project, joint between Imperial and INRIA, is in the process of
 producing an executable formal semantics for the (current) ECMAScript 5.1
 specification of the JavaScript language.
 The construction of these semantics is designed to support future tools for
 reasoning about and assisting developers to work with JavaScript.
 
-I detail two projects of interest to me that make use of the JsCert semantics in
-my fields of interest.
+I detail two projects of interest to me that build upon
+the work of the JsCert project.
 
 \subsection{Semantically-guided Language Test Suite Generation}
 Many popular programming languages are developed without formal specifications,
-instead using a mixture of 3 ways: by a specification written in English,
-through a canonical implementation, or through a test suite of code examples and
-expected behaviours.
+instead using a mixture of 3 informal methods: by a specification written in English,
+through a canonical implementation, or through an executable test suite of code
+examples and expected behaviours.
 
 To address the issue of non-conformant implementations, JavaScript has recently
-moved to supplement its specification with a test suite. The test suite
-currently comprises of around 10,000 tests, which notionally cover the entirety
-of the specification. However, as the suite is largely handwritten, it suffers
-from the common incompleteness problem due to lack of inspiration of failure
-cases. Indeed, a number of bug reports are currently open, noting potentially
-poor test coverage of a number of parts of the specification.
+moved to supplement its English specification with a test suite. The test suite
+currently comprises of around 10,000 tests, which notionally cover the entire
+specification. However, as the suite is largely handwritten, it is incomplete,
+either due to incorrect assumptions that the test-writer may have, or simply a
+lack of inspiration for all possible failure
+cases. Indeed, several bug reports are currently open, noting potentially
+poor test coverage for a number of parts of the specification.
 
 Furthermore, since the JavaScript specification is not machine-readable, the
 test suite developers have no means of verification of the test suite's
@@ -83,8 +87,9 @@ academic interest\footnote{\url{https://bugs.ecmascript.org/show_bug.cgi?id=56}}
 
 Given an executable specification of the language, it would be possible to run
 the tests directly against the specification and hence estimate the proportion
-of the language that the test cover, and highlight any portions of the spec
-that should be considered more carefully.
+of the language that the tests cover. It would also be possible to break down
+the coverage results to discover any portions of the specification
+that should be considered for further testing.
 
 Secondly, is it possible to automatically produce new, interesting test cases
 for the language from the formal specification, and can these new tests tell us
@@ -97,7 +102,7 @@ a grammar, or dictionary), in attempt to trigger a crash condition. The
 \texttt{jsfunfuzz} tool, produced by Mozilla, is one particularly successful
 fuzzer for the JavaScript language. The purpose of the tool is mainly to find
 crash-causing bugs in the interpreter, however it is also used to check
-implementation correctness by comparing test results with another implementation.
+implementation correctness by comparing test results against another implementation.
 % }
 % Other methods include passing code through a compile/decompile cycle. Also
 % used for perf testing implementation improvements.
@@ -109,7 +114,7 @@ One previous effort towards semantic test generation was Allwood and Eisenbach's
 ``Tickling Java with a Feather'' 2008 paper, in which initial attempts at test
 generation for Java were reported. This paper led to REACTOR, a prize-winning
 undergraduate 3rd year project of 2008/9. These projects show that the basis for
-this approach is reasonable, both left the generation of tests with direct
+this approach is reasonable. Both projects left the generation of tests with direct
 reference to a formal language specification as an open problem.
 % I've failed to find any later references to similar projects
 % Note: This was Azalea's UG Group Project
@@ -124,11 +129,12 @@ interesting use-case is the execution of user-provided code within a web
 application.
 
 JavaScript is a notoriously hard language to secure against untrusted code,
-because a large portion of the language's primitives are mutable, function aliasing
-(especially of the \texttt{eval} function, and other primitives), and a tendency
+because: a large portion of the language's primitives are mutable; function aliasing
+(especially of the \texttt{eval} function, and other primitives) is rampant; and
+there is a tendency
 to leak pointers to the global object (from which most other objects can be
-reached) made JavaScript versions prior to the latest specification impossible
-to secure against malicious code. Recent additions to the
+reached). This has made JavaScript versions prior to the latest specification
+all but impossible to secure against malicious code. Recent additions to the
 language primitives to properly support sandboxing implementations have
 simplified this impossible problem to just a \emph{very difficult} one.
 
@@ -163,18 +169,19 @@ The implementation of SES as a layer on top of JavaScript also poses its own
 interesting problems. SES inherently depends upon the JavaScript specification
 as its basis, but the JavaScript specification process is also directed to
 maintaining the properties required to enable SES to be implemented securely.
-(These properties are usually very subtle, such as ensuring that the
+These properties are usually very subtle, such as ensuring that the
 language-defined data structures and primitives do not inadvertently allow for
-pointer leakage or covert channels of communication within the language.)
+pointer leakage or covert channels of communication within the language.
 
 As a result of sharing the intuitions I developed about SES with the rest of the
 group, another researcher in the group has discovered a potential bug in the
 upcoming ECMAScript specification. This demonstrates that although the
 specification committee should now have a good insight into the security
 implications of the language's design decisions, errors are still being made as
-a result of a poor, informal description of the security properties that are to
-hold of the language. With a formal specification of the properties, the
-formally specified language could be proven to correctly hold those properties.
+a result of a poor, informal description of the security properties that ought
+to hold for the language. With a formal specification of these properties, we
+could prove that the formally specified language definitely does hold these
+properties.
 % This ignores implementation-specific language extensions
 
 A proof that the SES implementation is correct is currently well beyond the
@@ -183,7 +190,7 @@ about the particular implementation-specific semantics of the JavaScript engine
 on which it is run, and attempts to fix any semantics that it deems unsafe.
 Program logics to date assume that there is one correct semantics for a language
 under which a program runs, JavaScript poses the unique possibility where a
-program may run under alike, but subtly different semantics. Research into
+program may run under similar, but subtly different semantics. Research into
 extension of the existing JavaScript program logic to support variable semantics
 would be a novel research project.
 
@@ -200,14 +207,19 @@ search space of test programs, and the desire for a `stable' set of produced
 tests when modifying the program under test.
 \\
 
-Research into SES, a secure subset of the JavaScript language, development of
-a program logic capable of proving desired security properties of programs
-written in SES / object-capability style languages.
+My fourth year individual project concerned SES, a secure subset of the
+JavaScript language. I developed a program logic capable of proving desired
+security properties of programs
+written in SES in the object-capability style.
 
 Through this project I gained a great deal of background knowledge on the
 JavaScript language semantics and the related security requirements. This
 project also gave me grounding in Separation Logic, a key tool in
 the construction of program logics used for the verification of software.
+\\
+
+Teaching experience through position as 1st Year Undergraduate Lab Helper in
+2011-2012.
 
 \section{Funding}
 I am seeking a studentship with the department, I am unable to self-fund.
