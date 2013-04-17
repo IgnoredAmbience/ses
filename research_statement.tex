@@ -1,11 +1,12 @@
 \documentclass[a4paper]{article}
-\usepackage{fullpage, titling, amsmath, footnote, listings}
+\usepackage{fullpage, amsmath, footnote, listings}
 \usepackage{hyperref}
 \makesavenoteenv{tabular}
-\setlength{\droptitle}{-50pt}
+%\setlength{\droptitle}{-50pt}
 
 \title{PhD Research Statement}
 \author{Thomas Wood}
+\date{}
 
 \begin{document}
 \maketitle
@@ -33,6 +34,7 @@ JavaScript was conceived with some unusual semantics for object structure, which
 can easily trip even those experienced with
 using the language into producing software that is vulnerable to attack under
 certain conditions.
+\\
 
 Another unusual aspect of JavaScript is that there are multiple competing
 implementations of the language, each with a significant share of the end users.
@@ -52,6 +54,7 @@ it is a regular occurrence for bugs to be detected in the lesser used `corners'
 of the language. This may seem a small or insignificant issue, but
 deviations from the specification or differences in behaviour between
 implementations is an oft-used attack vector for malicious parties.
+\\
 
 The JsCert project, joint between Imperial and INRIA, is in the process of
 producing an executable formal semantics for the (current) ECMAScript 5.1
@@ -84,6 +87,7 @@ coverage of implementations as a measure of coverage of the specification, but
 this is likely to produce spurious results. The group developing the test suite
 recognise that the specification coverage problem is likely to be worthy of
 academic interest\footnote{\url{https://bugs.ecmascript.org/show_bug.cgi?id=56}}.
+\\
 
 Given an executable specification of the language, it would be possible to run
 the tests directly against the specification and hence estimate the proportion
@@ -94,11 +98,12 @@ that should be considered for further testing.
 Secondly, is it possible to automatically produce new, interesting test cases
 for the language from the formal specification, and can these new tests tell us
 anything new about the language? % More needed here, too!
+\\
 
 % Suitable? {
 One notable automated testing method for compilers and interpreters is
 \emph{fuzzing}, production of random test data (often syntactically directed by
-a grammar, or dictionary), in attempt to trigger a crash condition. The
+a grammar or dictionary), in attempt to trigger a crash condition. The
 \texttt{jsfunfuzz} tool, produced by Mozilla, is one particularly successful
 fuzzer for the JavaScript language. The purpose of the tool is mainly to find
 crash-causing bugs in the interpreter, however it is also used to check
@@ -118,6 +123,26 @@ this approach is reasonable. Both projects left the generation of tests with dir
 reference to a formal language specification as an open problem.
 % I've failed to find any later references to similar projects
 % Note: This was Azalea's UG Group Project
+\\
+
+My third-year group project focused on automated regression test generation for
+programs written in Ruby, a duck-typed language. The project was able to produce
+rudimentary test suites for programs that could detect regressions in simple
+programs. The project used mock objects to intercept method calls on objects
+passed to programs, in attempt to infer the expected input types.
+
+This project made me aware of the common challenges associated with test
+generation, such as the requirement to prune isomorphic tests, an exponential
+search space of test programs, and the desire for a `stable' set of produced
+tests when modifying the program under test.
+\\
+
+In summary, this project proposes to: produce techniques for evaluating test
+coverage over a formal language specification; develop methods for generation of
+concise, high-coverage test suites for a language from the language's formal
+specification; use the developed tools to evaluate ECMAScript's test262 suite;
+and to use the developed tools to automatically produce tests capable of filling
+any gaps in coverage of the test262 suite detected by the evaluation.
 
 \subsection{Safe Sandboxing of Untrusted JavaScript Code}
 An interesting result of the tight integration of JavaScript code and the web is
@@ -142,21 +167,17 @@ As part of their Caja project, Google have (loosely) specified the Secure
 ECMAScript (SES) variant of JavaScript to provide sandboxing primitives that
 permit controlled interaction between trusted and untrusted code.
 
-My masters' thesis project is examining the additions required to a JavaScript
-program verification logic to additionally support reasoning about the security
-implications of interactions across the sandbox boundary.
-
 % Is Mark representative of Google as a whole? :D
 % The stuff below also exists, now. Probably needs a tense change.
 Google have lofty ambitions for the future of the SES language, producing it as
 one ideal view for the future of programming in the browser. When
 tightly-coupled with a communication layer, the concept of a distributed object
 capability language becomes a possibility. Such a language permits the
-implementation of interesting algorithms such as multi-party mutually-suspicious
-escrow exchange, or contract agreement (where the contract may be executable
+implementation of interesting algorithms such as mutually suspicious multi-party
+escrow exchange or contract agreement (where the contract may be executable
 code).
 
-Verification of these types of algorithms is a new, interesting problem, as
+Verification of these types of algorithms poses a new, interesting problem, as
 their proofs will possibly involve several verification techniques that are
 currently rarely used together. For example a process calculus for the
 distributed reasoning, combined with higher-order reasoning for contract
@@ -193,24 +214,11 @@ under which a program runs, JavaScript poses the unique possibility where a
 program may run under similar, but subtly different semantics. Research into
 extension of the existing JavaScript program logic to support variable semantics
 would be a novel research project.
-
-\section{Relevant experience}
-My third-year group project focused on automated regression test generation for
-programs written in Ruby, a duck-typed language. The project was able to produce
-rudimentary test suites for programs that could detect regressions in simple
-programs. The project used mock objects to intercept method calls on objects
-passed to programs, in attempt to infer the expected input types.
-
-This project made me aware of the common challenges associated with test
-generation, such as the requirement to prune isomorphic tests, an exponential
-search space of test programs, and the desire for a `stable' set of produced
-tests when modifying the program under test.
 \\
 
-My fourth year individual project concerned SES, a secure subset of the
-JavaScript language. I developed a program logic capable of proving desired
-security properties of programs
-written in SES in the object-capability style.
+My masters' thesis project is examining the additions required to the JavaScript
+program verification logic to additionally support reasoning about the security
+implications of design of programs that make use of the SES sandbox.
 
 Through this project I gained a great deal of background knowledge on the
 JavaScript language semantics and the related security requirements. This
@@ -218,8 +226,13 @@ project also gave me grounding in Separation Logic, a key tool in
 the construction of program logics used for the verification of software.
 \\
 
-Teaching experience through position as 1st Year Undergraduate Lab Helper in
-2011-2012.
+In summary, this project proposes research into program verification problems at
+the `top' and `bottom' of the SES language: in one direction to produce logics
+capable of verifying programs that make use of SES's distributed features to
+reason about trust or the contract-agreement problem; and in the other direction,
+researching how to reason about implementation-specific language features or
+quirks, and how to prove that a given program is correct across all known
+(modelled) implementations.
 
 \section{Funding}
 I am seeking a studentship with the department, I am unable to self-fund.
