@@ -23,31 +23,32 @@
 \newcommand{\gds}[1]{\editlabel{GDS}{Orange}{#1}}
 
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
-\begin{display}{Syntax of SES values and expressions, $v, e$}
+\begin{display}{Syntax of SES values and expressions, \js{v}, \js{e}}
   $\begin{array}{rll}
-    \syntaxline[v ::=]{$n$}{Number}
-    \syntaxline{$s$}{String}
-    \syntaxline{undefined}{Undefined}
-    \syntaxline{null}{Null}
-    \syntaxline[e ::=]{$v$}{Value}
-    \syntaxline{$x$}{Identifier}
-    \syntaxline{\{$x_1$:$e_1$, $\ldots$, $x_n$:$e_n$\}}{Object creation}
-    \syntaxline{$e$; $e$}{Sequence}
-    \syntaxline{$e \oplus e$}{Binary operator}
-    \syntaxline{if($e$) \{$e$\} else \{$e$\}}{Conditional}
-    \syntaxline{while($e$) \{$e$\}}{Looping}
-    \syntaxline{var $x$}{Variable declaration}
-    \syntaxline{$e$ = $e$}{Assignment}
-    \syntaxline{$e$.$x$}{Member access}
-    \syntaxline{$e$[$e$]}{Computed member access}
-    \syntaxline{$e$($e$)}{Function call}
+    \syntaxline[\js{v} ::=]{\js{n}}{Number}
+    \syntaxline{s}{String}
+    \syntaxline{\und}{Undefined}
+    \syntaxline{\nil}{Null}
+    \syntaxline{\true \pipe \false}{Booleans}
+    \syntaxline[\js{e} ::=]{v}{Value}
+    \syntaxline{x}{Identifier}
+    \syntaxline{\{x_1:e_1, \ldots, x_n:e_n\}}{Object creation}
+    \syntaxline{e; e}{Sequence}
+    \syntaxline{e \oplus e}{Binary operator}
+    \syntaxline{if(e) \{e\} else \{e\}}{Conditional}
+    \syntaxline{while(e) \{e\}}{Looping}
+    \syntaxline{\jsvar{x}}{Variable declaration}
+    \syntaxline{e = e}{Assignment}
+    \syntaxline{e.x}{Member access}
+    \syntaxline{e[e]}{Computed member access}
+    \syntaxline{e(e)}{Function call}
     \syntaxline{this}{this}
-    \syntaxline{function($e$) \{$e$\}}{Function creation}
-    \syntaxline{function $x$($e$) \{$e$\}}{Named function creation}
-    \syntaxline{new $e$($e$)}{Object construction}
-    \syntaxline{reval($e$, $e$)}{Restricted evaluation}
-    \syntaxline{freeze($e$)}{Freeze}
-    \syntaxline{def($e$)}{Recursive freeze}
+    \syntaxline{\jsfun{e}{e}}{Function creation}
+    \syntaxline{\jsfun[x]{e}{e}}{Named function creation}
+    \syntaxline{\jsnew{e}{e}}{Object construction}
+    \syntaxline{reval(e, e)}{Restricted evaluation}
+    \syntaxline{freeze(e)}{Freeze}
+    \syntaxline{def(e)}{Recursive freeze}
   \end{array}$
 \end{display}
 
@@ -61,8 +62,8 @@ interchangably.
   don't need that last sentence.}
 
 \paragraph{Object creation}  The Object Construction syntax produces a new object
-with fields named $x_1, \ldots, x_n$ which map to the values of expressions
-$e_1, \ldots, e_n$ when evaluated in order at creation.
+with fields named \js{x_1, \ldots, x_n} which map to the values of expressions
+\js{e_1, \ldots, e_n} when evaluated in order at creation.
 
 \paragraph{Sequence} The sequencing operator specifies that the expression on the left should be
 evaluated, followed by the expresion on the right.
@@ -202,63 +203,75 @@ via user-defined fields from the given object.
     \jrule{\getValue(H,\fld{l}{\js{x}})}{H(l',\js{x})}{\proto(H,l,\js{x}) = l'\\ l\neq \nil}
   \end{display}
 
+  \begin{display}{Local Variable Declarations}
+    \jaxiom{\defs(\js{x},l,\jsvar{y})}{(l,y) \pointsto \und \quad$ \= iff
+      $\js{x} \neq \js{y}} \\
+    \jaxiom{\defs(\js{x},l,\js{e_1 = e_2})}{\defs(\js{x},l,\js{e_1})} \\
+    \jaxiom{\defs(\js{x},l,\js{e_1;e_2})}{\defs(\js{x},l,\js{e_1}) \cup
+      \defs(\js{x},l,\js{e_2})} \\
+    \jaxiom{\defs(\js{x},l,\js{if(e_1)\{e_2\}\{e_3\}})}
+      {\defs(\js{x},l,\js{e_2}) \cup \defs(\js{x},l,\js{e_3})} \\
+    \jaxiom{\defs(\js{x},l,\js{while(e_1)\{e_2\}})}{\defs(\js{x},l,\js{e_2})} \\
+    \jaxiom{\defs(\js{x},l,\js{e})}{\emp$ \> otherwise$}
+  \end{display}
+
 \begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
   Dereferencing notation: $H,L,\js{e} \gevalsto H',v \triangleq \exists r. (H,L,\js{e} \evalsto H',r \wedge \getValue(H',r) = v)$.
 \vg
 
   \stateaxiom{(Value)}
-    {H,L,v \evalsto H,v}
+  {H,L,\js{v} \evalsto H,v}
 \vg
 
   \stateaxiom{(Variable declaration)}
-  {H,L,\js{var x} \evalsto H,\und}
+  {H,L,\jsvar{x} \evalsto H,\und}
 \vg
 
   \staterule{(Object creation)}
     {H_0 = H \disju \obj(l,\lop)\\
      \forall i\in 1..n \st \left(\begin{array}{l}
-      H_{i-1},L,\js{ei}\gevalsto H_i',v_i \\
-      H_i = H_i' [ (l,\js{xi}) \pointsto v_i]\end{array}\right)}
-    {H,L,\{\js{x1:e1},\dots, \js{xn:en}\} \evalsto H_n,l}
+      H_{i-1},L,\js{e_i}\gevalsto H_i',v_i \\
+      H_i = H_i' [ (l,\js{x_i}) \pointsto v_i]\end{array}\right)}
+    {H,L,\js{\{x_1:e_1,\dots,x_n:e_n\}} \evalsto H_n,l}
 \vg
 
   \staterule{(Sequence)}
-    {H,L,e_1 \evalsto H_1,r' \\
-     H_1,L,e_2 \evalsto H',r}
-    {H,L,e_1\js; e_2 \evalsto H',r}
+    {H,L,\js{e_1} \evalsto H'',r' \\
+     H'',L,\js{e_2} \evalsto H',r}
+   {H,L,\js{e_1; e_2} \evalsto H',r}
 \vg
 
   \staterule{(Binary operator)}
-    {H,L,e_1 \gevalsto H_1,v_1 \\
-     H_1,L,e_2 \gevalsto H',v_2\\
+    {H,L,\js{e_1} \gevalsto H'',v_1 \\
+     H'',L,\js{e_2} \gevalsto H',v_2\\
      v_1 \oplus v_2 = v}
-    {H,L,e_1 \oplus e_2 \evalsto H',v}
+   {H,L,\js{e_1 \oplus e_2} \evalsto H',v}
 \vg
 
   \staterule{(Conditional true)}
-  {H,L,e_1 \gevalsto H'',v \quad \istrue(v) \\
-   H'',L,e_2 \evalsto H',r}
-  {H,L,\js{if($e_1$)\{$e_2$\} else \{$e_3$\}} \evalsto H',r}
+  {H,L,\js{e_1} \gevalsto H'',v \quad \istrue(v) \\
+   H'',L,\js{e_2} \evalsto H',r}
+  {H,L,\js{if(e_1)\{e_2\} else \{e_3\}} \evalsto H',r}
 \qquad
 
   \staterule{(Conditional false)}
-  {H,L,e_1 \gevalsto H'',v \quad \isfalse(v) \\
-   H'',L,e_3 \evalsto H',r}
-  {H,L,\js{if($e_1$)\{$e_2$\} else \{$e_3$\}} \evalsto H',r}
+  {H,L,\js{e_1} \gevalsto H'',v \quad \isfalse(v) \\
+   H'',L,\js{e_3} \evalsto H',r}
+  {H,L,\js{if(e_1)\{e_2\} else \{e_3\}} \evalsto H',r}
 \vg
 
   \staterule{(While true)}
-  {H,L,e_1 \gevalsto H'', v \quad \istrue(v) \\
-   H'',L,e_2\js{;while($e_1$)\{$e_2$\}} \evalsto H', v''}
-  {H,L,\js{while($e_1$)\{$e_2$\}} \evalsto H',\und}
+  {H,L,\js{e_1} \gevalsto H'', v \quad \istrue(v) \\
+   H'',L,e_2\js{;while(e_1)\{e_2\}} \evalsto H', v''}
+  {H,L,\js{while(e_1)\{e_2\}} \evalsto H',\und}
 \qquad
 
   \staterule{(While false)}
-  {H,L,e_1 \gevalsto H', v \quad \isfalse(v)}
-  {H,L,\js{while($e_1$)\{$e_2$\}} \evalsto H',\und}
+  {H,L,\js{e_1} \gevalsto H', v \quad \isfalse(v)}
+  {H,L,\js{while(e_1)\{e_2\}} \evalsto H',\und}
 \vg
 
-  % l' \neq \nil comdition given in ES5-8.7.2.3.a Strict-mode null SetValue (and
+  % l' \neq \nil condition given in ES5-8.7.2.3.a Strict-mode null SetValue (and
   % all-mode GetValue)
   \staterule{(Variable)}
     {\scope(H,L,x) = l' \quad l' \neq \nil}
@@ -268,34 +281,34 @@ via user-defined fields from the given object.
   \staterule{(Member access)}
   {H,L,\js e \gevalsto H',l' \\
    l' \neq \nil}
-  {H,L,e\js{.}x \evalsto H', \fld{l'}{x}}
+  {H,L,\js{e.x} \evalsto H', \fld{l'}{x}}
 \qquad
 
   \staterule{(Computed member access)}
-  {H,L,e_1 \gevalsto H'',l' \\
+  {H,L,\js{e_1} \gevalsto H'',l' \\
    l' \neq \nil \\
-   H'',L,e_2 \evalsto H', x}
-  {H,L,e_1\js{[}e_2\js{]} \evalsto H',\fld{l'}{x}}
+   H'',L,\js{e_2} \evalsto H', x}
+  {H,L,\js{e_1[e_2]} \evalsto H',\fld{l'}{x}}
 \vg
 
   \staterule{(Assignment)}
-  {H,L,e_1 \evalsto H_1,\fld{l}{x} \qquad
+  {H,L,\js{e_1} \evalsto H_1,\fld{l}{x} \qquad
    H_1(l, @frozen) \neq \true \\
-   H_1,L,e_2 \gevalsto H_2, v \\
+   H_1,L,\js{e_2} \gevalsto H_2, v \\
    H' = H_2[(l,x) \pointsto v]}
-  {H,L,e_1\js = e_2 \evalsto H', v}
+  {H,L,\js{e_1 = e_2} \evalsto H', v}
 \vg
 
   \staterule{(Function creation)}
-  {H' = H \disju \obj(l,\lop) \disju \fun(l',L,x,e,l)}
-  {H,L,\js{function($x$)\{$e$\}} \evalsto H',l'}
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',L,\js{x},\js{e},l)}
+  {H,L,\jsfun{x}{e} \evalsto H',l'}
 \vg
 
   \staterule{(Named function creation)}
-  {H' = H \disju \obj(l,\lop) \disju \fun(l',l_1 \cons L,x,e,l) \disju l_1 \pointsto
-    \{@proto:\nil, y:l'\}}
-  {H,L,\js{function $y$($x$)\{$e$\}} \evalsto H',l'}
-%\vg
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',l_1 \cons L,\js{x},\js{e},l) \disju
+    l_1 \pointsto \{@proto:\nil, y:l'\}}
+  {H,L,\jsfun[y]{x}{e} \evalsto H',l'}
+\vg
 
 \COMMENT{There's no need to $\proto$ in this now that we've disallowed prototype
   chains from scope lists (we hit the base AR before we need to start
@@ -307,42 +320,45 @@ via user-defined fields from the given object.
 \vg
 
   \staterule{(Function call)}
-  {H,L,\js{e1} \evalsto H_1,r_1\qquad
-   \pickThis(H_1,{r_1})=l_2\qquad
+  {H,L,\js{e_1} \evalsto H_1,r_1\qquad
+   \pickThis(H_1,r_1)=l_2\qquad
    \getValue(H_1,r_1)=l_1\\
-   H_1(l_1,@body)=\lambda \js{x.e3}\qquad
+   H_1(l_1,@body)=\lambda \js{x.e_3}\qquad
    H_1(l_1,@scope)= L'\\
-   H_1,L,\js{e2} \gevalsto H_2,{v}\\
-   H_3 = H_2\disju\act(l,\js x,v,\js{e3},l_2) \\
-   H_3,l \cons L',\js{e3} \gevalsto H',{v'}}
-  {H,L,\js{e1(e2)} \evalsto H',{v'}}
+   H_1,L,\js{e_2} \gevalsto H_2,v\\
+   H_3 = H_2\disju\act(l,\js x,v,\js{e_3},l_2) \\
+   H_3,l \cons L',\js{e_3} \gevalsto H',v'}
+  {H,L,\js{e_1(e_2)} \evalsto H',v'}
 \vg
 
   \staterule{(Object construction)}
-  {H,L,\js{e1} \gevalsto H_1,{l_1} \qquad
+  {H,L,\js{e_1} \gevalsto H_1,l_1 \qquad
    l_1\neq \nil\qquad
-   H_1(l_1,@body)=\lambda \js{x.e3}\\
+   H_1(l_1,@body)=\lambda \js{x.e_3}\\
    H_1(l_1,@scope)= L'\qquad
    H_1(l_1,\js{prototype})= v\\
-   H_1,L,\js{e2} \gevalsto H_2,{v_1}  \qquad
+   H_1,L,\js{e_2} \gevalsto H_2,v_1  \qquad
    l_2 = \objOrGlob(v) \\
-   H_3 = H_2\disju \obj(l_3,l_2) \disju\act(l,\js x,v_1,\js{e3},l_3)\\
-   H_3,l \cons L',\js{e3} \gevalsto H',v_2\qquad
+   H_3 = H_2\disju \obj(l_3,l_2) \disju\act(l,\js x,v_1,\js{e_3},l_3)\\
+   H_3,l \cons L',\js{e_3} \gevalsto H',v_2\qquad
    \getBase(l_3,v_2) = l'}
-  {H,L,\js{new e1(e2)} \evalsto H',{l'}}
+  {H,L,\jsnew{e_1}{e_2} \evalsto H',l'}
 \vg
 
+\TODO{This appears to contradict the program logic, was the decision to shadow
+  imports?}
   \staterule{(Restricted evaluation)}
-  {H,L,e_1 \gevalsto H_1,v \qquad
-   \parse(v) = e \\
-   H_1,L,e_2 \gevalsto H_2, l \\
-   H_3 = H_2 \disju l' \pointsto \{@this:l, @proto:\nil\} \disju \defs(x, l', e) \\
-   H_3, l' \cons [l], e \gevalsto H',v }
-  {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
+  {H,L,\js{e_1} \gevalsto H_1,v \qquad
+   \js{e_3} = \parse(v) \\
+   H_1,L,\js{e_2} \gevalsto H_2, l \\
+   H_3 = H_2 \disju l' \pointsto \{@this:l, @proto:\nil\} \disju
+     \defs(\_, l', \js{e_3}) \\
+   H_3, l' \cons [l], \js{e_3} \gevalsto H',v }
+  {H,L,\js{reval(e_1, e_2)} \evalsto H',v}
 \vg
 
   \staterule{(Freeze)}
-  {H,L,e \gevalsto H'', l\\
+  {H,L,\js{e} \gevalsto H'', l\\
    H' = H''[(l, @frozen) \pointsto \true]}
   {H,L,\js{freeze(e)} \evalsto H', l}
 \vg
@@ -849,7 +865,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         \lop \bp s_3 \sep \lfp \bp s_4 \sep
           \scopePtrs(\ls,s',s',\{\}) \sep \ls\doteq{L:Ls}
       } \\
-      \js{var access = function(field) \{$b_a$\};} \\
+      \js{var access = function(field) \{b_a\};} \\
       \logic{
         \exists A, A_p \st \left(\begin{array}{l}
           % var, assign
@@ -872,7 +888,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         \lop \bp s_5 \sep \lfp \bp s_6 \sep
         \scopePtrs(\ls, s'_1, s'_1,\{\}) \sep \ls\doteq{L:Ls}
       } \\
-      \js{var kill = function() \{$b_k$\};} \\
+      \js{var kill = function() \{b_k\};} \\
       \logic{
         \exists K, K_p \st
         \left(\begin{array}{l}
