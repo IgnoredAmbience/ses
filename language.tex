@@ -169,14 +169,18 @@ via user-defined fields from the given object.
   \auxf{\objOrGlob(v)}{\lop \quad v\not\in\loc}\\
   \auxf{\getBase(l,l')}{l' \qquad l \in \loc}\\
   \auxf{\getBase(l,v)}{v \qquad v\not\in\loc}\\
+
   \auxf{\act(l,\js{x},v,\js{e},l'')}{l\pointsto\{\js{x}:
-    v,@this: l'',@proto: \nil\}\sep \defs(\js{x},l,\js{e})}\\
-  \auxf{\auxDef(H,l,s)}{H \qquad l \in s \lor l \not\in \loc}\\
-  \auxf{\auxDef(H,l,s)}{\forall (x_n, V_n) \in H_{n-1}(l) \st H_n =
-    \auxDef(H_{n-1},l,s \cup\{l\})[(l,@frozen) \mapsto \true]}
+    v,@this: l'',@proto: \nil\}\disju \defs(\js{x},l,\js{e})}\\
+
+  \auxf{\auxDef(H,l,s)}{\begin{cases}
+    \emp & l \in s \lor l \not\in \loc\\
+    (l,@frozen) \mapsto \true \cup \bigcup_{(l,x_n) \in H, x_n \in \uvars}
+    \auxDef(H,H(l,x_n),s \cup\{l\}) & \mbox{otherwise} \\
+  \end{cases}}\\
   \end{array}$
 \end{display}
-  \TODO{Some way of looping through (only user-def) fields on \auxDef}
+
   \TODO{Define H[update]}
   \TODO{Requirements for minimal heap $H_\emptyset$ soundness $H(\lgo, @this)$}
 
@@ -211,7 +215,7 @@ via user-defined fields from the given object.
 \vg
 
   \staterule{(Object creation)}
-    {H_0 = H \sep \obj(l,\lop)\\
+    {H_0 = H \disju \obj(l,\lop)\\
      \forall i\in 1..n \st \left(\begin{array}{l}
       H_{i-1},L,\js{ei}\gevalsto H_i',v_i \\
       H_i = H_i' [ (l,\js{xi}) \pointsto v_i]\end{array}\right)}
@@ -283,12 +287,12 @@ via user-defined fields from the given object.
 \vg
 
   \staterule{(Function creation)}
-  {H' = H \sep \obj(l,\lop) \sep \fun(l',L,x,e,l)}
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',L,x,e,l)}
   {H,L,\js{function($x$)\{$e$\}} \evalsto H',l'}
 \vg
 
   \staterule{(Named function creation)}
-  {H' = H \sep \obj(l,\lop) \sep \fun(l',l_1 \cons L,x,e,l) \sep l_1 \pointsto
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',l_1 \cons L,x,e,l) \disju l_1 \pointsto
     \{@proto:\nil, y:l'\}}
   {H,L,\js{function $y$($x$)\{$e$\}} \evalsto H',l'}
 %\vg
@@ -309,7 +313,7 @@ via user-defined fields from the given object.
    H_1(l_1,@body)=\lambda \js{x.e3}\qquad
    H_1(l_1,@scope)= L'\\
    H_1,L,\js{e2} \gevalsto H_2,{v}\\
-   H_3 = H_2\sep\act(l,\js x,v,\js{e3},l_2) \\
+   H_3 = H_2\disju\act(l,\js x,v,\js{e3},l_2) \\
    H_3,l \cons L',\js{e3} \gevalsto H',{v'}}
   {H,L,\js{e1(e2)} \evalsto H',{v'}}
 \vg
@@ -322,7 +326,7 @@ via user-defined fields from the given object.
    H_1(l_1,\js{prototype})= v\\
    H_1,L,\js{e2} \gevalsto H_2,{v_1}  \qquad
    l_2 = \objOrGlob(v) \\
-   H_3 = H_2\sep \obj(l_3,l_2) \sep\act(l,\js x,v_1,\js{e3},l_3)\\
+   H_3 = H_2\disju \obj(l_3,l_2) \disju\act(l,\js x,v_1,\js{e3},l_3)\\
    H_3,l \cons L',\js{e3} \gevalsto H',v_2\qquad
    \getBase(l_3,v_2) = l'}
   {H,L,\js{new e1(e2)} \evalsto H',{l'}}
@@ -332,7 +336,7 @@ via user-defined fields from the given object.
   {H,L,e_1 \gevalsto H_1,v \qquad
    \parse(v) = e \\
    H_1,L,e_2 \gevalsto H_2, l \\
-   H_3 = H_2 \sep l' \pointsto \{@this:l, @proto:\nil\} * \defs(x, l', e) \\
+   H_3 = H_2 \disju l' \pointsto \{@this:l, @proto:\nil\} \disju \defs(x, l', e) \\
    H_3, l' \cons [l], e \gevalsto H',v }
   {H,L,\js{reval($e_1$, $e_2$)} \evalsto H',v}
 \vg
@@ -345,7 +349,7 @@ via user-defined fields from the given object.
 
   \staterule{(Recursive freeze)}
   {H,L,\js{e} \gevalsto H'', l \\
-   H' = \auxDef(H'', l, \{\})}
+   H' = H''[\auxDef(H'', l, \{\})]}
   {H,L,\js{def(e)} \evalsto H', l}
 \end{display}
 
