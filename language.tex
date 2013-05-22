@@ -76,8 +76,8 @@ works on the JavaScript family of languages.
 to \js{true} under a boolean casting operation, the second sub-expression is
 evaluated and result returned, otherwise the third sub-expression is evaluated
 and result returned.
-\gds{Be prepared to defend the lack of object-level casting. At the moment our
-  simple semantics only cast primitive values.}
+%gds{Be prepared to defend the lack of object-level casting. At the moment our
+%  simple semantics only cast primitive values.}
 
 \paragraph{Looping} The looping expression executes the body sub-expression
 whilst the condition sub-expression evaluates to true. \und is returned. (ES6
@@ -161,8 +161,9 @@ via user-defined fields from the given object.
   \auxf{\istrue(v)}{v\not\in\{0,\emptystr,\nil,\und,\false\}}\\
   \auxf{\isfalse(v)}{v\in   \{0,\emptystr,\nil,\und,\false\}}\\
   \auxf{\fun(l',L,\js x,\js e,l)}{l'\mapsto\{@proto: \lfp, \js{prototype}:
-    l, @scope: L, @body: \lambda \js{x.e}, @frozen: \false\}}\\
-  \auxf{\pickThis(H, \fld{l}{x})}{l \phantom{\und} \quad \text{iff} (l,@this) \in \dom(H)}\\
+        l, @scope: L, @body: \lambda \js{x.e}, @frozen: \false\}}\\
+  \auxf{\pickThis(H, \fld{l}{x})}{l \phantom{\und} \quad
+        \text{iff} (l,@this) \in \dom(H)}\\
   \auxf{\pickThis(H, r)}{\und \phantom{l} \quad \text{otherwise}}\\
   \auxf{\objOrGlob(l)}{l\phantom{_{op}} \quad l\in \loc}\\
   \auxf{\objOrGlob(v)}{\lop \quad v\not\in\loc}\\
@@ -171,7 +172,8 @@ via user-defined fields from the given object.
   \auxf{\act(l,\js{x},v,\js{e},l'')}{l\pointsto\{\js{x}:
     v,@this: l'',@proto: \nil\}\sep \defs(\js{x},l,\js{e})}\\
   \auxf{\auxDef(H,l,s)}{H \qquad l \in s \lor l \not\in \loc}\\
-  \auxf{\auxDef(H,l,s)}{\auxDef(H,,s \cup\{l\})[(l,@frozen) \mapsto \true]}
+  \auxf{\auxDef(H,l,s)}{\forall (x_n, V_n) \in H_{n-1}(l) \st H_n =
+    \auxDef(H_{n-1},l,s \cup\{l\})[(l,@frozen) \mapsto \true]}
   \end{array}$
 \end{display}
   \TODO{Some way of looping through (only user-def) fields on \auxDef}
