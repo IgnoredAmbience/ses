@@ -516,7 +516,11 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 \TODO{More Auxiliary predicates}
 \begin{display}{Auxiliary Predicates}
   \jaxiom{\bpGen(V,\_,\_,\_)}{V \notdotin \loc} \\
-  \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s}
+  \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s} \\
+  \jaxiom{\auxDef(V,s,\_)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
+    s} \\
+  \jaxiom{\auxDef(V,s,b)}{(V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
+    \uvars} (V,x_n) \pointsto V' \sepish \auxDef(V', s\cup\{V\}, b))}
 \end{display}
 
 \begin{display}{Inference Rules}
@@ -692,16 +696,19 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \vg
 
   \staterule{(Freeze)}
-  {
-    \tr{P}{\js{e}}{R_1 \sep \rv \doteq V_1 \sep (V_2, @frozen) \pointsto V_3} \\
-    Q = dereference V1 to V2 \sep S \\
-  }
+    {
+      \tr{P}{\js{e}}{Q \sep \rv \doteq V_1 \sep (V_2, @frozen) \pointsto V_3} \\
+      Q = \getValue(\_,V_1,V_2) \sep S
+    }
     {\tr{P}{\js{freeze(e)}}{Q \sep (V_2, @frozen) \pointsto \true \sep \rv \doteq V_2}}
   \vg
 
   \staterule{(Recusive freeze)}
-    {}
-    {}
+    {
+      \tr{P}{\js{e}}{Q \sep \rv \doteq V_2 \sep \auxDef(V_2, \{\}, \_)} \\
+      Q = \getValue(\_,V_1,V_2) \sep S
+    }
+    {\tr{P}{\js{def(e)}}{Q \sep \rv \doteq V_2 \sep \auxDef(V_2, \{\}, \true)}}
   \vg
 
   % Control flow
