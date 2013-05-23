@@ -54,12 +54,6 @@
 
 An object is a location in the heap, it contains a set of
 values indexed by fields.
-For the purposes of this semantics, \js{null} and \js{undefined} behave
-interchangably.
-\gds{You say this, but then you don't mention \js{null} until you get to
-  inference rules (where it'd better not be just like \js{undefined}), and you
-  only mention \js{undefined} when talking about \js{this}. I think you just
-  don't need that last sentence.}
 
 \paragraph{Object creation}  The Object Construction syntax produces a new object
 with fields named \js{x_1, \ldots, x_n} which map to the values of expressions
@@ -164,7 +158,7 @@ via user-defined fields from the given object.
   \auxf{\fun(l',L,\js x,\js e,l)}{l'\mapsto\{@proto: \lfp, \js{prototype}:
         l, @scope: L, @body: \lambda \js{x.e}, @frozen: \false\}}\\
   \auxf{\pickThis(H, \fld{l}{x})}{l \phantom{\und} \quad
-        \text{iff} (l,@this) \in \dom(H)}\\
+        \text{if } (l,@this) \in \dom(H)}\\
   \auxf{\pickThis(H, r)}{\und \phantom{l} \quad \text{otherwise}}\\
   \auxf{\objOrGlob(l)}{l\phantom{_{op}} \quad l\in \loc}\\
   \auxf{\objOrGlob(v)}{\lop \quad v\not\in\loc}\\
@@ -185,7 +179,7 @@ via user-defined fields from the given object.
   \TODO{Requirements for minimal heap $H_\emptyset$ soundness $H(\lgo, @this)$}
 
   \begin{display}{Local Variable Declarations}
-    \jaxiom{\defs(\js{x},l,\jsvar{y})}{(l,y) \pointsto \und \quad$ \= iff
+    \jaxiom{\defs(\js{x},l,\jsvar{y})}{(l,y) \pointsto \und \quad$ \= if
       $\js{x} \neq \js{y}} \\
     \jaxiom{\defs(\js{x},l,\js{e_1 = e_2})}{\defs(\js{x},l,\js{e_1})} \\
     \jaxiom{\defs(\js{x},l,\js{e_1;e_2})}{\defs(\js{x},l,\js{e_1}) \cup
@@ -198,7 +192,7 @@ via user-defined fields from the given object.
 
   \begin{display}{Heap Update $H[H']$}
     \jaxiom{H[\emp]}{H} \\
-    \jaxiom{H[(l,x) \pointsto v]}{H \disju (l,x) \pointsto v \qquad \mbox{iff }
+    \jaxiom{H[(l,x) \pointsto v]}{H \disju (l,x) \pointsto v \qquad \mbox{if }
       (l,x) \not\in \dom(H)} \\
     \jaxiom{H[(l,x) \pointsto v \disju H']}{H[(l,x) \pointsto v][H']}
   \end{display}
@@ -316,10 +310,10 @@ via user-defined fields from the given object.
   {H,L,\jsfun[y]{x}{e} \evalsto H',l'}
 \vg
 
-\COMMENT{There's no need to $\proto$ in this now that we've disallowed prototype
-  chains from scope lists (we hit the base AR before we need to start
-  traversing) (Also assume that $\lgo$ has $@this$ set directly) We can also drop
-  $\getValue$ to just use $\scope$?}
+%\COMMENT{There's no need to $\proto$ in this now that we've disallowed prototype
+%  chains from scope lists (we hit the base AR before we need to start
+%  traversing) (Also assume that $\lgo$ has $@this$ set directly) We can also drop
+%  $\getValue$ to just use $\scope$?}
   \staterule{(This)}
   {\scope(H,L,@this)=l}
   {H,L,\js{this} \evalsto H,l}
@@ -351,8 +345,7 @@ via user-defined fields from the given object.
   {H,L,\jsnew{e_1}{e_2} \evalsto H',l'}
 \vg
 
-\TODO{This appears to contradict the program logic, was the decision to shadow
-  imports?}
+\COMMENT{Shadow imports}
   \staterule{(Restricted evaluation)}
   {H,L,\js{e_1} \gevalsto H_1,v \qquad
    \js{e_3} = \parse(v) \\
@@ -421,9 +414,6 @@ frozen). This choice may need to be reviewed at a later point.
   $\begin{array}{lll}
     \defline{h,h_g \in}{Abstract heap}
     \defline{h,h_g,L,\env \satisfies P}{Satisfaction relation}
-    \defline{h[h']}{Heap $h$ updated to be consistent with heap $h'$}
-    \defline{h[h'](x) \triangleq h'(x)}{iff $x \in \dom(h')$}
-    \defline{h[h'](x) \triangleq h(x)}{otherwise}
     \defline{\tr{P}{\js{x}}{Q}}{Hoare triple}
   \end{array}$
 \end{display}
@@ -432,14 +422,14 @@ frozen). This choice may need to be reviewed at a later point.
 \begin{display}{Assertions}
   $\begin{array}{rll}
     \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
-    \false}{Boolean formulae}
-    \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulae}
-    \asrtline{\bigsep_{x \in \T{S}} P(x)}{Iterative $\sep$}
-    \asrtline{P \boxwand Q}{Global `hypothesis' formulae}
-    \asrtline{(E,E) \pointsto E \pipe \lemp}{SES formulae}
+    \false}{Boolean formulas}
+    \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulas}
+    \asrtline{\bigsep_{x \in \T{set}} P(x)}{Iterative $\sep$}
+    \asrtline{P \boxwand Q}{Global `hypothesis' formula}
+    \asrtline{(E,E) \pointsto E \pipe \lemp}{Heap formulas}
     \asrtline{E \bp E}{Backpointer formula}
     \asrtline{E = E}{Expression equality}
-    \asrtline{\forall X \st P \pipe \exists X \st P}{First-order formulae}
+    \asrtline{\forall X \st P \pipe \exists X \st P}{First-order formulas}
   \end{array}$
 \end{display}
 
@@ -518,20 +508,20 @@ Frame property:
   h \disju h', L, \js{e} \leadsto h_2' \land h\subseteq h_g\impl h, L, \js{e} \leadsto h_2 \land
   h_2' = h_2 \disju h' \]
 
-\TODO{Bake-in safety and frame properties?}
 An alternative formulation which emphasises the relationship between the global
 view of the heap and the framing property ($h_g = h \disju h_f$) can also be
 produced, it should be noted that the meaning is subtly different (in that $h'
 \neq h_g$ in all cases).
 
-\TODO{Auxiliary predicates}
-\begin{display}{Inference Rules}
-  $\bpGen(V,\_,\_,\_) \triangleq V \notdotin \loc$ \\
-  $\bpGen(V,L,x,s) \triangleq V \dotin \loc \sep V \bp \{(L,x)\} \cup s$
-  \vg
+\TODO{More Auxiliary predicates}
+\begin{display}{Auxiliary Predicates}
+  \jaxiom{\bpGen(V,\_,\_,\_)}{V \notdotin \loc} \\
+  \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s}
+\end{display}
 
+\begin{display}{Inference Rules}
   \stateaxiom{(Declaration)}
-    {\tr {\lemp} {\js{var x}} {\rv \doteq \und}}
+    {\tr {\lemp} {\jsvar{x}} {\rv \doteq \und}}
   \vg
 
   \stateaxiom{(Value)}
@@ -551,37 +541,33 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Computed Access)}
     {
-      \tr {P} {\js{e1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep
+      \tr {P} {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep
       \getValue(Ls_1, V_1, L) \sep L \not\doteq \nil \sep L\dotin\loc\\
-      \tr {R} {\js{e2}} {Q \sep X \dotin \uvars \sep \rv \doteq V_2}
+      \tr {R} {\js{e_2}} {Q \sep X \dotin \uvars \sep \rv \doteq V_2}
       \quad Q = S_2 \sep \getValue(Ls_2, V_2, X)
     }
-    {\tr {P} {\js{e1[e2]}} {Q \sep \rv \doteq \fld{L}{X}}}
+    {\tr {P} {\js{e_1[e_2]}} {Q \sep \rv \doteq \fld{L}{X}}}
   \vg
 
   \staterule{(Bin Op)}
     {
-      \tr P {\js{e1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls,
+      \tr P {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls,
       V_1, V_3) \\
-      \tr R {\js{e2}} {Q \sep \rv \doteq V_2} \quad Q = S_2 \sep \getValue(Ls,
+      \tr R {\js{e_2}} {Q \sep \rv \doteq V_2} \quad Q = S_2 \sep \getValue(Ls,
       V_2, V_4) \\
       V = V_3 \mathbin{\bar\oplus} V_4
     }
-    {\tr P {\js{e1} \oplus \js{e2}} {Q \sep \rv \doteq V}}
+    {\tr P {\js{e_1} \oplus \js{e_2}} {Q \sep \rv \doteq V}}
   \vg
 
-  \FIXME{Look at bp closer - need to remove $V_3$?}
-  \gds{I don't think you \emph{need} to remove $V_3$. You maintain permission to\\
-    $(L,X)$ after the assignment, so you can use consequence to remove $V_3$\\
-    from the bp set then. Also, consider the case where $V_3$=$V_2$.}
   \staterule{(Assign)}
     {
-      \tr P {\js{e1}} {R \sep \rv \doteq \fld{L}{X}} \\
-      \tr R {\js{e2}} {Q \sep (L,X) \pointsto V_3 \sep \rv \doteq V_1} \\
+      \tr P {\js{e_1}} {R \sep \rv \doteq \fld{L}{X}} \\
+      \tr R {\js{e_2}} {Q \sep (L,X) \pointsto V_3 \sep \rv \doteq V_1} \\
       Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep
       \bpGen(V_2, L, X, s)
     }
-    {\tr P {\js{e1 = e2}} {Q \sep (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
+    {\tr P {\js{e_1 = e_2}} {Q \sep (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
   \vg
 
   \staterule{(This)}
@@ -602,7 +588,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \{(L_2,@proto)\} \sep \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
     \end{array}\right)
   }
-  {\tr P {\js{function(x) \{e\}}} Q}
+  {\tr P {\jsfun{x}{e}} Q}
   \vg
 
   \staterule{(Named Function)}
@@ -622,7 +608,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \cup s_2 \sep  \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
       \end{array}\right)
     }
-    {\tr P {\js{function y(x) \{e\}}} Q}
+    {\tr P {\jsfun[y]{x}{e}} Q}
   \vg
 
   \staterule{(Object)}
@@ -630,21 +616,21 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \forall i \in 1..n \st \left(\begin{array}{l}
         P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \sep
           X_i \bp s_i \\
-        \tr {P_{i-1}} {\js{ei}} {P_i \sep \rv \doteq Y_i} \\
+        \tr {P_{i-1}} {\js{e_i}} {P_i \sep \rv \doteq Y_i} \\
       \end{array}\right) \\
       P_n = R \sep \lop \bp s_{op} \\
       Q = R \sep
       \exists L \st \left(\begin{array}{l}
-        \newobj(L, @proto, \js{x1} \ldots \js{xn}) \sep {} \\
+        \newobj(L, @proto, \js{x_1} \ldots \js{x_n}) \sep {} \\
         \bigsep_{1 \leq i \leq n} (
-          (L, \js{xi}) \pointsto X_i \sep \bpGen(X_i, L,\js{xi}, s_i)
+          (L, \js{x_i}) \pointsto X_i \sep \bpGen(X_i, L,\js{x_i}, s_i)
         ) \sep {} \\
         (L,@proto) \pointsto \lop \sep \lop \bp s_{op} \cup \{(L,@proto)\} \sep {} \\
         \rv \doteq L \sep L \bp \{\} \\
       \end{array}\right) \\
-      \js{x1} \neq \dots \neq \js{xn} \qquad \rv \not\in \fv(P_n)
+      \js{x_1} \neq \dots \neq \js{x_n} \qquad \rv \not\in \fv(P_n)
     }
-    {\tr {P_0} {\js{\{x1:e1, ..., xn:en\}}} Q}
+    {\tr {P_0} {\js{\{x_1:e_1, ..., x_n:e_n\}}} Q}
   \TODO{Consider situations when $X_n = X_{n+1}$ for bp sets. Also consider if
     subexpression \js{ei} modifies the $\lop$ bp set (eg, object creation,
     assigns $\lop$ to $@proto$), since we expressly update
@@ -657,27 +643,27 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Function Call)}
     {
-      \tr P {\js{e1}} {R_1 \sep \rv \doteq F_1} \\
+      \tr P {\js{e_1}} {R_1 \sep \rv \doteq F_1} \\
       R_1 = \left(\begin{array}{l}
           S_1 \sepish \pickThis(F_1, T) \sepish \getValue(Ls_1, F_1, F_2) \sep {} \\
-          (F_2, @body) \pointsto \lambda X.\js{e3} \sep (F_2, @scope) \pointsto
+          (F_2, @body) \pointsto \lambda X.\js{e_3} \sep (F_2, @scope) \pointsto
           Ls_2
       \end{array}\right) \\
-      \tr {R_1} {\js{e2}} {R_2 \sep T \bp s \sep \bpGen(V_2,\_,\_,s') \sep
+      \tr {R_1} {\js{e_2}} {R_2 \sep T \bp s \sep \bpGen(V_2,\_,\_,s') \sep
         \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
       R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
       R_3 = \left(\begin{array}{l}
           R_2 \sep \exists L \st \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
           \sep (L, @this) \pointsto T \sep (L, @proto) \pointsto \nil \sep
-          \defs(X,L,\js{e3}) \sep {} \\
-          \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e3})) \sep
+          \defs(X,L,\js{e_3}) \sep {} \\
+          \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e_3})) \sep
           L \bp \{\} \sep T \bp \{(L,@this)\} \cup s \sep
           \bpGen(V_2, L, X, s')
       \end{array}\right) \\
-      \tr {R_3} {\js{e3}} {\exists L \st Q \sep \ls \doteq L:Ls_2} \qquad
+      \tr {R_3} {\js{e_3}} {\exists L \st Q \sep \ls \doteq L:Ls_2} \qquad
       \ls \notin \fv(Q) \cup \fv(R_2)
     }
-    {\tr P {\js{e1(e2)}} {\exists L \st Q \sep \ls \doteq Ls_3}}
+    {\tr P {\js{e_1(e_2)}} {\exists L \st Q \sep \ls \doteq Ls_3}}
   \vg
 
   \staterule{(New)}
@@ -689,25 +675,28 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \COMMENT{Work in progress}
   \staterule{(Restricted evaluation)}
     {
-      \tr{P}{\js{e1}}{R_1 \sep \rv \doteq V_1} \\
+      \tr{P}{\js{e_1}}{R_1 \sep \rv \doteq V_1} \\
       R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \text{String} \\ %% FIXME: STRING
-      \parse(V_2) = \js{e3} \\
-      \tr{R_1}{\js{e2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls \sep \gv \doteq g} \\
+      \parse(V_2) = \js{e_3} \\
+      \tr{R_1}{\js{e_2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls \sep \gv \doteq g} \\
       R_2 = \left(\begin{array}{l}
         S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep {} \\
         \exists L \st R_3 \sep
-        \newobj_L(@proto,@this,\vardecls(...,\js{e3})) \sep {} \\
-        \obj_L(@this: V_2, @proto: \nil) \sep \defs(...,\js{e3}) \sep {} \\
+        \newobj_L(@proto,@this,\vardecls(...,\js{e_3})) \sep {} \\
+        \obj_L(@this: V_2, @proto: \nil) \sep \defs(...,\js{e_3}) \\
       \end{array}\right) \\
-      R_3 = \ls \sep L:[V_2] \sep \gv \doteq V_2 \\
-      \tr{R_2}{\js{e3}}{\exists L \st Q \sep R_3}
+      R_3 = (\ls \doteq L:[V_2] \sep \gv \doteq V_2) \\
+      \tr{R_2}{\js{e_3}}{\exists L \st Q \sep R_3}
     }
-    {\tr{P}{\js{reval(e1,e2)}}{\exists L \st Q \sep \ls \doteq Ls \sep \gv \doteq g}}
+    {\tr{P}{\js{reval(e_1,e_2)}}{\exists L \st Q \sep \ls \doteq Ls \sep \gv \doteq g}}
   \vg
 
   \staterule{(Freeze)}
-    {}
-    {}
+  {
+    \tr{P}{\js{e}}{R_1 \sep \rv \doteq V_1 \sep (V_2, @frozen) \pointsto V_3} \\
+    Q = dereference V1 to V2 \sep S \\
+  }
+    {\tr{P}{\js{freeze(e)}}{Q \sep (V_2, @frozen) \pointsto \true \sep \rv \doteq V_2}}
   \vg
 
   \staterule{(Recusive freeze)}
@@ -717,31 +706,31 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   % Control flow
   \staterule{(Sequence)}
-    {\tr P {\js{e1}} R \quad \tr R {\js{e2}} Q}
-    {\tr P {\js{e1; e2}} Q}
+    {\tr P {\js{e_1}} R \quad \tr R {\js{e_2}} Q}
+    {\tr P {\js{e_1; e_2}} Q}
   \vg
 
   \staterule{(If True)}
-    {\tr P {\js{e1}}{S\sep \istrue(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
+    {\tr P {\js{e_1}}{S\sep \istrue(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
      S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
-     \tr {S}{\js{e2}} Q}
-    {\tr P {\js{if(e1)\{e2\}\{e3\}}} Q}
+     \tr {S}{\js{e_2}} Q}
+    {\tr P {\js{if(e_1)\{e_2\}\{e_3\}}} Q}
   \vg
 
   \staterule{(If False)}
-    {\tr P {\js{e1}}{S\sep \isfalse(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
+    {\tr P {\js{e_1}}{S\sep \isfalse(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
      S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
-     \tr {S}{\js{e3}} Q}
-    {\tr P {\js{if(e1)\{e2\}\{e3\}}} Q}
+     \tr {S}{\js{e_3}} Q}
+    {\tr P {\js{if(e_1)\{e_2\}\{e_3\}}} Q}
   \vg
 
   \staterule{(While)}
-    {\tr P {\js{e1}} {S\sep\rv\doteq\E{V_1}} \qquad
+    {\tr P {\js{e_1}} {S\sep\rv\doteq\E{V_1}} \qquad
     S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
-     \tr {S \sep \istrue(\E{V_2})} {\js{e2}} P\\
+     \tr {S \sep \istrue(\E{V_2})} {\js{e_2}} P\\
      Q = S \sep \isfalse(\E{V_2})\sep\rv\doteq\und\qquad
      \rv\not\in \fv(R)}
-    {\tr P {\js{while(e1)\{e2\}}} Q}
+    {\tr P {\js{while(e_1)\{e_2\}}} Q}
   \vg
 
   % Standard
