@@ -182,8 +182,26 @@ via user-defined fields from the given object.
   \end{array}$
 \end{display}
 
-  \TODO{Define H[update]}
   \TODO{Requirements for minimal heap $H_\emptyset$ soundness $H(\lgo, @this)$}
+
+  \begin{display}{Local Variable Declarations}
+    \jaxiom{\defs(\js{x},l,\jsvar{y})}{(l,y) \pointsto \und \quad$ \= iff
+      $\js{x} \neq \js{y}} \\
+    \jaxiom{\defs(\js{x},l,\js{e_1 = e_2})}{\defs(\js{x},l,\js{e_1})} \\
+    \jaxiom{\defs(\js{x},l,\js{e_1;e_2})}{\defs(\js{x},l,\js{e_1}) \cup
+      \defs(\js{x},l,\js{e_2})} \\
+    \jaxiom{\defs(\js{x},l,\js{if(e_1)\{e_2\}\{e_3\}})}
+      {\defs(\js{x},l,\js{e_2}) \cup \defs(\js{x},l,\js{e_3})} \\
+    \jaxiom{\defs(\js{x},l,\js{while(e_1)\{e_2\}})}{\defs(\js{x},l,\js{e_2})} \\
+    \jaxiom{\defs(\js{x},l,\js{e})}{\emp$ \> otherwise$}
+  \end{display}
+
+  \begin{display}{Heap Update $H[H']$}
+    \jaxiom{H[\emp]}{H} \\
+    \jaxiom{H[(l,x) \pointsto v]}{H \disju (l,x) \pointsto v \qquad \mbox{iff }
+      (l,x) \not\in \dom(H)} \\
+    \jaxiom{H[(l,x) \pointsto v \disju H']}{H[(l,x) \pointsto v][H']}
+  \end{display}
 
   \begin{display}{Scope resolution: $\scope(H,l,x)$.}
     \jaxiom{\scope(H,{\emptylist},\njs{x})}{\nil}{}\vg
@@ -201,18 +219,6 @@ via user-defined fields from the given object.
     \jrule{\getValue(H,\njs{r})}{\njs{r}}{\njs{r}\neq \fld{l}{\js{x}}}~
     \jrule{\getValue(H,\fld{l}{\js{x}})}{\und}{\proto(H,l,\js{x}) = \nil\\ l\neq \nil}~
     \jrule{\getValue(H,\fld{l}{\js{x}})}{H(l',\js{x})}{\proto(H,l,\js{x}) = l'\\ l\neq \nil}
-  \end{display}
-
-  \begin{display}{Local Variable Declarations}
-    \jaxiom{\defs(\js{x},l,\jsvar{y})}{(l,y) \pointsto \und \quad$ \= iff
-      $\js{x} \neq \js{y}} \\
-    \jaxiom{\defs(\js{x},l,\js{e_1 = e_2})}{\defs(\js{x},l,\js{e_1})} \\
-    \jaxiom{\defs(\js{x},l,\js{e_1;e_2})}{\defs(\js{x},l,\js{e_1}) \cup
-      \defs(\js{x},l,\js{e_2})} \\
-    \jaxiom{\defs(\js{x},l,\js{if(e_1)\{e_2\}\{e_3\}})}
-      {\defs(\js{x},l,\js{e_2}) \cup \defs(\js{x},l,\js{e_3})} \\
-    \jaxiom{\defs(\js{x},l,\js{while(e_1)\{e_2\}})}{\defs(\js{x},l,\js{e_2})} \\
-    \jaxiom{\defs(\js{x},l,\js{e})}{\emp$ \> otherwise$}
   \end{display}
 
 \begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
