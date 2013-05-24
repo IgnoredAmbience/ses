@@ -434,46 +434,48 @@ frozen). This choice may need to be reviewed at a later point.
 \end{display}
 
 \newcommand{\assaxiom}[1]{\>$h,h_g,L,\env \satisfies #1$}
-\newcommand{\asssat}[3]{\assaxiom{#1}\>$\iff$\>$#2$\\%
-\ifblank{#3}{}{\>\>\>\quad$#3$\\}}
+\newcommand{\asssat}[3]{\assaxiom{#1}\>$\iff$\>$#2$
+  \ifblank{#3}{}{\\\>\>\>\quad$#3$}}
 \begin{display}{Assertion satisfaction relation}
 \hspace{1.5em} \= $h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3$ \= $\iff$ \= \kill
 
 \assaxiom{\true} \\
 %    h,h_g,L,\env \not\satisfies \false \\
-\asssat{P \land Q}{(h,h_g,L,\env \satisfies P) \land (h,h_g,L,\env \satisfies Q)}{}
-\asssat{P \lor Q}{(h,h_g,L,\env \satisfies P) \lor (h,h_g,L,\env \satisfies Q)}{}
-\asssat{\lnot P}{\lnot(h,h_g,L,\env \satisfies P)}{}
-\asssat{P \sep Q}{\exists h_1,h_2 \st h \equiv h_1 \sep h_2 \land{}}
-  {(h_1,h_g,L,\env \satisfies P) \land (h_2,h_g,L,\env \satisfies Q)}
+\asssat{P \land Q}{(h,h_g,L,\env \satisfies P) \land (h,h_g,L,\env \satisfies
+Q)}{} \\
+\asssat{P \lor Q}{(h,h_g,L,\env \satisfies P) \lor (h,h_g,L,\env \satisfies
+Q)}{} \\
+\asssat{\lnot P}{\lnot(h,h_g,L,\env \satisfies P)}{} \\
+\asssat{P \sep Q}{\exists h_1,h_2 \st h \equiv h_1 \disju h_2 \land{}}
+  {(h_1,h_g,L,\env \satisfies P) \land (h_2,h_g,L,\env \satisfies Q)} \\
 \asssat{P \sepish Q}{\exists h_1,h_2,h_3 \st
     h \equiv h_1 \disju h_2 \disju h_3 \land{}}
   {(h_1 \disju h_3, h_g, L, \env \satisfies P) \land
-    (h_2 \disju h_3, h_g, L, \env \satisfies Q)}
+    (h_2 \disju h_3, h_g, L, \env \satisfies Q)} \\
 \asssat{P \wand Q}{\forall h' \st (h',h_g,L,\env \satisfies P) \land h \disj h'
     \land h' \subseteq h_g}
-  {\impl (h \disju h', h_g, L, \env \satisfies Q)}
+  {\impl (h \disju h', h_g, L, \env \satisfies Q)} \\
 %h,h_g,L,\env \satisfies \upd P}{h, h_g[h], L, \env \satisfies P }\\
 %h,h_g,L,\env \satisfies P?Q}{h, h_g[h], L, \env \satisfies P }\\
 %P \boxwand Q & \triangleq & P \wand P ? Q }\\
 \asssat{P \boxwand Q}{\forall h' \st (h',h_g[h'],L,\env \satisfies P)
     \land h \disj h'}
-  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)}
+  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)} \\
+\asssat{\bigsep_{x\in\{\}}P(x)}{h,h_g,L,{\env}\satisfies\lemp}{} \\
+\asssat{\bigsep_{x\in\T{set}}P(x)}{y\in\T{set} \land h,h_g,L,{\env} \satisfies
+  P(y)\sep(\bigsep_{x\in(\T{set}\setminus y)}P(x))}{} \\
+\asssat{\lemp}{h = \emp}{} \\
 \asssat{(E_1,E_2) \pointsto E_3}{h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto
-  \evalle{E_3}}{}
-\asssat{E_1 \bp E_2}{\forall (l,x) \in \dom(h_g) \st h_g(l,x) = \evalle{E_1}}
-  {\impl (l,x) \in \evalle{E_2}}
-\asssat{\lemp}{h = \emp}{}
+  \evalle{E_3}}{} \\
+\asssat{E_1 \bp E_2}{h \equiv (\evalle{E_1}, @bp) \pointsto v \land
+  \forall (l,x) \in \dom(h_g) \st h_g(l,x) = \evalle{E_1}}
+  {\impl (l,x) \in \evalle{E_2}} \\
+\asssat{E_1 = E_2}{\evalle{E_1} = \evalle{E_2}}{} \\
 \asssat{\exists\V X \st P}{\exists \V{v} \st h,h_g,L,[{\env} | \V X\takes \V{v}]
-  \satisfies P}{}
+  \satisfies P}{} \\
 \asssat{\forall\V X \st P}{\forall \V{v} \st h,h_g,L,[{\env} | \V X\takes \V{v}]
   \satisfies P}{}
-\asssat{\bigsep_{x\in\{\}}P(x)}{h,h_g,L,{\env}\satisfies\lemp}{}
-\asssat{\bigsep_{x\in\T{set}}P(x)}{y\in\T{set} \land h,h_g,L,{\env} \satisfies
-  P(y)\sep(\bigsep_{x\in(\T{set}\setminus y)}P(x))}{}
 \end{display}
-
-\FIXME{Give $\bp$ a footprint to prevent contradictory assertions/implication}
 
 The definition of $\wand$ is awkward, by introducing the global view of the
 heap, we cannot keep both the right-adjoint property of $\sep$
@@ -721,14 +723,14 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {\tr P {\js{e_1}}{S\sep \istrue(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
      S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
      \tr {S}{\js{e_2}} Q}
-    {\tr P {\js{if(e_1)\{e_2\}\{e_3\}}} Q}
+    {\tr P {\js{if(e_1)\{e_2\}else\{e_3\}}} Q}
   \vg
 
   \staterule{(If False)}
     {\tr P {\js{e_1}}{S\sep \isfalse(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
      S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
      \tr {S}{\js{e_3}} Q}
-    {\tr P {\js{if(e_1)\{e_2\}\{e_3\}}} Q}
+    {\tr P {\js{if(e_1)\{e_2\}else\{e_3\}}} Q}
   \vg
 
   \staterule{(While)}
