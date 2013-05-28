@@ -1068,6 +1068,13 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \end{figure}
 
 \FIXME{$L \bp \{\}$ conflicts with use of $\scopePtrs$ in overall precondition.}
+\gds{Want to fix this by doing $\scopePtrs(blah)\sepish L\bp\{\}$ ? Since the bp
+assertion is exact, you can use wand to get a fairly tight frame
+like so:
+$\scopePtrs(blah)\sepish L\bp\{\} \equiv L\bp\{\}\sep (L\bp\{\} \wand
+\scopePtrs(blah)\sepish L\bp\{\})$
+Note that we're not speculating different values, just shifting our footprint
+around. So the regular wand will do.}
 \TODO{Extend to writing to objects via the proxy. Take careful note of
   \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
 {Nov-11 es-discuss thread} (theft of \js{protected} by using \js{\_\_proto\_\_}
