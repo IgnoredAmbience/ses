@@ -868,7 +868,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \begin{figure}
 \[
   \begin{array}{l}
-    \js{var RevocableRef = function(ref) \{}\\
+    \jsvar{RevocableRef = function(ref) \{}\\
     \begin{array}{@{\qquad}l}
       \logic{
         % function
@@ -894,7 +894,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         % assign
           V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
       } \\
-      \js{var protected = ref;} \\
+      \jsvar{protected = ref;} \\
       \logic{
         % var *2
           \obj_L(\js{protected}: V, \js{ref}: V, @frozen: \false) \sep {} \\
@@ -909,7 +909,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         \lop \bp s_3 \sep \lfp \bp s_4 \sep
           \scopePtrs(\ls,s',s',\{\}) \sep \ls\doteq{L:Ls}
       } \\
-      \js{var access = function(field) \{b_a\};} \\
+      \jsvar{access = function(field) \{b_a\};} \\
       \logic{
         \exists A, A_p \st \left(\begin{array}{l}
           % var, assign
@@ -932,7 +932,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         \lop \bp s_5 \sep \lfp \bp s_6 \sep
         \scopePtrs(\ls, s'_1, s'_1,\{\}) \sep \ls\doteq{L:Ls}
       } \\
-      \js{var kill = function() \{b_k\};} \\
+      \jsvar{kill = function() \{b_k\};} \\
       \logic{
         \exists K, K_p \st
         \left(\begin{array}{l}
@@ -953,7 +953,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         \obj_L(\js{access}:A, \js{kill}:K) \sep
         A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9 \sep \ls \doteq L : Ls
       } \\
-      \js{return \{access: access, kill: kill\};} \\
+      \js{return\ \{access: access, kill: kill\};} \\
       \logic{
         \exists O \st
         \left(\begin{array}{l}
@@ -1001,7 +1001,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \begin{figure}
 \[
   \begin{array}{l}
-    \js{var kill = function() \{} \\
+    \jsvar{kill = function() \{} \\
     \begin{array}{@{\qquad}l}
       \logic{
         (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
@@ -1040,7 +1040,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 % RevocableRef#access body call
 \[
   \begin{array}{l}
-    \js{var access = function(field) \{} \\
+    \jsvar{access = function(field) \{} \\
     \begin{array}{@{\qquad}l}
       \logic{
         (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
@@ -1059,7 +1059,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
           \sep {} \\
         X \dotin \uvars \sep \ls \doteq L':L:Ls
       } \\
-      \js{return protected[field];} \\
+      \js{return\ protected[field];} \\
       \logic{
         \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
         (L, \js{protected}) \mapsto P \sep
@@ -1097,8 +1097,6 @@ around. So the regular wand will do.}
   \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
 {Nov-11 es-discuss thread} (theft of \js{protected} by using \js{\_\_proto\_\_}
 or through redefining/hiding a \emph{trusted prototypical} method (eg on Array))}
-\gds{On my system the ``var protected = ref'' and similar mysteriously lose
-  whitespace between the ``var'' and the ``protected''.}
 
 \subsection{Membrane}
 \label{sec:membrane}
