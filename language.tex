@@ -597,7 +597,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \vg
 
   \staterule{(This)}
-  { P = \scope(Ls, \ls, @this, L_1) \sepish \proto(Ls_2, L_1, @this, L_2)
+  { P = \scope(Ls_1, \ls, @this, L_1) \sepish \proto(Ls_2, L_1, @this, L_2)
     \sepish (L_2,@this) \pointsto V }
   {\tr P {\js{this}} {P \sep \rv \doteq V}}
   \vg
@@ -605,13 +605,16 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Function)}
   {
     P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \\
-      Q = \left(\begin{array}{l}
-          \exists L_1,L_2 \st \newobj(L_1,@proto) \sep (L_1,@proto) \pointsto \lop
-    \sep \newobj(L_2,@proto, \js{prototype}, @scope, @body) \sep {}\\
-    L_2 \bp \{\} \sep \fun(L_2, \ls, x, e, L_1) \sep \rv \doteq L_2 \sep
-    L_1 \bp \{(L_2, \js{prototype})\} \sep {} \\
-    \lop \bp s_1 \cup \{(L_1,@proto)\} \sep \lfp \bp s_2 \cup
-      \{(L_2,@proto)\} \sep \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
+      Q = \exists L_1,L_2 \st \left(\begin{array}{l}
+        % L_1 - prototype object
+        \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
+          \lop \bp s_1 \cup \{(L_1,@proto)\}  \sep {} \\
+        % L_2 - function
+        \newfun_{L_2}(\ls, \js{x}, \js{e}, L_1) \sep L_2 \bp \{\} \sep
+          \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
+        % Other bits
+        \rv \doteq L_2 \sep
+        \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
     \end{array}\right)
   }
   {\tr P {\jsfun{x}{e}} Q}
@@ -621,17 +624,19 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     {
       P = \lop \bp s_1 \sep \lfp \bp s_2 \sep
         \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \\
-      Q = \left(\begin{array}{l}
-      \exists L_1, L_2, L_3 \st \newobj(L_1, @proto) \sep (L_1, @proto)
-      \pointsto \lop \sep \newobj(L_3,@proto,y) \sep (L_3, @proto) \pointsto
-      \nil \sep {} \\
-      (L_3,\js{y}) \pointsto L_2 \sep L_2 \bp \{(L_3,\js{y})\} \sep
-      L_3 \bp \{(L_2,@scope)\} \sep
-      \newobj(L_2,@proto,\js{prototype},@scope,@body) \sep {} \\
-      \fun(L_2,(L_3:\ls), \js{x}, \js{e}, L_1) \sep \rv \doteq L_2 \sep
-      L_1 \bp \{(L_2, \js{prototype})\} \sep {} \\
-      \lop \bp \{(L_1, @proto)\} \cup s_1 \sep \lfp \bp \{(L_2, @proto)\}
-      \cup s_2 \sep  \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
+      Q = \exists L_1, L_2, L_3 \st \left(\begin{array}{l}
+        % L_1 - prototype object
+        \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
+          \lop \bp s_1 \cup \{(L_1,@proto)\}  \sep {} \\
+        % L_2 - function
+        \newfun_{L_2}((L_3:\ls), \js{x}, e, L_1) \sep
+          L_2 \bp \{(L_3,\js{y})\} \sep
+          \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
+        % L_3 - new scope object
+        \fullobj_{L_3}(@proto:\nil,\js{y}:L_2) \sep L_3 \bp \{(L_2,@scope)\} \sep {} \\
+        % Other bits
+        \rv \doteq L_2 \sep
+        \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
       \end{array}\right)
     }
     {\tr P {\jsfun[y]{x}{e}} Q}
