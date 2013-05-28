@@ -665,6 +665,14 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \COMMENT{I \emph{think} the $\lop$ bp should work as specified here - we get
     the $\lop$ bp set out of $P_n$ as $s_{op}$ - it may have been updated
     multiple times in the precondition loop.}
+  \gds{You're right about $\lop$. So we're left with the $X_n = X_{n+1}$ case. I
+    think that the current rule is sound, but cannot be used to reason about
+    \js{ob1 = \{\} ; ob2 = \{x:ob1 , y:ob1\}} because the bp sets of $X_1$
+    and $X_2$ (which correspond to \js{x} and \js{y}) overlap. I think
+    this is probably fine, but worth knowing. The obvious fix --
+    changing the $\bigsep$ to a $\bigsepish$ --  \emph{may} be ok, but then
+    soundness relies on the $\js{x_1} \neq \dots \neq \js{x_n}$ to prevent us
+    from proving postcondition False for the program \js{ob = \{x:1,x:2\}}}
   \vg
 
   \staterule{(Function Call)}
