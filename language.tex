@@ -542,7 +542,20 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     s} \\
   \jaxiom{\auxDefSet(V,s,b)}{(V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefSet(V', s\cup\{V\}, b))} \\
-  \jaxiom{\ReadWrite(L)}{(L, @frozen) \pointsto \false}
+  \jaxiom{\ReadWrite(L)}{(L, @frozen) \pointsto \false} \\
+  \jaxiom{\decls(X,L,\js{e})}{\js{x_1},...,\js{x_n} \quad \text{where }
+    (L,\js{x_i}) \in \dom(\defs(X,L,\js{e}))}
+\end{display}
+
+\begin{display}{Local Variable Definitions}
+  \jaxiom{\defs(X,L,\jsvar{y})}{(l,y) \pointsto \und \sep X \not\doteq \js{y}} \\
+  \jaxiom{\defs(X,L,\js{e_1 = e_2})}{\defs(X,L,\js{e_1})} \\
+  \jaxiom{\defs(X,L,\js{e_1;e_2})}{\defs(X,L,\js{e_1}) \sepish
+    \defs(X,L,\js{e_2})} \\
+  \jaxiom{\defs(X,L,\js{if(e_1)\{e_2\}\{e_3\}})}
+    {\defs(X,L,\js{e_2}) \sepish \defs(X,L,\js{e_3})} \\
+  \jaxiom{\defs(X,L,\js{while(e_1)\{e_2\}})}{\defs(X,L,\js{e_2})} \\
+  \jaxiom{\defs(X,L,\js{e})}{\lemp \quad \text{otherwise}}
 \end{display}
 
 \begin{display}{Inference Rules}
@@ -652,7 +665,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       P_n = R \sep \lop \bp s_{op} \\
       Q = R \sep
       \exists L \st \left(\begin{array}{l}
-        \newobj(L, @proto, \js{x_1} \ldots \js{x_n}) \sep {} \\
+        \newobj_L(@proto, \js{x_1},...,\js{x_n}) \sep {} \\
         \bigsep_{1 \leq i \leq n} (
           (L, \js{x_i}) \pointsto X_i \sep \bpGen(X_i, L,\js{x_i}, s_i)
         ) \sep {} \\
@@ -691,8 +704,8 @@ produced, it should be noted that the meaning is subtly different (in that $h'
       \tr {R_1} {\js{e_2}} {R_2 \sep T \bp s \sep \bpGen(V_2,\_,\_,s') \sep
         \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
       R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
-      R_3 = \left(\begin{array}{l}
-          R_2 \sep \exists L \st \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
+      R_3 = R_2 \sep \exists L \st \left(\begin{array}{l}
+          \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
           \sep (L, @this) \pointsto T \sep (L, @proto) \pointsto \nil \sep
           \defs(X,L,\js{e_3}) \sep {} \\
           \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e_3})) \sep
