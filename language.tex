@@ -169,10 +169,11 @@ via user-defined fields from the given object.
     v,@this: l'',@proto: \nil\}\disju \defs(\js{x},l,\js{e})}\\
 
   \auxf{\auxDef(H,l,s)}{\begin{cases}
-    \emp & l \in s \lor l \not\in \loc\\
-    (l,@frozen) \mapsto \true \cup \bigcup_{(l,x_n) \in H, x_n \in \uvars}
-    \auxDef(H,H(l,x_n),s \cup\{l\}) & \mbox{otherwise} \\
-  \end{cases}}\\
+      \emp & l \in s \lor l \not\in \loc\\
+      (l,@frozen) \mapsto \true \cup \bigcup_{(l,x_n) \in H, x_n \in \uvars}
+      \auxDef(H,H(l,x_n),s \cup\{l\}) & \mbox{otherwise} \\
+    \end{cases}}\\
+  \auxf{\ReadWrite(H, l)}{H(l, @frozen) = \false} \\
   \end{array}$
 \end{display}
 
@@ -293,7 +294,7 @@ via user-defined fields from the given object.
 
   \staterule{(Assignment)}
   {H,L,\js{e_1} \evalsto H_1,\fld{l}{x} \qquad
-   H_1(l, @frozen) \neq \true \\
+   \ReadWrite(H_1, l) \\
    H_1,L,\js{e_2} \gevalsto H_2, v \\
    H' = H_2[(l,x) \pointsto v]}
   {H,L,\js{e_1 = e_2} \evalsto H', v}
@@ -517,12 +518,31 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
 \TODO{More Auxiliary predicates}
 \begin{display}{Auxiliary Predicates}
+  \jaxiom{\obj_E(E_1:E'_1,...,E_n:E'_n)}{(E,E_1) \pointsto E'_1 \sep ... \sep
+    (E,E_n) \pointsto E'_n} \\
+  \jaxiom{\newobj_L(V_1,...,V_n)}{\bigsep_{V \in \vars \setminus
+    \{V_1,...,V_n\}} (L,V) \pointsto \none} \\
+  \jaxiom{\fullobj_E(E_1:E_1',\dots,E_n:E_n')}
+    {\obj_{E}(E_1:E_1',\dots,E_n:E_n') \sep \newobj_{E}(E_1,\dots,E_n)} \\
+  \jaxiom{\fun_F(E_1,E_2,E_3,E_4)}{(F, @scope) \pointsto E_1 \sep
+    (F, @body) \pointsto \lambda E_2.E_3 \sep (F, \js{prototype}) \pointsto E_4
+    \sep (F, @proto) \pointsto \lfp} \\
+  \jaxiom{\newfun_{E}(E_1,E_2,E_3,E_4)}{\fun_{E}(E_1,E_2,E_3,E_4) \sep
+    \newobj_{E}(@proto, \js{prototype}, @scope, @body)} \\
+  \jaxiom{\scopePtrs(Ls, s, s', n)}{\bigsep_{0\leq i<\length(Ls)}(
+    \lstitem(i,Ls) \bp \lstitem(i,s') \sep \lstitem(i,s') \doteq \lstitem(i,s)
+    \cup n)} \\
   \jaxiom{\bpGen(V,\_,\_,\_)}{V \notdotin \loc} \\
   \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s} \\
-  \jaxiom{\auxDef(V,s,\_)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
+  \jaxiom{\auxDefGet(V,s)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
     s} \\
-  \jaxiom{\auxDef(V,s,b)}{(V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
-    \uvars} (V,x_n) \pointsto V' \sepish \auxDef(V', s\cup\{V\}, b))}
+  \jaxiom{\auxDefGet(V,s)}{(V, @frozen) \pointsto \_ \sep (\bigsepish_{x_n \in
+    \uvars} (V,x_n) \pointsto V' \sepish \auxDefGet(V', s\cup\{V\}))} \\
+  \jaxiom{\auxDefSet(V,s,b)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
+    s} \\
+  \jaxiom{\auxDefSet(V,s,b)}{(V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
+    \uvars} (V,x_n) \pointsto V' \sepish \auxDefSet(V', s\cup\{V\}, b))} \\
+  \jaxiom{\ReadWrite(L)}{(L, @frozen) \pointsto \false}
 \end{display}
 
 \begin{display}{Inference Rules}
@@ -557,9 +577,9 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Bin Op)}
     {
-      \tr P {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls,
+      \tr P {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls_1,
       V_1, V_3) \\
-      \tr R {\js{e_2}} {Q \sep \rv \doteq V_2} \quad Q = S_2 \sep \getValue(Ls,
+      \tr R {\js{e_2}} {Q \sep \rv \doteq V_2} \quad Q = S_2 \sep \getValue(Ls_2,
       V_2, V_4) \\
       V = V_3 \mathbin{\bar\oplus} V_4
     }
@@ -700,17 +720,17 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Freeze)}
     {
       \tr{P}{\js{e}}{Q \sep \rv \doteq V_1 \sep (V_2, @frozen) \pointsto V_3} \\
-      Q = \getValue(\_,V_1,V_2) \sep S
+      Q = \getValue(Ls,V_1,V_2) \sep S
     }
     {\tr{P}{\js{freeze(e)}}{Q \sep (V_2, @frozen) \pointsto \true \sep \rv \doteq V_2}}
   \vg
 
   \staterule{(Recusive freeze)}
     {
-      \tr{P}{\js{e}}{Q \sep \rv \doteq V_2 \sep \auxDef(V_2, \{\}, \_)} \\
-      Q = \getValue(\_,V_1,V_2) \sep S
+      \tr{P}{\js{e}}{Q \sep \rv \doteq V_2 \sep \auxDefGet(V_2, \{\})} \\
+      Q = \getValue(Ls,V_1,V_2) \sep S
     }
-    {\tr{P}{\js{def(e)}}{Q \sep \rv \doteq V_2 \sep \auxDef(V_2, \{\}, \true)}}
+    {\tr{P}{\js{def(e)}}{Q \sep \rv \doteq V_2 \sep \auxDefSet(V_2, \{\}, \true)}}
   \vg
 
   % Control flow
@@ -810,12 +830,6 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 
 \begin{displaymath}
   \begin{array}{rcl}
-  \fullobj_{E}(E_1:E_1',\dots,E_n:E_n') &\triangleq&
-    \obj_{E}(E_1:E_1',\dots,E_n:E_n') \sep \newobj_{E}(E_1,\dots,E_n) \\
-  \newfun_{E}(E_1,E_2,E_3,E_4) &\triangleq& \fun_{E}(E_1,E_2,E_3,E_4) \sep
-    \newobj_{E}(@proto, \js{prototype}, @scope, @body) \\
-  \scopePtrs(Ls, s, s', n) &\triangleq& \bigsep_{0\leq i<\length(Ls)}
-    \lstitem(i,Ls) \bp \lstitem(i,s') \sep \lstitem(i,s') \doteq \lstitem(i,s) \cup n
 \end{array}
 \end{displaymath}
 
