@@ -221,4 +221,16 @@
 %\parbox[t]\dimen@{#1\ifhmode\strut\fi}%
 \parbox[t]\dimen@{\raggedright #1\ifhmode\strut\fi}%
 }
+
+% Negative phantom spacing
+\def\nvphantom{\v@true\h@false\nph@nt}
+\def\nhphantom{\v@false\h@true\nph@nt}
+\def\nphantom{\v@true\h@true\nph@nt}
+\def\nph@nt{\ifmmode\def\next{\mathpalette\nmathph@nt}%
+  \else\let\next\nmakeph@nt\fi\next}
+\def\nmakeph@nt#1{\setbox\z@\hbox{#1}\nfinph@nt}
+\def\nmathph@nt#1#2{\setbox\z@\hbox{$\m@th#1{#2}$}\nfinph@nt}
+\def\nfinph@nt{\setbox\tw@\null
+  \ifv@ \ht\tw@\ht\z@ \dp\tw@\dp\z@\fi
+  \ifh@ \wd\tw@-\wd\z@\fi \box\tw@}
 \makeatother
