@@ -461,7 +461,8 @@ Q)}{} \\
 %P \boxwand Q & \triangleq & P \wand P ? Q }\\
 \asssat{P \boxwand Q}{\forall h' \st (h',h_g[h'],L,\env \satisfies P)
     \land h \disj h'}
-  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)} \\
+  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)} %\\
+\TODO{Infinite list handling}
 \asssat{\bigsep_{x\in\{\}}P(x)}{h,h_g,L,{\env}\satisfies\lemp}{} \\
 \asssat{\bigsep_{x\in\T{set}}P(x)}{y\in\T{set} \land h,h_g,L,{\env} \satisfies
   P(y)\sep(\bigsep_{x\in(\T{set}\setminus y)}P(x))}{} \\
@@ -529,9 +530,10 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     \sep (F, @proto) \pointsto \lfp} \\
   \jaxiom{\newfun_{E}(E_1,E_2,E_3,E_4)}{\fun_{E}(E_1,E_2,E_3,E_4) \sep
     \newobj_{E}(@proto, \js{prototype}, @scope, @body)} \\
-  \jaxiom{\scopePtrs(Ls, s, s', n)}{\bigsep_{0\leq i<\length(Ls)}(
+  \jaxiom{\scopeBpsUpd(Ls, s, s', n)}{\bigsep_{0\leq i<\length(Ls)}(
     \lstitem(i,Ls) \bp \lstitem(i,s') \sep \lstitem(i,s') \doteq \lstitem(i,s)
     \cup n)} \\
+  \jaxiom{\scopeBps(Ls, s)}{\scopeBpsUpd(Ls, s, s, \{\})} \\
   \jaxiom{\bpGen(V,\_,\_,\_)}{V \notdotin \loc} \\
   \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s} \\
   \jaxiom{\auxDefGet(V,s)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
@@ -617,7 +619,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Function)}
   {
-    P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \\
+    P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \scopeBps(\ls, ss) \\
       Q = \exists L_1,L_2 \st \left(\begin{array}{l}
         % L_1 - prototype object
         \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
@@ -627,7 +629,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
           \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
         % Other bits
         \rv \doteq L_2 \sep
-        \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
+        \scopeBpsUpd(\ls, ss, ss', \{(L_2, @scope)\})
     \end{array}\right)
   }
   {\tr P {\jsfun{x}{e}} Q}
@@ -635,8 +637,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 
   \staterule{(Named Function)}
     {
-      P = \lop \bp s_1 \sep \lfp \bp s_2 \sep
-        \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp s'_i \\
+      P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \scopeBps(\ls, ss)  \\
       Q = \exists L_1, L_2, L_3 \st \left(\begin{array}{l}
         % L_1 - prototype object
         \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
@@ -649,7 +650,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
         \fullobj_{L_3}(@proto:\nil,\js{y}:L_2) \sep L_3 \bp \{(L_2,@scope)\} \sep {} \\
         % Other bits
         \rv \doteq L_2 \sep
-        \bigsep_{0\leq i<\length(\ls)} \lstitem(i,\ls) \bp \{(L_2,@scope)\} \cup s'_i
+        \scopeBpsUpd(\ls, ss, ss', \{(L_2, @scope)\})
       \end{array}\right)
     }
     {\tr P {\jsfun[y]{x}{e}} Q}
@@ -836,6 +837,12 @@ Using the ``at most'' semantics allows for the rule of consequence to be used to
 add new items to the set at any time. \emph{Note: should probably consider the
 impact of this on reachability, as well as non-reachability analysis.}
 
+Note this equivalence: (think haskelly)
+\[
+  \scopeBpsUpd(L:Ls, s:ss, (s \cup n):ss', n) \equiv L \bp s \cup n \sep
+  \scopeBpsUpd(Ls, ss, ss', n)
+\]
+
 \section{Proofs}
 \subsection{Revocable Reference}
 Used to provide a restricted execution context with a reference to an object
@@ -853,11 +860,6 @@ var RevocableRef = function(ref) {
 \end{verbatim}
 
 Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
-
-\begin{displaymath}
-  \begin{array}{rcl}
-\end{array}
-\end{displaymath}
 
 % RevocableRef body call
 %
@@ -884,8 +886,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         % bp
           L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
           \lop \bp s_3 \sep \lfp \bp s_4 \sep
-          % L <- {} and L <- s'_1 through scopePtrs!
-          \scopePtrs(\ls, s', s', \{\})
+          \scopeBps(Ls, ss)
       } \\
       \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
       \logic{
@@ -907,7 +908,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
           \obj_L(\js{access}: \und, @frozen: \false) \sep {} \\
         % fun pre
         \lop \bp s_3 \sep \lfp \bp s_4 \sep
-          \scopePtrs(\ls,s',s',\{\}) \sep \ls\doteq{L:Ls}
+        L \bp \{\} \sep \scopeBps(Ls,ss) \sep \ls\doteq{L:Ls}
       } \\
       \jsvar{access = function(field) \{b_a\};} \\
       \logic{
@@ -918,7 +919,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
           % fun pre
           \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
             \cup \{(A, @proto)\} \sep {} \\
-            \scopePtrs(\ls, s', s'_1, \{(A,@scope)\}) \sep {} \\
+            L \bp \{(A,@scope)\} \sep \scopeBpsUpd(Ls, ss, ss_1, \{(A,@scope)\}) \sep {} \\
           % fun post
           \fullobj_{A_p}(@proto: \lop) \sep A_p \bp \{(A, \js{prototype})\} \sep {}\\
           \newfun_A(\ls, \js{field}, b_a, A_p)
@@ -930,7 +931,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
           \obj_L(\js{kill}: \und, @frozen: \false) \sep {} \\
         % fun pre
         \lop \bp s_5 \sep \lfp \bp s_6 \sep
-        \scopePtrs(\ls, s'_1, s'_1,\{\}) \sep \ls\doteq{L:Ls}
+        L \bp \{(A, @scope)\} \sep \scopeBpsUpd(Ls, ss_1) \sep \ls\doteq{L:Ls}
       } \\
       \jsvar{kill = function() \{b_k\};} \\
       \logic{
@@ -942,7 +943,8 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
           % fun pre
           \lop \bp s_9 \sep s_9 \doteq s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
             \cup \{(K, @proto)\} \sep {} \\
-          \scopePtrs(\ls, s'_1, s'_2, \{(K,@scope)\}) \sep {} \\
+            L \bp \{(A,@scope),(K,@scope)\} \sep {} \\
+            \scopeBpsUpd(Ls, ss_1, ss_2, \{(K,@scope)\}) \sep {} \\
           % fun post
           \fullobj_{K_p}(@proto: \lop) \sep K_p \bp \{(K, \js{prototype})\} \sep {} \\
           \newfun_K(\ls, \_, b_k, K_p)
@@ -980,11 +982,12 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         \lop \bp s_3 \cup \{(A_p,@proto),(K_p,@proto),(O,@proto)\} \sep {} \\
         \lfp \bp s_4 \cup \{(A,@proto),(K,@proto)\} \sep {} \\
         A   \bp \{(L,\js{access}),(O,\js{access})\} \sep
-          A_p \bp \{(A,\js{prototype}) \sep {} \\
+        A_p \bp \{(A,\js{prototype}) \sep {} \\
         K   \bp \{(L,\js{kill}),(O,\js{kill})\} \sep
-          K_p \bp \{(K,\js{prototype}) \sep {} \\
-        V   \bp s_1 \cup \{(L,\js{ref}),(L,\js{protected})\} \sep
-          \scopePtrs(\ls,s'_2,s'_2,\{\}) \sep {} \\
+        K_p \bp \{(K,\js{prototype}) \sep {} \\
+        V   \bp s_1 \cup \{(L,\js{ref}),(L,\js{protected})\} \sep {} \\
+        \scopeBpsUpd(Ls,ss,ss_2,\{(A,@scope),(K,@scope))\}) \sep {} \\
+        L   \bp \{(A,@scope),(K,@scope)\} \sep
         O   \bp \{\} \sep
 
         \rv \doteq O \sep \ls \doteq L : Ls
@@ -1085,18 +1088,16 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \label{rr-access}
 \end{figure}
 
-\FIXME{$L \bp \{\}$ conflicts with use of $\scopePtrs$ in overall precondition.}
-\gds{Want to fix this by doing $\scopePtrs(blah)\sepish L\bp\{\}$ ? Since the bp
-assertion is exact, you can use wand to get a fairly tight frame
-like so:
-$\scopePtrs(blah)\sepish L\bp\{\} \equiv L\bp\{\}\sep (L\bp\{\} \wand
-\scopePtrs(blah)\sepish L\bp\{\})$
-Note that we're not speculating different values, just shifting our footprint
-around. So the regular wand will do.}
 \TODO{Extend to writing to objects via the proxy. Take careful note of
   \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
 {Nov-11 es-discuss thread} (theft of \js{protected} by using \js{\_\_proto\_\_}
 or through redefining/hiding a \emph{trusted prototypical} method (eg on Array))}
+
+\COMMENT{Idea: Pre-set $\lop \bp \loc \times \vars$, since anything can
+potentially point at our frozen language globals. How does this interact with
+the consequence rule? (I'd guess that without an explicit $(a,b) \not\pointsto
+\lop$, then we cannot remove it from the set?) This is inspired by the use of
+$\top$ in Abstract Interpretation...}
 
 \subsection{Membrane}
 \label{sec:membrane}
