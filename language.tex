@@ -1107,18 +1107,22 @@ Reference that shares its kill switch with its parent. All references to the
 parent object and anything it created are removed simultaneously.
 \begin{verbatim}
 var Membrane = function(ref) {
-  var killSwitch = false;
+  var killed = false;
+
   var MembraneRef = function MembraneRef(r) {
     var access = function(field) {
-      if(!killSwitch) return MembraneRef(r[field]);
-      else throw();
+      if(!killed) return MembraneRef(r[field]);
+      else throw("Membrane has been killed");
     }
-    var kill = function() { killSwitch = true; }
 
     if(primitive(r)) return r;
-    else return {access: access, kill: kill};
+    else return access;
   }
-  return MembraneRef(ref);
+
+  return {
+    access: MembraneRef(ref),
+    kill:   function() { killed = true; }
+  };
 }
 \end{verbatim}
 
