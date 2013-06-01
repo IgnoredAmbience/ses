@@ -17,6 +17,11 @@
 % Internal variables
 \newcommand{\ivars}{\vars^{\T i}}
 
+\newcommand{\vals}{\sortstyle{V}}
+% User values
+\newcommand{\uvals}{\vals^{\T u}}
+
+
 %% Operational Semantics
 \newcommand{\evalsto}{{\,\longrightarrow\,}}
 % Dereferencing evals-to
@@ -85,6 +90,7 @@
 \newcommand{\und}{\js{undefined}}
 \newcommand{\nil}{\js{null}\xspace}
 \newcommand{\js}[1]{\ensuremath{\mathtt{#1}}}
+\newcommand{\tjs}[1]{\texttt{#1}}
 \newcommand{\jsfun}[3][]{\js{function\ #1(#2)\{#3\}}}
 \newcommand{\jsnew}[2]{\js{new\ #1(#2)}}
 \newcommand{\jsvar}[1]{\js{var\ #1}}
@@ -126,12 +132,19 @@
 \newcommand\tr[3]{\{#1\}#2\{#3\}}
 
 % Proofs
-\newcommand{\logic}[1]{%
-  \left\{%
+\newcommand{\bigparens}[3]{%
+  \left#1%
     \begin{array}{l}%
-      #1%
+      #3%
     \end{array}%
-  \right\}}
+  \right#2}
+\newcommand{\logic}[1]{\bigparens{\{}{\}}{#1}}
+\newcommand{\args}[1]{\bigparens{(}{)}{#1}}
+\newcommand{\indblock}[1]{%
+  \begin{array}{@{\qquad}l}%
+    #1%
+  \end{array}\\}
+
 \newcommand{\step}[1]{\text{[#1]}}
 
 %%%%%%%%%%%%%%
