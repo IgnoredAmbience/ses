@@ -9,8 +9,7 @@
 \usepackage{hyperref}
 \usepackage{etoolbox}
 \usepackage{separationlogic}
-\usepackage[english]{babel}
-\usepackage[fixlanguage]{babelbib}
+\usepackage[numbers]{natbib}
 
 \begin{document}
 
@@ -25,7 +24,7 @@
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
 \begin{display}{Syntax of SES values and expressions, \js{v}, \js{e}}
   $\begin{array}{rll}
-    \syntaxline[\js{v} ::=]{\js{n}}{Number}
+    \syntaxline[\js{v} ::=]{n}{Number}
     \syntaxline{s}{String}
     \syntaxline{\und}{Undefined}
     \syntaxline{\nil}{Null}
@@ -546,7 +545,10 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefSet(V', s\cup\{V\}, b))} \\
   \jaxiom{\ReadWrite(L)}{(L, @frozen) \pointsto \false} \\
   \jaxiom{\decls(X,L,\js{e})}{\js{x_1},...,\js{x_n} \quad \text{where }
-    (L,\js{x_i}) \in \dom(\defs(X,L,\js{e}))}
+    (L,\js{x_i}) \in \dom(\defs(X,L,\js{e}))} \\
+  \jaxiom{\pickThis(\fld{L}{\_},L)}{(L,@this) \pointsto \none} \\
+  \jaxiom{\pickThis(\fld{L}{\_},\und)}{\exists V \st (L,@this) \pointsto V \sep V
+    \not\doteq \none}
 \end{display}
 
 \begin{display}{Local Variable Definitions}
@@ -871,7 +873,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \[
   \begin{array}{l}
     \jsvar{RevocableRef = function(ref) \{}\\
-    \begin{array}{@{\qquad}l}
+    \indblock{
       \logic{
         % function
         \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
@@ -992,7 +994,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 
         \rv \doteq O \sep \ls \doteq L : Ls
       }
-    \end{array} \\
+    }
     \js{\}}
   \end{array}
 \]
@@ -1005,7 +1007,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \[
   \begin{array}{l}
     \jsvar{kill = function() \{} \\
-    \begin{array}{@{\qquad}l}
+    \indblock{
       \logic{
         (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
         \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
@@ -1030,8 +1032,8 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
         \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
         \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
         \obj_L(\js{protected}: \nil, @frozen: \false) \sep \rv \doteq \nil
-      } \\
-    \end{array} \\
+      }
+    }
     \js{\}}
   \end{array}
 \]
@@ -1044,7 +1046,7 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
 \[
   \begin{array}{l}
     \jsvar{access = function(field) \{} \\
-    \begin{array}{@{\qquad}l}
+    \indblock{
       \logic{
         (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
           (A, @scope) \mapsto L:Ls \sep {} \\
@@ -1079,8 +1081,8 @@ Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
           \sep {} \\
         (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
           \sep X \dotin \uvars \sep \rv \doteq \fld{P}{X}
-      } \\
-    \end{array} \\
+      }
+    }
     \js{\}}
   \end{array}
 \]
@@ -1101,37 +1103,135 @@ $\top$ in Abstract Interpretation...}
 
 \subsection{Membrane}
 \label{sec:membrane}
-A Membrane is a transitive Revocable Reference. In addition to the standard
-Revocable Reference, all returned objects are also wrapped in a Revocable
-Reference that shares its kill switch with its parent. All references to the
-parent object and anything it created are removed simultaneously.
+A Membrane is a transitive Revocable Reference, in addition to protecting all
+interactions with a particular object, a Membrane also protects all subsequent
+products of interactions with the protected object.
+
+This is achieve by wrapping all returned objects in a Membrane Reference that
+shares its kill switch with its parent. When the Membrane is killed, all
+references to the parent object and anything it created are blocked
+simultaneously.
+
 \begin{verbatim}
 var Membrane = function(ref) {
   var killed = false;
 
-  var MembraneRef = function MembraneRef(r) {
+  var MembraneRef = function(ref) {
     var access = function(field) {
-      if(!killed) return MembraneRef(r[field]);
+      if(!killed) return MembraneRef(ref[field]);
       else throw("Membrane has been killed");
     }
-
-    if(primitive(r)) return r;
-    else return access;
+    if(primitive(ref)) { return ref; } else { return access; }
   }
 
-  return {
-    access: MembraneRef(ref),
-    kill:   function() { killed = true; }
-  };
+  var access = MembraneRef(ref);
+  var kill = function() { killed = true; }
+  return {access: access, kill: kill};
 }
 \end{verbatim}
 
-For a protected object $L$, protected by a membrane instance object $M$, there
-will be some set $S$ of pointers to $L$.
+We specify that the Membrane is not allowed to cause the creation of more
+references to the protected object. And that a reference to the protected object
+may not be returned.
 \[
   Protected(L, S, M) = L \bp S \cup \{(M,\js{ref})\} \sep \rv \not\doteq L
 \]
-Calls to functions of the membrane must maintain this predicate.
+
+We show that $Protected(L,S,M)$ holds after a call to \js{Membrane(L)}, and
+throughout a call to the accessor function, the kill function is omitted as the
+proof is trivial.
+
+\begin{figure}
+  \[
+    \begin{array}{l}
+      \tjs{var Membrane = function(ref) \{} \\
+        \indblock{
+          \logic{
+            \fullobj_M \args{
+              \js{ref}: L, @this: \_, @proto: \nil, \js{killed}: \und, \\
+              \js{MembraneRef}: \und, \js{access}: \und, \js{kill}: \und
+            } \sep {} \\
+            Protected(L,S,M) \sep \ls \doteq M:Ls
+          } \\
+          \tjs{var killed = false;} \\
+          \tjs{var MembraneRef = function(ref) \{...\}} \\
+          \logic{
+            \fullobj_M \args{
+              \js{ref}: L, @this: \_, @proto: \nil, \js{killed}: \false, \\
+              \js{MembraneRef}: F_{MR}, \js{access}: \und, \js{kill}: \und
+            } \sep {} \\
+            Protected(L,S,M) \sep \newfun_{F_{MR}}(\ls,\js{ref},\lambda_{MR},\_)
+              \sep \ls \doteq M:Ls
+          } \\
+          \tjs{var access = MembraneRef(ref);} \\
+          \logic{
+            
+          } \\
+          \tjs{var kill = function() \{...\}} \\
+          \js{return \{access: access, kill: kill\};} \\
+          \logic{
+            Protected(L, S, M)
+          }
+        }
+      \tjs{\}} \\
+      \\
+      \tjs{var MembraneRef = function(ref) \{} \\
+        \indblock{
+          \logic{
+            \fullobj_{MR_n}(\js{ref}: L, @this: \_, @proto: \nil, \js{access}:
+              \und) \sep {} \\
+            L \bp s \cup \{(MR_n, \js{ref})\} \sep 
+            \ls \doteq MR_n : A_{n-1} : MR_{n-1} : ... : A_0 : MR_0 : M : Ls
+          } \\
+          \tjs{var access = function(field) \{...\}} \\
+          \logic{
+            \fullobj_{MR_n}(\js{ref}: L, @this: \_, @proto: \nil, \js{access}:
+              F_{A_n}) \sep {} \\
+            \newfun_{F_{A_n}}(\ls, \js{field}, \lambda_A, \_) \sep {} \\
+            \ls \doteq MR_n : A_{n-1} : MR_{n-1} : ... : A_0 : MR_0 : M : Ls
+              \sep {} \\
+          } \\
+          \tjs{if(primitive(ref)) \{} \\
+            \indblock{
+              \logic{L \dotin \uvals}\\
+              \tjs{return ref;} \\
+              \logic{\rv \doteq L}
+            }
+          \tjs{\} else \{} \\
+            \indblock{
+              \logic{L \notdotin\uvals} \\
+              \tjs{return access;} \\
+              \logic{\rv \doteq F_{A_n}}
+            }
+          \tjs{\}} \\
+          \logic{
+
+          } \\
+        }
+      \tjs{\}} \\
+      \\
+      \tjs{var access = function(field) \{} \\
+        \indblock{
+          \logic{} \\
+          \tjs{if(!killed) \{} \\
+            \indblock{
+              \logic{} \\
+              \tjs{return MembraneRef(ref[field]);} \\
+              \logic{} \\
+            }
+          \tjs{\} else \{} \\
+            \indblock{
+              \tjs{throw("Membrane has been killed");}
+            }
+          \tjs{\}} \\
+          \logic{}
+        }
+      \tjs{\}}
+    \end{array}
+  \]
+  \caption{Proof outline for \js{Membrane} and its \emph{nested} \js{MembraneRef}
+    and \js{access} functions}
+\end{figure}
 
 \gds{Remember to protect arguments to function calls as well as return values. This may also apply to ``set'' thingamies.}
 \TODO{Check prototype chain for leaks? proxies/simpleMembrane.js}
@@ -1167,6 +1267,6 @@ Page 13 of
       auditor.
 
 \bibliography{bibliography}
-\bibliographystyle{babplain}
+\bibliographystyle{plainnat}
 
 \end{document}
