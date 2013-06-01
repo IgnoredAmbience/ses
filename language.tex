@@ -1176,7 +1176,7 @@ protected object during execution.
           } \\
           \tjs{var access = MembraneRef(ref);} \\
           \logic{
-            
+
           } \\
           \tjs{var kill = function() \{...\}} \\
           \js{return \{access: access, kill: kill\};} \\
@@ -1191,7 +1191,7 @@ protected object during execution.
           \logic{
             \fullobj_{MR_n}(\js{ref}: L, @this: \_, @proto: \nil, \js{access}:
               \und) \sep {} \\
-            \bpGen(L, s, s', \{(MR_n, \js{ref})\}) \sep 
+            \bpGen(L, s, s', \{(MR_n, \js{ref})\}) \sep
             \ls \doteq MR_n : A_{n-1} : MR_{n-1} : ... : A_0 : MR_0 : M : Ls
           } \\
           \tjs{var access = function(field) \{...\}} \\
@@ -1309,6 +1309,12 @@ Page 13 of
 
       There is some relationship between these ideas and the e
       auditor.
+
+\section{Limitations}
+We do not model the full SES language. For example:
+\url{http://code.google.com/p/google-caja/issues/detail?id=1752} -- SES security
+hole due to binding of \js{this} to $\lg$ in \js{valueOf()}, method not tamed by
+the environment.
 
 \bibliography{bibliography}
 \bibliographystyle{plainnat}
