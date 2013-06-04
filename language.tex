@@ -1180,7 +1180,7 @@ proof is trivial.
           \logic{
             \fullobj_{MR_n}(\js{ref}: L, @this: \_, @proto: \nil, \js{access}:
               \und) \sep {} \\
-            L \bp s \cup \{(MR_n, \js{ref})\} \sep 
+            \bpGen(L, s, s', \{(MR_n, \js{ref})\}) \sep 
             \ls \doteq MR_n : A_{n-1} : MR_{n-1} : ... : A_0 : MR_0 : M : Ls
           } \\
           \tjs{var access = function(field) \{...\}} \\
@@ -1189,30 +1189,42 @@ proof is trivial.
               F_{A_n}) \sep {} \\
             \newfun_{F_{A_n}}(\ls, \js{field}, \lambda_A, \_) \sep {} \\
             \ls \doteq MR_n : A_{n-1} : MR_{n-1} : ... : A_0 : MR_0 : M : Ls
-              \sep {} \\
           } \\
           \tjs{if(primitive(ref)) \{} \\
             \indblock{
-              \logic{L \dotin \uvals}\\
+              \logic{(MR_n, \js{ref}) \pointsto L \sep \ls \doteq MR_n:...}\\
               \tjs{return ref;} \\
               \logic{\rv \doteq L}
             }
           \tjs{\} else \{} \\
             \indblock{
-              \logic{L \notdotin\uvals} \\
+              \logic{(MR_n, \js{access}) \pointsto F_{A_n} \sep \ls \doteq
+              MR_n:...    } \\
               \tjs{return access;} \\
               \logic{\rv \doteq F_{A_n}}
             }
           \tjs{\}} \\
           \logic{
-
+            \fullobj_{MR_n}(\js{ref}: L, @this: \_, @proto: \nil, \js{access}:
+              F_{A_n}) \sep {} \\
+            \newfun_{F_{A_n}}(\ls, \js{field}, \lambda_A, \_) \sep {} \\
+            \ls \doteq MR_n : A_{n-1} : MR_{n-1} : ... : A_0 : MR_0 : M : Ls
+              \sep {} \\
+            ((L \dotin\uvals \sep \rv \doteq L) \lor (L \notdotin\uvals \sep \rv
+            \doteq F_{A_n}))
           } \\
         }
       \tjs{\}} \\
       \\
       \tjs{var access = function(field) \{} \\
         \indblock{
-          \logic{} \\
+          \logic{
+            \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
+            \bigsep_{i \in 0..n}((A_i,\js{killed}) \pointsto \none \sep
+              (MR_i,\js{killed}) \pointsto \none) \sep (M, \js{killed}) \pointsto
+              B \sep {} \\
+              \istrue(B)
+          } \\
           \tjs{if(!killed) \{} \\
             \indblock{
               \logic{} \\
@@ -1221,7 +1233,9 @@ proof is trivial.
             }
           \tjs{\} else \{} \\
             \indblock{
+              \logic{\lfalse}
               \tjs{throw("Membrane has been killed");}
+              \logic{\lfalse}
             }
           \tjs{\}} \\
           \logic{}
