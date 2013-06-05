@@ -1141,6 +1141,17 @@ We show that $Protected(L,S,M)$ holds after a call to \js{Membrane(L)}, and
 throughout a call to the accessor function, the kill function is omitted as the
 proof is trivial.
 
+Notes: our predicate needs to track all MembraneRefs created, we can do this
+with rules in the proof that simply grow the set by the new objects.
+This implies that security properties may require far larger footprints for
+verification than safety properties.
+
+Idea: collect newly created MRs in a set that is propagated with the safety
+predicate.
+
+Potential issue: Code within the membrane that creates new references to the
+protected object during execution.
+
 \begin{figure}
   \[
     \begin{array}{l}
@@ -1227,13 +1238,32 @@ proof is trivial.
           } \\
           \tjs{if(!killed) \{} \\
             \indblock{
-              \logic{} \\
+              \logic{
+                \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
+                (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
+                  L \sep {} \\
+                (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
+                  \dotin \uvars \sep {} \\
+                \bigsep_{i \in 0..n}((A_i,\js{MembraneRef}) \pointsto \none \sep
+                  (MR_i,\js{MembraneRef}) \pointsto \none) \sep {} \\
+                (M, \js{MembraneRef}) \pointsto F_{MR}
+              } \\
               \tjs{return MembraneRef(ref[field]);} \\
-              \logic{} \\
+              % TODO
+              \logic{
+                \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
+                (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
+                  L \sep {} \\
+                (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
+                  \dotin \uvars \sep {} \\
+                \bigsep_{i \in 0..n}((A_i,\js{MembraneRef}) \pointsto \none \sep
+                  (MR_i,\js{MembraneRef}) \pointsto \none) \sep {} \\
+                (M, \js{MembraneRef}) \pointsto F_{MR}
+              } \\
             }
           \tjs{\} else \{} \\
             \indblock{
-              \logic{\lfalse}
+              \logic{\ltrue}
               \tjs{throw("Membrane has been killed");}
               \logic{\lfalse}
             }
