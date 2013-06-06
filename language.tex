@@ -1241,24 +1241,30 @@ protected object during execution.
               \logic{
                 \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
                 (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
-                  L \sep {} \\
-                (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
+                  L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
                   \dotin \uvars \sep {} \\
-                \bigsep_{i \in 0..n}((A_i,\js{MembraneRef}) \pointsto \none \sep
-                  (MR_i,\js{MembraneRef}) \pointsto \none) \sep {} \\
-                (M, \js{MembraneRef}) \pointsto F_{MR}
+                \getValue(\_, \fld{L}{X}, L') \sep \bpGen(L',s)
+               % \bigsep_{i \in 0..n}((A_i,\js{MembraneRef}) \pointsto \none \sep
+               %   (MR_i,\js{MembraneRef}) \pointsto \none) \sep {} \\
+               % (M, \js{MembraneRef}) \pointsto F_{MR}
               } \\
               \tjs{return MembraneRef(ref[field]);} \\
               % TODO
               \logic{
                 \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
                 (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
-                  L \sep {} \\
-                (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
+                  L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
                   \dotin \uvars \sep {} \\
-                \bigsep_{i \in 0..n}((A_i,\js{MembraneRef}) \pointsto \none \sep
-                  (MR_i,\js{MembraneRef}) \pointsto \none) \sep {} \\
-                (M, \js{MembraneRef}) \pointsto F_{MR}
+                \getValue(\_, \fld{L}{X}, L') \sep \bpGen(L',s, s',
+                  \{(MR_{n+1}, \js{ref})\}) \sep {} \\
+               % \bigsep_{i \in 0..n}((A_i,\js{MembraneRef}) \pointsto \none \sep
+               %   (MR_i,\js{MembraneRef}) \pointsto \none) \sep {} \\
+               % (M, \js{MembraneRef}) \pointsto F_{MR}
+                \fullobj_{MR_{n+1}}(\js{ref}: L', @this: \_, @proto: \nil, \js{access}:
+                  F_{A_{n+1}}) \sep {} \\
+                \newfun_{F_{A_n}}(MR_{n+1}:\ls, \js{field}, \lambda_A, \_) \sep {} \\
+                ((L' \dotin\uvals \sep \rv \doteq L') \lor (L' \notdotin\uvals \sep \rv
+                \doteq F_{A_{n+1}}))
               } \\
             }
           \tjs{\} else \{} \\
@@ -1278,7 +1284,6 @@ protected object during execution.
 \end{figure}
 
 \gds{Remember to protect arguments to function calls as well as return values. This may also apply to ``set'' thingamies.}
-\TODO{Check prototype chain for leaks? proxies/simpleMembrane.js}
 
 \section{Abstraction Layers}
 \TODO{Add abstraction layers to cope with the intuitions in Mark's diagrams}
