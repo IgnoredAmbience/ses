@@ -1315,7 +1315,6 @@ protected object during execution.
       \tjs{var access = function(field) \{} \\
         \indblock{
           \logic{
-            \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
             \bigsep_{i \in 0..n}((A_i,\js{killed}) \pointsto \none \sep
               (MR_i,\js{killed}) \pointsto \none) \sep (M, \js{killed}) \pointsto
               B \sep {} \\
@@ -1324,7 +1323,6 @@ protected object during execution.
           \tjs{if(!killed) \{} \\
             \indblock{
               \logic{
-                \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
                 (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
                   L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
                   \dotin \uvars \sep {} \\
@@ -1336,7 +1334,6 @@ protected object during execution.
               \tjs{return MembraneRef(ref[field]);} \\
               % TODO
               \logic{
-                \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
                 (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
                   L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
                   \dotin \uvars \sep {} \\
@@ -1351,7 +1348,6 @@ protected object during execution.
             }
           \tjs{\}} \\
             \logic{
-              \ls \doteq A_n : MR_n : ... : A_0 : MR_0 : M : Ls \sep {} \\
               (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
                 L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
                 \dotin \uvars \sep {} \\
