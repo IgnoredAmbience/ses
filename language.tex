@@ -1135,10 +1135,17 @@ Notation:
   \item $MRef_{MR}(M,r,F_A,S,T)$ \qquad Membrane reference for Membrane $M$ protecting object
 $r$, corresponding access function $F_A$, (safe-side) backpointer set $S$ for
 $r$, membrane-constructed backpointer set $T$.
-\[ MRef_{MR}(M,r,F_A,S,T) = \fun_{F_A}(MR:M:\_, \js{field}, \lambda_A, \_) \sep
-    \fullobj_{MR}(\js{ref}: r, \js{access}: F_A, @this: \_, @proto: \nil) \sep
+\begin{align*}
+  MRef_{MR}(M,r,F_A,S,T) &= \fun_{F_A}(MR:M:\_, \js{field}, \lambda_A, \_) \sep {} \\
+                         & \fullobj_{MR}(\js{ref}: r, \js{access}: F_A, @this: \_, @proto: \nil) \sep
     r \bp S \cup T
-\]
+\end{align*}
+
+Note: We cannot use the $\newfun$ predicate here as we return this function out
+to the usercode, it may be tampered with by having fields added, this does not
+impact upon the function call, since all the information used by the proofs is
+placed into internal fields, or within the function's scope chain.
+(The corresponding $\newobj$ produced in proofs is framed off for clarity)
 
   \item $MRset_M(Ls,T)$ \qquad Membrane-backpointer constructor. Given a list of
 constructed $MR$s (access functions thereon?), provide (maximal) backpointer set
@@ -1146,13 +1153,19 @@ for protected references for the Membrane $M$.
 \[ MRset_M([], \{(M, \js{ref})\}) = \lemp \]
 \[ MRset_M(L:Ls, Ts') = MRset_M(Ls, Ts) \sep Ts' \doteq Ts \cup \{(L, \js{ref})\}\]
 
-  \item $alive(M)$ and $dead(M)$ \qquad encapsulates Membrane data object (AR),
+  \item $alive(M, F_{MR})$ and $dead(M, F_{MR})$ \qquad encapsulates Membrane data object (AR),
     on which is contained initial reference to $r$, the killswitch, (kill
     function), MembraneRef constructor. (Use $membraneInstance$?)
-\[ MembraneInstance(M) = \obj_M(\js{ref}: \_, @this: \_, @proto: \nil,
-  \js{MembraneRef}: F_{MR}, \js{kill}: F_{K})\]
-\[ alive(M) = MembraneInstance(M) \sep (M, killed) \pointsto \false \]
-\[ dead(M) = MembraneInstance(M) \sep (M, killed) \pointsto \true \]
+    \begin{align*}
+      MembraneInstance(M, F_{MR}) =& \obj_M(\js{ref}: \_, @this: \_, @proto: \nil,
+      \js{MembraneRef}: F_{MR}, \js{kill}: F_{K}) \sep {} \\
+  & \newfun_{F_{MR}}(M:\_, \js{ref}, \lambda_{MR}, \_) \\
+alive(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \false \\
+ dead(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \true 
+    \end{align*}
+
+    Note: We are safe to use $\newfun$ here, as the $F_{MR}$ function is
+    internal to the Membrane, it is guaranteed not to be tampered with.
 
   \item $kill(F_K, M)$ \qquad Represents the kill function $F_K$ for membrane $M$.
 \[ kill(F_K, M) = \fun_{F_K}(M:\_, \_ , \lambda_K, \_) \]
@@ -1179,12 +1192,14 @@ protected object during execution.
       } \\
       \js{Membrane(ref);} \\
       \logic{
-        kill(F_K,M) \sep
-        alive(M) \sep
-        MR(M, r, F_A, S, T) \sep
-        MRset([F_A],T) \sep {} \\
-        \obj_L(\js{access:}F_A\js{,kill:}F_K) \sep
-        \rv \doteq L
+        \exists M, F_K, F_A, F_{MR}, MR, L \st \args{
+          alive(M, F_{MR}) \sep
+          kill(F_K,M) \sep
+          MRef_{MR}(M, ref, F_A, S, T) \sep {} \\
+          MRset([MR],T) \sep
+          \fullobj_L(\js{access}:F_A,\js{kill}:F_K) \sep
+          \rv \doteq L
+        }
       } \\
       \\
       \tjs{var Membrane = function(ref) \{} \\
@@ -1194,79 +1209,125 @@ protected object during execution.
               \js{ref}: ref, @this: \_, @proto: \nil, \js{killed}: \und, \\
               \js{MembraneRef}: \und, \js{access}: \und, \js{kill}: \und
             } \sep {} \\
-            MRset_M([], T) \sep ref \bp S \cup T \sep
+            MRset_M([], T) \sep
+            ref \bp S \cup T \sep
+            ref \dotin \loc \sep
             \ls \doteq M:Ls
           } \\
           \tjs{var killed = false;} \\
           \tjs{var MembraneRef = function(ref) \{...\}} \\
+          \tjs{var kill = function() \{...\}} \\
           \logic{
-            \fullobj_M \args{
-              \js{ref}: ref, @this: \_, @proto: \nil, \js{killed}: \false, \\
-              \js{MembraneRef}: F_{MR}, \js{access}: \und, \js{kill}: \und
-            } \sep {} \\
-            \newfun_{F_{MR}}(M:Ls,\js{ref},\lambda_{MR},\_)
-              \sep \ls \doteq M:Ls
+            alive(M, F_{MR}) \sep 
+            \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
+                   \js{access},\js{kill}) \sep {} \\
+
+            kill(F_K,M) \sep
+            (M,\js{access}) \pointsto \und \sep {} \\
+
+            MRset_M([], T) \sep
+            ref \bp S \cup T \sep
+            ref \dotin \loc \sep
+            \ls \doteq M:Ls
           } \\
           \tjs{var access = MembraneRef(ref);} \\
           \logic{
-            \fullobj_{MR_0}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
-              F_{A_0}) \sep {} \\
-            \newfun_{F_{A_0}}(MR_0:\ls, \js{field}, \lambda_A, \_) \sep {} \\
-            ((ref \dotin\uvals \sep \rv \doteq ref) \lor (ref \notdotin\uvals \sep \rv
-            \doteq F_{A_n}))
-          } \\
-          \tjs{var kill = function() \{...\}} \\
-          \js{return \{access: access, kill: kill\};} \\
-          \logic{
-          } \\
-          \step{subst} \\
-          \logic{
+            alive(M, F_{MR}) \sep 
+            \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
+                   \js{access},\js{kill}) \sep {} \\
 
+            kill(F_K,M) \sep
+            (M,\js{access}) \pointsto F_A \sep {} \\
+
+            MRset_M([MR], T') \sep
+            MRef_{MR}(M,ref,F_A,S,T') \sep
+            ref \dotin \loc \sep
+            \ls \doteq M:Ls
+          } \\
+          \tjs{return \{access: access, kill: kill\};} \\
+          \logic{
+            alive(M, F_{MR}) \sep 
+            \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
+                   \js{access},\js{kill}) \sep {} \\
+
+            kill(F_K,M) \sep
+            (M,\js{access}) \pointsto F_A \sep {} \\
+
+            MRset_M([MR], T') \sep
+            MRef_{MR}(M,ref,F_A,S,T') \sep
+            ref \dotin \loc \sep {} \\
+
+            \fullobj_L(\js{access}:F_A,\js{kill}:F_K) \sep
+            \ls \doteq M:Ls \sep
+            \rv \doteq L
           }
         }
       \tjs{\}} \\
       \\
+      \\
       \logic{
-        kill(F_K,M) \sep (alive(M) \lor dead(M))
+        (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep (alive(M, F_{MR}) \lor dead(M, F_{MR}))
       } \\
       \js{kill()} \\
       \logic{
-        kill(F_K,M) \sep dead(M)
-      }
+        (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep dead(M)
+      } \\
       \\
+      \tjs{var kill = function() \{} \\
+        \indblock{
+          \logic{
+            \exists A \st \ls \doteq A : M : \_ \sep
+            \fullobj_A(@proto: \nil, @this: \_) \sep
+            (alive(M, F_{MR}) \lor dead(M, F_{MR}))
+          } \\
+          \tjs{killed = true;} \\
+          \logic{
+            \exists A \st \ls \doteq A : M : \_ \sep
+            \fullobj_A(@proto: \nil, @this: \_) \sep
+            dead(M)
+          }
+        }
+      \tjs{\}}
     \end{array}
   \]
-  \caption{Proof \emph{outline} for \js{Membrane}}
+  \caption{Proof \emph{outline} for \js{Membrane} and its \js{kill} function}
 \end{figure}
 
 \begin{figure}
   \[
     \begin{array}{l}
       \logic{
-        % alive(M) provides footprint for MembraneRef lookup... need to clarify
-        alive(M) \sep MRset_M(Ls,T) \sep ref \bp S \cup T \sep ref \dotin \loc
+        (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
+        alive(M, F_{MR}) \sep MRset_M(Ls,T) \sep ref \bp S \cup T \sep ref \dotin \loc
       } \\
       \tjs{MembraneRef(ref);} \\
       \logic{
-        alive(M) \sep MRset_M(MR:Ls,T') \sep MRef_{MR}(M,ref,F_A,S,T') \sep ref
-        \dotin \loc \sep \rv \doteq F_A
+        \exists R, F_A \st \args{
+          (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
+          alive(M, F_{MR}) \sep MRset_M(R:Ls,T') \sep {} \\
+          MRef_{R}(M,ref,F_A,S,T') \sep ref \dotin \loc \sep \rv \doteq F_A
+        }
       } \\
       \\
       \tjs{var MembraneRef = function(ref) \{} \\
         \indblock{
           \logic{
-            alive(M) \sep  \fullobj_{MR}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
-              \und) \sep {} \\
-            ref \dotin \loc \sep
-            MRset_M(MR:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq MR:M:Ls
+            \exists R \st \args{
+              alive(M, F_{MR}) \sep  \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+                \und) \sep {} \\
+              ref \dotin \loc \sep
+              MRset_M(R:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq R:M:Ls
+            }
           } \\
           \tjs{var access = function(field) \{...\}} \\
           \logic{
-            alive(M) \sep \fullobj_{MR}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
-              F_A) \sep {} \\
-            \newfun_{F_A}(MR:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
-            \loc \sep {} \\
-            MRset_M(MR:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq MR:M:Ls
+            \exists R,F_A \st \args{
+              alive(M, F_{MR}) \sep \fullobj_{MR}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+                F_A) \sep {} \\
+              \newfun_{F_A}(R:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
+              \loc \sep {} \\
+              MRset_M(R:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq R:M:Ls
+            }
           } \\
           \tjs{if(primitive(ref)) \{...\} else \{} \\
             \indblock{
@@ -1274,90 +1335,121 @@ protected object during execution.
             }
           \tjs{\}} \\
           \logic{
-            alive(M) \sep \fullobj_{MR}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
-              F_A) \sep {} \\
-            \newfun_{F_A}(MR:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
-            \loc \sep {} \\
-            MRset_M(MR:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq MR:M:Ls
-              \sep {} \\
-            \rv \doteq F_A
+            \exists R,F_A \st \args{
+              alive(M, F_{MR}) \sep \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+                F_A) \sep {} \\
+              \newfun_{F_A}(R:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
+              \loc \sep {} \\
+              MRset_M(R:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq R:M:Ls
+                \sep {} \\
+              \rv \doteq F_A
+            }
           } \\
           \step{subst} \\
           \logic{
-            alive(M) \sep MRset_M(MR:Ls,T') \sep MRef_{MR}(M,ref,F_A,S,T') \sep
-              {} \\
-            ref \dotin \loc \sep rv \doteq F_A \sep \ls \doteq MR:M:Ls
+            \exists R,F_A \st \args{
+              alive(M, F_{MR}) \sep MRset_M(R:Ls,T') \sep MRef_{R}(M,ref,F_A,S,T') \sep
+                {} \\
+              ref \dotin \loc \sep rv \doteq F_A \sep \ls \doteq R:M:Ls
+            }
           }
         }
       \tjs{\}} \\
       \\
+      \\
       \logic{
-        \js{field} \dotin Str \sep
-        MR(M,r,F_A1,S_1,T_1) \sep
+        alive(M, F_{MR}) \sep
+        access \doteq F_{A_1} \sep
+        MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
         MRset(Ls,T_1) \sep {} \\
-        alive(M) \sep
-        (r, \js{field}) \pointsto V \sep
+
+        field \dotin \uvars \sep
+        (ref, field) \pointsto V \sep
         V \dotin \loc \sep
         V \bp S_2
       } \\
       \js{access(field)} \\
       \logic{
-        \js{field} \dotin Str \sep
-        MR(M,r,F_A1,S_1,T_2) \sep
-        MR(M,r,F_A2,S_2,T_2) \sep
-        MRset(F_A2:Ls,T_2) \sep {} \\
-        alive(M) \sep
-        (r, \js{field}) \pointsto V \sep
-        V \dotin \loc \sep
-        V \bp S_2
+        \exists R_2, F_{A_2} \st \args{
+          alive(M, F_{MR}) \sep
+          access \doteq F_{A_1} \sep
+          MRef_{R_1}(M,ref,F_{A_1},S_1,T_2) \sep {} \\
+
+          MRset(R_2:Ls,T_2) \sep
+          MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep
+          \rv \doteq F_{A_2} \sep {} \\
+
+          field \dotin \uvars \sep
+          (ref, field) \pointsto V \sep
+          V \dotin \loc
+        }
       } \\
       \\
       \tjs{var access = function(field) \{} \\
         \indblock{
           \logic{
-            \bigsep_{i \in 0..n}((A_i,\js{killed}) \pointsto \none \sep
-              (MR_i,\js{killed}) \pointsto \none) \sep (M, \js{killed}) \pointsto
-              B \sep {} \\
-              \istrue(B)
+            \exists A \st \ls \doteq A : R_1 : M : \_ \sep 
+            \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
+            alive(M, F_{MR}) \sep
+            MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+            MRset(Ls,T_1) \sep {} \\
+
+            field \dotin \uvars \sep
+            (ref, field) \pointsto V \sep
+            V \dotin \loc \sep
+            V \bp S_2
           } \\
           \tjs{if(!killed) \{} \\
             \indblock{
               \logic{
-                (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
-                  L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
-                  \dotin \uvars \sep {} \\
-                \getValue(\_, \fld{L}{X}, L') \sep \bpGen(L',s)
-               % \bigsep_{i \in 0..n}((A_i,\js{MembraneRef}) \pointsto \none \sep
-               %   (MR_i,\js{MembraneRef}) \pointsto \none) \sep {} \\
-               % (M, \js{MembraneRef}) \pointsto F_{MR}
+                \exists A \st \ls \doteq A : R_1 : M : \_ \sep {} \\
+                alive(M, F_{MR}) \sep 
+                MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+                MRset_M(Ls,T_1) \sep {} \\
+
+                (A, \js{field}) \pointsto field \sep
+                field \dotin \uvars \sep {} \\
+
+                (ref, field) \pointsto V \sep
+                V \dotin \loc \sep
+                V \bp S_2 \cup T_1
               } \\
               \tjs{return MembraneRef(ref[field]);} \\
-              % TODO
               \logic{
-                (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
-                  L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
-                  \dotin \uvars \sep {} \\
-                \getValue(\_, \fld{L}{X}, L') \sep \bpGen(L',s, s',
-                  \{(MR_{n+1}, \js{ref})\}) \sep {} \\
-                \fullobj_{MR_{n+1}}(\js{ref}: L', @this: \_, @proto: \nil, \js{access}:
-                  F_{A_{n+1}}) \sep {} \\
-                \newfun_{F_{A_n}}(MR_{n+1}:\ls, \js{field}, \lambda_A, \_) \sep {} \\
-                ((L' \dotin\uvals \sep \rv \doteq L') \lor (L' \notdotin\uvals \sep \rv
-                \doteq F_{A_{n+1}}))
+                \exists A,R_2,F_{A_2} \st \args {
+                  \ls \doteq A : R_1 : M : \_ \sep
+                  alive(M, F_{MR}) \sep {} \\
+
+                  MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+                  MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep {} \\
+
+                  MRset_M(R_2:Ls,T_2) \sep
+                  \rv \doteq F_{A_2} \sep {} \\
+
+                  (A, \js{field}) \pointsto field \sep
+                  field \dotin \uvars \sep
+                  (ref, field) \pointsto V \sep
+                  V \dotin \loc
+                }
               } \\
             }
           \tjs{\}} \\
             \logic{
-              (A_n, \js{ref}) \pointsto \none \sep (MR_n, \js{ref}) \pointsto
-                L \sep (A_n, \js{field}) \pointsto V \sep \getValue(\_,V,X) \sep X
-                \dotin \uvars \sep {} \\
-              \getValue(\_, \fld{L}{X}, L') \sep \bpGen(L',s, s',
-                \{(MR_{n+1}, \js{ref})\}) \sep {} \\
-              \fullobj_{MR_{n+1}}(\js{ref}: L', @this: \_, @proto: \nil, \js{access}:
-                F_{A_{n+1}}) \sep {} \\
-              \newfun_{F_{A_n}}(MR_{n+1}:\ls, \js{field}, \lambda_A, \_) \sep {} \\
-              ((L' \dotin\uvals \sep \rv \doteq L') \lor (L' \notdotin\uvals \sep \rv
-              \doteq F_{A_{n+1}}))
+              \exists A,R_2,F_{A_2} \st \args{
+                \ls \doteq A : R_1 : M : \_ \sep 
+                \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
+
+                alive(M, F_{MR}) \sep
+                MRef_{R_1}(M,ref,F_{A_1},S_1,T_2) \sep {} \\
+
+                MRset(R_2:Ls,T_2) \sep
+                MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep
+                \rv \doteq F_{A_2} \sep {} \\
+
+                field \dotin \uvars \sep
+                (ref, field) \pointsto V \sep
+                V \dotin \loc
+              }
             }
         }
       \tjs{\}}
