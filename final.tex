@@ -1,0 +1,387 @@
+\documentclass[a4paper]{report}
+\usepackage[usenames,dvipsnames,svgnames,x11names]{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{wasysym}
+\usepackage{xspace}
+\usepackage{fullpage}
+\usepackage{hyperref}
+\usepackage{etoolbox}
+\usepackage{separationlogic}
+\usepackage[numbers]{natbib}
+
+\begin{document}
+\begin{titlepage}
+\begin{center}
+  \textsc{\Large Imperial College London} \\[0.1cm]
+  \textsc{\Large Department of Computing}
+
+  \vfill
+
+  % Still rough title
+  {\Huge A Program Logic for Verification of Security Properties in Secure
+  ECMAScript} \\[3cm]
+
+  {\LARGE Thomas Wood} \\
+  tw1509@doc.ic.ac.uk \\[1cm]
+
+  {\Large Supervisors: Dr. Gareth Smith \& Prof. Philippa Gardner}
+
+  \vfill
+
+  {\Large June 2013} \\[0.5cm]
+
+  Submitted in partial fulfilment of the requirements for the\\
+  MEng Degree in Computing of Imperial College London
+\end{center}
+\end{titlepage}
+
+\begin{abstract}
+  JavaScript is a mess...
+\end{abstract}
+
+\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+  Thanks to...
+
+  Gareth, Philippa.
+
+  Mark Miller.
+
+  Housemates.
+
+  Lecturers this year.
+\end{abstract}
+
+\tableofcontents
+
+\chapter{Introduction}
+%Citations required
+  In recent years with the development of the web, JavaScript has become an
+  increasingly-intensively used language. At its invention and for a
+  considerable length of time, JavaScript was only used for simple tasks such as
+  form validation
+  
+  The modern nature of web-programming
+  is that multiple different programs from different sources may be loaded and
+  executed in a single environment. This combination of different code poses
+  some interesting problems regarding code-correctness and security. JavaScript
+  provides no means to isolate different modules of code from one another, all
+  data stored in memory is accessible to any code loaded on the page, which must
+  be implicitly trusted.
+
+  Some attempts have been made to solve this problem, examples include AdSafe
+  \cite{AdSafe}, and Google's Caja language \cite{miller2008caja}. SES aims to
+  integrate some of these features into the core JavaScript language, to promote
+  safer web programming.
+
+  Secure ECMAScript is a proposed extension to the ECMAScript 5 specification
+  that allows programs to be executed within a restricted context. Restricted
+  execution will ideally permit fine-grained control over the permissions
+  untrusted executing code has. It is possible for unrestricted code to interact
+  with code under restricted execution, it is in this situation that it is
+  envisaged that lapses in the encapsulation could occur inadvertantly.
+  % could still expand details on mixed execution - examples?
+
+  The language's structure already poses some interesting problems for
+  researchers producing formal models of programming languages due to its memory
+  structure.  A formal logic for ECMAScript 3 has been recently developed by
+  researchers at Imperial College. This project aims to extend this program
+  logic to effectively model the restricted execution support proposed by the
+  Secure ECMAScript language specification. This will permit proofs asserting
+  that the language constructs are secure, and that programs written using the
+  restricted execution construct do not accidentally leak private data or
+  permissions to untrusted code, especially during interactions between two
+  contexts.
+
+  The formal logic for ECMAScript 3 is based upon Separation Logic, an extension
+  of Hoare Logic which permits efficient reasoning about data contained within
+  heaps by splitting the heap into smaller discrete portions. However, to reason
+  about restricted execution, we need to reason about the \emph{entire}
+  heap. The first aim of the project is to extend Separation logic with a
+  backpointer operator to allow reasoning about which objects point to an
+  object of interest.
+
+  Using this new operator, we then aim to produce semantics for the restricted
+  \texttt{eval()} operation.
+
+  Finally, we prove the correctness of a contract host algorithm
+  \cite{contract-host-algo} which permits
+  two mutually suspicious parties to execute an agreed contract on a mutually
+  trusted third-party.
+
+% What is the problem?
+
+% Why is it interesting?
+
+% What's the idea to solve it?
+
+\chapter{Background}
+\section{Hoare Reasoning}
+  This style of reasoning about the functionality and correctness of computer
+  programs was first presented in his 1969 paper ``An Axiomatic Basis for
+  Computer Programming''\cite{Hoare1969Axiom}, the principles presented were
+  based on earlier work by Floyd\cite{floyd1967assigning} for flowchart
+  representations of programs, and by others in other branches of mathematics;
+  Hoare developed the style of the reasoning to fit textual representation of
+  programs.
+
+  Hoare's reasoning depends on the basis that commands used in programming
+  languages should be well-defined and thus the consequences of a computer
+  program should be determinable directly from the program's text by deductive
+  means. Program proofs are deduced through the application of inference rules
+  to sets of axioms.
+
+  The main contribution of the paper was to introduce the notation, now known as
+  a Hoare triple:
+    \[ \{P\} C \{Q\} \]
+  $P$ and $Q$ are logical assertions and $C$ is some command or program. The
+  triple is interpreted by Hoare as ``if the assertion $P$ is true before
+  initiation of a program $C$, then the assertion $Q$ will be true on its
+  completion.'' Other interpretations of triples are possible, as will be shown
+  later.
+
+  The axioms selected for use in the reasoning alter the semantics of the system
+  being reasoned about. Hoare exemplifies this by presenting axioms that apply
+  to arithmetic under all sets of integers, followed by three alternative axioms
+  that describe different semantics for overflow in sets of finite integers.
+
+  A number of axioms and inference rules are universal or common to nearly all
+  imperitive languages, Hoare presents four of these:
+  \begin{display}{}
+    \stateaxiom{(Assign)}
+    {\tr{P[f/x]}{x := f}{P}} \qquad
+
+    \staterule{(Consequence)}
+    {\tr{P'}{C}{Q'} \quad P \impl P' \quad Q' \impl Q}
+    {\tr{P}{C}{Q}} \\
+    \\
+    \staterule{(Iteration)}
+    {P \quad \tr{B}{S}{P}}
+    {\tr{P}{\textbf{while } B \textbf{ do } S}{\lnot B \land P}} \qquad
+
+    \staterule{(Composition)}
+    {\tr{P}{C_1}{Q} \quad \tr{Q}{C_2}{R}}
+    {\tr{P}{C_1; C_2}{R}}
+  \end{display}
+
+  The consequence and composition rules are straight-forward. The iteration rule
+  is also reasonably simple once it is noted that the $P$ term is the loop
+  invariant. The assignment axiom is the most subtle of the set when not taken
+  in the context of a proof. The axiom asserts that the post-condition will hold
+  if the \emph{precondition} if the precondition has the variable replaced by
+  the assigned value. This axiom makes more sense if it is considered to be used
+  whilst reasoning backwards. For example, to prove $\tr{\true}{r := x; q :=
+  0}{x = r + y \times q}$:
+
+  \begin{tabular}{ll}
+    $\{\true \impl x = x + y \times 0 \}$ & Axiom \\
+    $\tr{x = x + y \times 0}{r:=x}{x = r + y \times 0}$ & Assignment \\
+    $\tr{x = r + y \times 0}{q:=0}{x = r + y \times q}$ & Assignment \\
+    $\tr{\true}{r:=x}{x = r + y \times 0}$ & Consequence \\
+    $\tr{\true}{r:=x; q:=0}{x = r + y \times q}$ & Composition\\
+  \end{tabular}
+
+  It is noted that proofs in this format are long and tedious, but it is
+  possible to derive more general rules from the given ones which would somewhat
+  reduce the length of these proofs. This is now the generally accepted method
+  of presenting proofs in Hoare's system, so the above proof could also be
+  presented as follows:
+
+  \begin{tabular}{l}
+    $\{\true\}$ \\
+    $\{x = x + y \times 0\}$ \\
+    $\ r:=x$ \\
+    $\{x = r + y \times 0\}$ \\
+    $\ q:=0$ \\
+    $\{x = r + y \times q\}$
+  \end{tabular}
+
+  Indeed, in his 1971 paper~\cite{Hoare1971proof}, Hoare presents a proof in
+  such a style for the non-trivial \textsc{Find} algorithm.
+
+  %Hoare closes his paper by reinforcing the need for formal proof and
+  %specification of computer programs and languages.
+
+\section{Separation Logic}
+
+  Whilst Hoare's methodology is suitable for reasoning about programs which only
+  operate within the stack, it is not suitable for reasoning about programs that
+  use the heap. This is because that data structures within the heap are more
+  prone to being shared in some manner (for example, multiple pointers to the
+  same heap location, or even arbitrary pointer arithmetic).
+ 
+  Reasoning about these shared data structures has been attempted by a number of
+  researchers, but no solution was particularly adequate. The main issue with
+  verification of shared data structures was that a global view of the data, and
+  attempts to axiomatize use of the heap would result in assertions
+  that rapidly grew in complexity, both in terms of length, but also from
+  universal quantification, for the need to assert that the rest of the heap was
+  not modfified along with the location of interest.
+
+  Burstall considered a local approach to this reasoning in 1972
+  \cite{burstall1972some}, but the approach featured little further research and
+  was unable to reason about data structures such as doubly-linked lists
+  \cite{reynolds2000intuitionistic}. Reynolds began further research into the
+  use of a spatial logic to permit local reasoning about the heap and in
+  collaboration with O'Hearn, Ishtiaq, Yang produced Separation Logic, a
+  combination of the spatial Bunched Implication logic with Hoare's methods for
+  reasoning about programs
+  \cite{Ishtiaq2001BI,OHearn2001Local,reynolds2000intuitionistic,Reynolds2002Separation}.
+
+  \subsection{Semantics of Separating Operators}
+  
+  Separation Logic introduces the separating conjunction operator, $P \sep Q$,
+  which can be thought of as splitting the heap into two disjoint portions, in
+  which $P$ holds in one and $Q$ the other. To denote the contents of the
+  heap, the $\mapsto$ operator is also introduced to relate heap locations with
+  values, $(x \mapsto 4, y)$ denotes that the pair of the value $4$ and a pointer
+  to the heap location $y$ is stored in the heap location $x$.
+
+  The separating conjunction only enforces disjointedness of the storage
+  locations of values, it is permitted to point to other heap locations from
+  within the heap. For example $(x \mapsto 4, y) \sep (y \mapsto 3, x)$ is
+  permissable and required to be able to build complex data structures.
+
+  % diagram of (x -> 4, y) * (y -> 3, x) ?
+
+  $x \mapsto -$ is shorthand meaning that there is some value stored at heap
+  location $x$.
+
+  The disjointedness enforced by the $\sep$ operator provides a very powerful
+  means of reasoning about operations made to the heap. Take for example the
+  assertion $x \mapsto 1 \sep P$ and the command $x := 2$, since we have $x$
+  explicitly defined on the left of the $\sep$, we know that it cannot occur
+  within $P$. We can therefore safely conclude that $P$ is not modified and that
+  the postcondition must be $x \mapsto 2 \sep P$.
+
+  A separating implication operator, $\wand$, also exists. The assertion $((x
+  \mapsto 7, 5) \wand P)$ has the meaning that if $x$ is updated to contain the
+  value $7, 5$, then $P$ will be true. This operator can thus, in effect, be
+  used to generate the weakest precondition for a command given a desired
+  postcondition.
+
+  \begin{display}{Assertion satisfaction rules: $s,h \satisfies P$}
+    %$s,h \satisfies E \mapsto E_1, E_2 \qquad \iff \{\eval{E} s \} = \domain(h)
+    %  \land h(\eval{E}) = \langle \eval{E_1}, \eval{E_2} \rangle \\
+    $s,h \satisfies \emp \qquad \iff h = \emptylist$ \\
+    $s,h \satisfies P \sep Q \qquad \iff \exists h_0, h_1.h_0 \disj h_1, h_0 \cdot
+    h_1 = h, s, h_0 \satisfies P \land s,h_1 \satisfies Q$ \\
+    $s,h \satisfies (E \mapsto E_1, E_2) \iff dom(h) = \{[E]_s\} \land h([E]_s)
+    = ([E_1]_s, [E_2]_s)$ \\
+    ...
+  \end{display}
+
+  \subsection{Program Reasoning}
+
+  Just as Hoare's reasoning was built atop of classical logic, we can extend
+  Hoare's reasoning to the spatial logic including the separating conjunction,
+  the combined system is known as Separation Logic.
+
+  The first concept to translate is that of the Hoare triple, $\tr{P}{C}{Q}$.
+  For the remainder of this report, we will consider Separation Logic to use
+  \emph{fault-avoiding} semantics for the triple. Under this semantics, then the
+  requirements for $C$ are strengthened, such that ``if $C$ is executed in a
+  state satisfying $P$, then it will \emph{not fault}, and if it terminates it
+  will do so in a state satisfying $Q$''.
+
+  Separation Logic extends the standard Hoare inference rules and axioms, the
+  rules for Consequence, Composition, and Simple Assignment are used without
+  modification.
+
+  The obvious new axioms to introduce are those for heap access and
+  modification, the following set are taken from \cite{OHearn2001Local}.
+
+  \begin{display}{Axioms for heap access}
+    $\begin{array}{ll}
+      \stateaxiom{(Update)}{\tr{x \mapsto -} {x := v} {x \mapsto v}} &
+      \stateaxiom{(Delete)}{\tr{x \mapsto -} {\js{delete}(x)} {\emp}} \\
+      \stateaxiom{(Allocate)}{\tr{x \doteq v'} {x := v} {x \mapsto v[v'/x]}} &
+      \stateaxiom{(Lookup)}{\tr{x \mapsto v} {y := [x]} {y = v \land x \mapsto v}} \\
+    \end{array}$
+  \end{display}
+
+  These axioms may be expressed in other ways, for example, in a form suitable
+  for backwards reasoning, or with use of existential quantifiers.
+
+  There is one important new inference rule, the frame rule: \\
+
+  $
+    \staterule{(Frame Rule)}
+    {\tr{P}{C}{Q}}
+    {\tr{P \sep R}{C}{Q \sep R}}
+    {\mathrm{modifies}(C) \disj \mathrm{free}(R)}
+  $\\
+
+  This rule is the prime reason why Separation Logic is suitable for local
+  reasoning. It allows assertions to be split down to the \emph{footprint} of
+  the command, those heap locations that the command touches. The side condition
+  guarantees that the command only touches the part of the assertion which is
+  kept, it guarantees that nothing in $R$ can be modified by $C$.
+
+\section{JavaScript}
+
+  JavaScript is a dynamically-typed, prototype-oriented language. The
+  early development of the language was haphazard with rival implementations
+  produced by Netscape and Microsoft for their browsers. The language's
+  specification was later standardised as ECMA-262 and named ECMAScript.
+  The specification is unusual with respect to it permitting many
+  implementation-specific extensions to the language. Until recently, many
+  JavaScript implementations did not conform to the ECMAScript specification.
+
+  Although originally targeted to be a programming language that was easy to
+  learn and suitable for non-programmers to use, the language's variable scoping
+  rules and semantics of the \js{this} keyword and \js{with} syntax are unusual
+  and differ from most programmers' intuitions. In addition, the ability to
+  redefine, or \emph{monkey-patch} many primitives that define the semantics of
+  the language means that reasoning about programs can become impossible if
+  some unknown code can execute within the same execution environment as the
+  program under study.
+
+  There have been several efforts to formally specify the semantics of the
+  JavaScript language, notable mentions include Maffeis, Mitchell and Taly's
+  production of an operational semantics for a wide range of JavaScript
+  implementations \cite{maffeis-jsopsem}. The remainder of this section will
+  focus on Gardner, Maffeis, Smith's work \cite{gms-popl} into producing a
+  Program Logic for JavaScript which provides a language in which to reason
+  about JavaScript programs.
+
+  A unique feature of the
+  language is that the entire state is stored on the heap in a structure that
+  loosely resembles the variable store in conventional programming languages. It
+  thus follows that Separation Logic is likely to be a useful basis for the
+  JavaScript program logic. However,sizable modifications were required to
+  accurately model the variable store and scoping rules.
+
+  %diagram
+
+  The variable store structure consists of an ordered scope chain,
+  somewhat alike to
+  stack frames in other languages. Each scope entry in the chain is an object,
+  on which fields may be defined, as well as a pointer to the object's
+  prototype. To perform a variable lookup, the first object in the scope chain has
+  its fields, and the fields of its prototypes inspected for a name match, before
+  progressing to the next entry in the scope chain to repeat the search.
+
+  To perform a write to a variable, a similar lookup is performed, except the
+  field is modified on the scope object for the prototype chain in which the
+  variable was found -- this is so that the prototypical variable is overridden,
+  but not overwritten.
+
+  Once again, Hoare-style reasoning is adapted to suit the extensions of the
+  logic. The fault-avoiding semantics for the Hoare triple is maintained. The
+  basic set of Separation Logic axioms and inference rules (excluding those
+  referring directly to the C-style heap implementation) are used. One notable
+  difference is that the Frame rule loses its side condition as a result of all
+  variables now being on the heap -- the footprint of $C$ will be expressed in
+  the $P$ and $Q$ terms, so is necessarily disjoint from the framed $R$ portion of
+  the rule.
+
+% 3-4 Chapters
+% Evaluation
+% Conclusions and Future Work
+% Bibliography
+% Appendices
+
+\end{document}
