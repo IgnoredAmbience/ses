@@ -1161,7 +1161,7 @@ for protected references for the Membrane $M$.
       \js{MembraneRef}: F_{MR}, \js{kill}: F_{K}) \sep {} \\
   & \newfun_{F_{MR}}(M:\_, \js{ref}, \lambda_{MR}, \_) \\
 alive(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \false \\
- dead(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \true 
+ dead(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \true
     \end{align*}
 
     Note: We are safe to use $\newfun$ here, as the $F_{MR}$ function is
@@ -1262,18 +1262,19 @@ protected object during execution.
             \rv \doteq L
           }
         }
-      \tjs{\}} \\
-      \\
-      \\
-      \logic{
-        (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep (alive(M, F_{MR}) \lor dead(M, F_{MR}))
-      } \\
-      \js{kill()} \\
-      \logic{
-        (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep dead(M)
-      } \\
-      \\
-      \tjs{var kill = function() \{} \\
+        \tjs{\}} \\
+        \\
+        \\
+        \logic{
+          (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep (alive(M, F_{MR}) \lor dead(M, F_{MR}))
+        } \\
+        \js{kill()} \\
+        \logic{
+          (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep dead(M)
+        } \\
+        \gds{\dots and this is what you meant in your email about the $(\_,\js{kill})\pointsto F_k$, I see. I think what you've done is fine, because these lines aren't part of any proof. They're for illustration only - ``this is the sort of thing you can prove using the lemma below and the function call rule''. Make it clear that these things are informal aids to intuition, and your notation is fine.}
+        \\
+        \tjs{var kill = function() \{} \\
         \indblock{
           \logic{
             \exists A \st \ls \doteq A : M : \_ \sep
@@ -1287,13 +1288,14 @@ protected object during execution.
             dead(M)
           }
         }
-      \tjs{\}}
+        \tjs{\}}
     \end{array}
   \]
   \caption{Proof \emph{outline} for \js{Membrane} and its \js{kill} function}
 \end{figure}
 
 \begin{figure}
+  \gds{You might need ${} \sep \ls\doteq\dots$ in your $\tjs{MembraneRef}$ and $\tjs{access}$ specs.}
   \[
     \begin{array}{l}
       \logic{
@@ -1357,6 +1359,7 @@ protected object during execution.
       \tjs{\}} \\
       \\
       \\
+      \gds{As you noted in your email you need to pick some notation for naming the function in these informal intuition-aid spec illustrations. I prefer the style above to the ``dot-equals'' style below. What's your preference?}
       \logic{
         alive(M, F_{MR}) \sep
         access \doteq F_{A_1} \sep
