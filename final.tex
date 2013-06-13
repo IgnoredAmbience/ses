@@ -83,7 +83,7 @@
   for it to be used for much more than form validation on web pages.
   However, in recent years, web technologies have become a central part of
   day-to-day computer use, an ever growing number of applications now target the
-  web as their platform of choice. 
+  web as their platform of choice.
   This increase in popularity has forced the JavaScript language to mature
   considerably, through syntax, semantics, and standard library support.
 
@@ -112,7 +112,7 @@
   Secure ECMAScript (SES) is a proposed revision of the ECMAScript (ES)
   specification that introduces changes to the language to permit programs to be
   executed within a restricted context, safe from the possibility of unintended
-  leak. 
+  leak.
   Restricted execution permits fine-grained control over the permissions that
   untrusted executing code has by restricting the set of accessable references
   to other objects.
@@ -275,7 +275,7 @@
   use the heap. This is because that data structures within the heap are more
   prone to being shared in some manner (for example, multiple pointers to the
   same heap location, or even arbitrary pointer arithmetic).
- 
+
   Reasoning about these shared data structures using conventional logics has been attempted by a number of
   researchers, but no solution was particularly adequate. The main issue with
   verification of shared data structures was that a global view of the data, and
@@ -295,7 +295,7 @@
   \cite{Ishtiaq2001BI,OHearn2001Local,reynolds2000intuitionistic,Reynolds2002Separation}.
 
   \subsection{Semantics of Separating Operators}
-  
+
   Separation Logic introduces the separating conjunction operator, $P \sep Q$,
   which can be thought of as splitting the heap into two disjoint portions, in
   which $P$ holds in one and $Q$ the other. To denote the contents of the
@@ -320,11 +320,17 @@
   within $P$. We can therefore safely conclude that $P$ is not modified and that
   the postcondition must be $x \mapsto 2 \sep P$.
 
-  A separating implication operator, $\wand$, also exists. The assertion $((x
-  \mapsto 7, 5) \wand P)$ has the meaning that if $x$ is updated to contain the
-  value $7, 5$, then $P$ will be true. This operator can thus, in effect, be
+  A counterpart for implication also exists,
+  the separating implication operator, $\wand$ (commonly known as the
+  \emph{magic wand}). The assertion $((x
+  \mapsto 7) \wand P)$ has the meaning that if $x$ is updated to contain the
+  value $7$, then $P$ will be true. So: $(x \mapsto 7) \sep ((x \mapsto 7) \wand
+  P) \impl P$.
+
+  This operator can thus, in effect, be
   used to generate the weakest precondition for a command given a desired
-  postcondition.
+  postcondition. This is often used for backwards reasoning, where a
+  postcondition for a command is known, but the precondition is not.
 
   \subsection{Program Reasoning}
 
@@ -373,57 +379,99 @@
   guarantees that the command only touches the part of the assertion which is
   kept, it guarantees that nothing in $R$ can be modified by $C$.
 
+  As a result of this, we are safe to temporarily disregard other portions of
+  the heap. This permits rules to be easily composed without requiring an
+  overwhelming number of predicates specifying that other portions of the heap
+  haven't changed.
+
 \section{JavaScript}
 
   JavaScript is a dynamically-typed, prototype-oriented language. The
   early development of the language was haphazard with rival implementations
   produced by Netscape and Microsoft for their browsers. The language's
-  specification was later standardised as ECMA-262 and named ECMAScript.
-  The specification is unusual with respect to it permitting many
-  implementation-specific extensions to the language. Until recently, many
-  JavaScript implementations did not conform to the ECMAScript specification.
+  specification was later standardised as ECMA-262 and named ECMAScript (ES).
+  The specification is unusual as it permits any
+  implementation-specific extensions to the language. Even today, many
+  JavaScript implementations do not conform to the ES specifications (as
+  determined by the incomplete ES test suite), although this situation is slowly
+  improving.
 
-  There have been several efforts to formally specify the semantics of the
+  There have been several efforts to formally specify various aspects of the
   JavaScript language, notable mentions include Maffeis, Mitchell and Taly's
-  production of an operational semantics for a wide range of JavaScript
-  implementations \cite{maffeis-jsopsem}. The remainder of this section will
-  focus on Gardner, Maffeis, Smith's work \cite{gms-popl} into producing a
-  Program Logic for JavaScript which provides a language in which to reason
-  about JavaScript programs.
+  production of an operational semantics for a wide range of ES3
+  implementations \cite{maffeis-jsopsem}, this work was continued by
+  Gardner, Maffeis, Smith's \cite{gms-popl} by producing a
+  Program Logic for JavaScript which is capable of expressing JavaScript
+  program states with high precision. Since SES is based upon JavaScript,
+  sharing many of the simple statements, this program logic was used as a
+  starting point for the formalisation of SES.
+
+  % FIXME
+  Notable differences -
+
+  * Flattening of statement/expression structure - dictated by syntax, assumes
+  all programs parse as valid ES, not big semantic impacts (ES syntax extremely
+  complex, eg ; insertion)
+
+  * Automatic type casting assumed, not modelled, would be very important in a
+  full logic, for now we skirt the issue by just enforcing that the primitive
+  type is supplied in the preconditions where required.
+
+  % END FIXME
 
   Although originally targeted to be a programming language that was easy to
   learn and suitable for non-programmers to use, the language's variable scoping
-  rules and semantics of the \js{this} keyword and \js{with} syntax are unusual
-  and differ from most programmers' intuitions. In addition, the ability to
+  rules, semantics of the \js{this} keyword and \js{with} syntax are unusual
+  and differ from most peoples' intuitions. In addition, the ability to
   redefine, or \emph{monkey-patch} many primitives that define the semantics of
   the language means that reasoning about programs can become impossible if
   some unknown code can execute within the same execution environment as the
   program under study.
 
+  \subsection{Data Structure}
+
   A unique feature of the
   language is that the entire state is stored on the heap in a structure that
   loosely resembles the variable store in conventional programming languages. It
   thus follows that Separation Logic is likely to be a useful basis for the
-  JavaScript program logic. However, sizable modifications were required to
-  accurately model the variable store and scoping rules.
+  JavaScript program logic. However, a considerable number of complex predicates
+  were required to accurately model the variable store and scoping rules.
 
   %diagram
 
-  The variable store structure consists of an ordered scope chain,
-  somewhat alike to
-  stack frames in other languages. Each scope entry in the chain is an object,
-  on which fields may be defined, as well as a pointer to the object's
-  prototype. To perform a variable lookup, the first object in the scope chain has
-  its fields, and the fields of its prototypes inspected for a name match, before
-  progressing to the next entry in the scope chain to repeat the search.
+  A JavaScript object is identified by a location $l \in \loc$, each object may
+  have fields $x \in \vars$ which map to values $v \in \vals$. The heap is
+  represented by the partial function of locations and fields to
+  values, $H \in \loc \times \vars \partialfunc \vals$.
+
+  Field names are subdivided into user fields $\uvars$ and internal fields
+  $\ivars$ (prefixed by an @ symbol). No internal fields are permitted to be
+  directly accessed by executing code, they are used by the language to store
+  contextual information on objects for purposes such as prototypical name
+  resolution and function closures.
+
+  Field lookup on an object proceeds by checking whether the field is present on
+  the object, if not the \emph{prototypical} object stored on the $@proto$ field
+  is recursively checked for the field. This operation is performed by the
+  $\proto$ predicate in the Operational Semantics and Program Logic. The list of
+  objects checked for field lookup is known as the \emph{prototype chain}
+  of an object.
+
+  During execution a \emph{scope chain}, an ordered list of object locations, is
+  maintained. This structure is somewhat alike to stack frames in other languages.
+  To perform a variable lookup, a prototypical field lookup is performed for
+  each object in the scope chain in turn until a field is matched. This
+  operation is performed by the $\scope$ predicate in the formalisations.
 
   To perform a write to a variable, a similar lookup is performed, except the
-  field is modified on the scope object for the prototype chain in which the
+  field is modified on the \emph{scope object} for the prototype chain in which the
   variable was found -- this is so that the prototypical variable is overridden,
   but not overwritten.
 
+  % both the above examples need diagrams
+
   Once again, Hoare-style reasoning is adapted to suit the extensions of the
-  logic. The fault-avoiding semantics for the Hoare triple is maintained. The
+  logic. The fault-avoiding semantics for the Hoare triple are maintained. The
   basic set of Separation Logic axioms and inference rules (excluding those
   referring directly to the C-style heap implementation) are used. One notable
   difference is that the Frame rule loses its side condition as a result of all
