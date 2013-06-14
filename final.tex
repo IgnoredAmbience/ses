@@ -246,7 +246,7 @@
   \end{tabular}
 
   It is noted that proofs in this format are long and tedious, but it is
-  possible to derive more general rules from the given ones \gds{are they really more general? Perhaps ``more palatable''?} which would somewhat
+  possible to derive more useful rules from the given ones which would somewhat
   reduce the length of these proofs. This is now the generally accepted method
   of presenting proofs in Hoare's system, so the above proof could also be
   presented as follows:
@@ -474,11 +474,242 @@
 
   \TODO{both the above examples need diagrams}
 
-\chapter{Syntax \& Operational Semantics}
-  We now define the syntax of permissable expressions in this model of the SES
+\chapter{SES Language Syntax \& Operational Semantics}
+  We now define the syntax of expressions in this model of the SES
   language and present the english definition of each expression along with the
   Operational Semantics for the precise effect it has on the heap and program
-  state.
+  state. We also discuss how SES differs from JavaScript and the rationale for
+  these differences.
+
+  \section{Syntax}
+    \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
+    \begin{display}{Syntax of SES values and expressions, \js{v}, \js{e}}
+      $\begin{array}{rll}
+        \syntaxline[\js{v} ::=]{n}{Number}
+        \syntaxline{s}{String}
+        \syntaxline{\und}{Undefined}
+        \syntaxline{\nil}{Null}
+        \syntaxline{\true \pipe \false}{Booleans}
+        \syntaxline[\js{e} ::=]{v}{Value}
+        \syntaxline{\jsvar{x}}{Variable declaration}
+        \syntaxline{x}{Identifier}
+        \syntaxline{\{x_1:e_1, \ldots, x_n:e_n\}}{Object creation}
+        \syntaxline{e; e}{Sequence}
+        \syntaxline{e \oplus e}{Binary operator}
+        \syntaxline{if(e) \{e\} else \{e\}}{Conditional}
+        \syntaxline{while(e) \{e\}}{Looping}
+        \syntaxline{e = e}{Assignment}
+        \syntaxline{e.x}{Member access}
+        \syntaxline{e[e]}{Computed member access}
+        \syntaxline{e(e)}{Function call}
+        \syntaxline{this}{this}
+        \syntaxline{\jsfun{e}{e}}{Function creation}
+        \syntaxline{\jsfun[x]{e}{e}}{Named function creation}
+        \syntaxline{\jsnew{e}{e}}{Object construction}
+        \syntaxline{reval(e, e)}{Restricted evaluation}
+        \syntaxline{freeze(e)}{Freeze}
+        \syntaxline{def(e)}{Recursive freeze}
+      \end{array}$
+    \end{display}
+
+  Numbers, strings, booleans and the special values of \und and \nil are the
+  only primitive values.
+
+  \FIXME{This paragraph should \emph{partially} go somewhere else}
+  Although locations are values that are stored in the heap, they are
+  not able to be directly referred to by user programs. This means that
+  references to objects are not forgable, this is a key security concept in the
+  SES language, an object it must be passed a reference to another object to be
+  able to access it.
+  Since all functions (including standard libraries and resources) are
+  themselves objects, the concept of access extends to one of privelege when a
+  security-sensitive interface needs to be protected.
+
+  We model SES as an expression-based language, the full language follows
+  JavaScript's Strict Mode parsing and variable declaration rules. For this
+  project, we assume that all programs proved additionally pass these checks.
+
+  SES syntax differs from JS syntax only by removal and addition of several
+  commands. The most notable removal is that of the \tjs{with} expression, this
+  expression would add the given JS object into the scope chain for the duration
+  of execution of the given block. This causes the scope chain to potentially
+  have multiple prototype chains requiring traversal. Removal of this command
+  ensures that all objects in the scope chain, other than the root, have no
+  prototype chains. This removal considerably simplifies the reasoning required
+  for variable lookup. The deprecation of the \tjs{with} syntax has also been
+  started in the most recent ES specifications.
+
+  We are modelling three additional primitives present in the SES language,
+  these are restricted evaluation, \tjs{reval(e,e)}, and methods to make objects
+  immutable, \tjs{freeze(e)} and \tjs{def(e)}.
+
+  \section{Operational Semantics}
+
+  We now describe the semantics of each expression given in the syntax, both
+  informally in english, and formally with the operational semantics rule, which
+  precisely describes how the program state is modified by execution of each
+  expression.
+
+  Although daunting at first, the rules are quite simple to follow. The syntax
+  $H,L,\js{e} \evalsto H',r$ means that the heap $H$, scope chain $L$, and
+  expression $\js{e}$ will evaluate to the heap $H'$ and return value $r$. (A
+  return value is a value, or a reference, $\fld{l}{\js{x}}$, to a location and
+  a field).
+
+  An expression will be evaluated iff the preconditions above the line hold,
+  these may be evaluations of subexpressions, or involve the use of predicates
+  that test or update the current state. 
+  Ordering of the evaluation of these preconditions is enforced through the
+  labelling of the variables in each rule.
+
+  As the dereferencing of references returned by subexpressions into values is a
+  common activity, $\gevalsto$ is defined as shorthand for this:
+  \[ H,L,\js{e} \gevalsto H',v \triangleq \exists r. (H,L,\js{e} \evalsto H',r
+  \wedge \getValue(H',r) = v) \]
+
+  \subsection{Structural Expressions}
+  \stateaxiom{(Value)}{H,L,\js{v} \evalsto H,v}
+
+  A value simply evaluates to itself, the heap is not modified. No preconditions
+  are required.
+
+  \stateaxiom{(Variable declaration)}{H,L,\jsvar{x} \evalsto H,\und}
+  
+  The variable declaration expression is only checked on entry to a function
+  body, they are treated as a no-op during execution.
+
+  \staterule{(Sequence)}
+    {H,L,\js{e_1} \evalsto H'',r' \\
+     H'',L,\js{e_2} \evalsto H',r}
+   {H,L,\js{e_1; e_2} \evalsto H',r}
+  \nopagebreak
+
+  The sequencing operator specifies that the expression on the left should be
+  evaluated, followed by the expresion on the right. The result of the right
+  subexpression is returned. This definitiion is standard for imperitive
+  languages.
+
+  \staterule{(Binary operator)}
+    {H,L,\js{e_1} \gevalsto H'',v_1 \\
+     H'',L,\js{e_2} \gevalsto H',v_2\\
+     v_1 \oplus v_2 = v}
+   {H,L,\js{e_1 \oplus e_2} \evalsto H',v}
+
+  Binary operations are evaluated left-to-right, and includes standard
+  mathematical and string operations. Formalisation of semantics for all of these
+  are beyond the scope of this project, but will correspond closely to similar
+  works on the JavaScript family of languages.
+
+  \staterule{(Conditional true)}
+  {H,L,\js{e_1} \gevalsto H'',v \quad \istrue(v) \\
+   H'',L,\js{e_2} \evalsto H',r}
+  {H,L,\js{if(e_1)\{e_2\} else \{e_3\}} \evalsto H',r}
+\qquad
+  \staterule{(Conditional false)}
+  {H,L,\js{e_1} \gevalsto H'',v \quad \isfalse(v) \\
+   H'',L,\js{e_3} \evalsto H',r}
+  {H,L,\js{if(e_1)\{e_2\} else \{e_3\}} \evalsto H',r}
+
+  The conditional expression evaluates the first sub-expression, if it evaluates
+  to \js{true} when cast to a boolean then the second
+  sub-expression is evaluated and result returned, otherwise the third
+  sub-expression is evaluated and result returned. This is the standard
+  definition.
+
+
+  \staterule{(While true)}
+  {H,L,\js{e_1} \gevalsto H'', v \quad \istrue(v) \\
+   H'',L,e_2\js{;while(e_1)\{e_2\}} \evalsto H', v''}
+  {H,L,\js{while(e_1)\{e_2\}} \evalsto H',\und}
+\qquad
+  \staterule{(While false)}
+  {H,L,\js{e_1} \gevalsto H', v \quad \isfalse(v)}
+  {H,L,\js{while(e_1)\{e_2\}} \evalsto H',\und}
+
+  Whilst the loop guard is true, the loop is syntactically unrolled once, and
+  the resulting expression evaluated. When the guard condition evaluates to
+  false, \und is returned. This is the standard loop unrolling definition.
+
+  \subsection{Heap-based Expressions}
+  \staterule{(Variable Resolution)}
+    {\scope(H,L,x) = l' \quad l' \neq \nil}
+    {H,L,\js x \evalsto H, \fld{l'}{x}}
+
+  \staterule{(Object creation)}
+    {H_0 = H \disju \obj(l,\lop)\\
+     \forall i\in 1..n \st \left(\begin{array}{l}
+      H_{i-1},L,\js{e_i}\gevalsto H_i',v_i \\
+      H_i = H_i' [ (l,\js{x_i}) \pointsto v_i]\end{array}\right)}
+    {H,L,\js{\{x_1:e_1,\dots,x_n:e_n\}} \evalsto H_n,l}
+  \nopagebreak
+
+  The Object Construction syntax produces a new object at the new location $l$,
+  with fields named \js{x_1, \ldots, x_n} which map to the values of expressions
+  \js{e_1, \ldots, e_n} when evaluated in order at creation. The location of the
+  new object is returned.
+
+\paragraph{Assignment} Assigns the value on the right hand side to the named
+field on the left. Assignments to undeclared variables are forbidden (enforced
+by the Variable rule), this is consistent with ES5-strict.
+
+\paragraph{Member access} Returns the value of the named field of the object referenced by
+the subexpression.
+
+\paragraph{Computed member access} As Member access, but the field name is derived from
+the expression in \js{[]}.
+
+\paragraph{Function creation} Creates a function object, assigning the body, parameter
+declarations and the current scope to internal fields. A new object is also
+created and assigned to the \js{prototype} field for use as the prototype of
+objects produced by using this function as a constructor (this permits
+emulation of a class-based language).
+
+\paragraph{Named function creation} This syntax is the same as standard function creation,
+but also adds the name and a self-reference to the function to the function's
+scope record. This permits recursive functions to be created. \emph{Note:} the
+name of the function is not added to the current scope, it is permitted in the
+actual language, but is considered to be syntactic sugar, combining creation and
+assignment.
+
+\paragraph{Function call} Executes the body of the function, using the passed expression
+as the value to bind to the parameter. The body of the function is executed in
+the scope stored with the function, any variables defined within the function
+body are defined on an activation record so that they are lexically scoped.
+
+\paragraph{Object construction} Constructs an object using the given function, an object
+is created as usual, it's prototype is assigned to that of the function's
+\js{prototype} field. The body of the function is then exectuted, commonly used
+to initialize the newly created object.
+
+% ES5-Strict definition, plus reval global - matches caja impl (and intuition).
+\paragraph{\js{this}} The \js{this} expression is context-dependent. When used
+outside of a
+function, it should evaluate to the most global accessible scope.
+When used within a function, if the function is called using Member Access, it
+will evaluate to the object on which that function was called. Otherwise
+(most likely function call directly via scope),
+\js{this} returns undefined. Note that this is particularly
+problematic because functions can easily be aliased off of the object on which
+they appear to be defined.
+
+\paragraph{Restricted evaluation} Parse the first given expression as SES code.
+A new scope chain is prepared, its root is the
+object specified by the second parameter, the \emph{imports} to the restricted
+environment.
+An activation record which initializes any variables declared in the parsed
+source is then appended. This may cause imported objects to be shadowed.
+The return value of the restricted evaluation statement is the same as that of
+the final statement of the source to be executed.
+
+\paragraph{Freeze} Makes the provided object read-only, prevents field additions,
+modifications and deletions.
+Note that the ES5 spec has a bug, meaning that frozen fields on an object's
+prototype are not permitted to be overridden\footnote{See
+ses/repairES5.js\#makeTamperProof()}, some browsers opt to ``fix'' the spec bug.
+This bug does not occur in these semantics.
+
+\paragraph{Recursive freeze} Recursively calls freeze on all objects reachable
+via user-defined fields from the given object.
 
 \chapter{Program Logics}
 \section{Extending Separation Logic}
