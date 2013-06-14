@@ -358,7 +358,7 @@
       \stateaxiom{(Lookup)}{\tr{x \mapsto v} {y := [x]} {y = v \land x \mapsto v}} \\
     \end{array}$
   \end{display}
-
+\gds{I'm used to seeing Allocate given as $\tr{\emp} {x := new()} {\exists L \st x=L \land L \mapsto\_}$. The $\exists$ is important, because otherwise we can use the frame rule to ``prove'' that we know already something about the allocated address.}
   These axioms may be expressed in other ways, for example, in a form suitable
   for backwards reasoning, or with use of existential quantifiers.
 
