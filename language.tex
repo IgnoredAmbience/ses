@@ -15,13 +15,6 @@
 
 \section{SES Syntax and Description}
 
-\newcommand{\editlabel}[3]{~\vg\nphantom{#1:}\colorbox{#2}{\textbf{#1:}}\tabfill{\textrm{ #3}}\\}
-\newcommand{\FIXME}[1]{\editlabel{FIXME}{red}{#1}}
-\newcommand{\TODO}[1]{\editlabel{TODO}{yellow}{#1}}
-\newcommand{\COMMENT}[1]{\editlabel{COMMENT}{YellowGreen}{#1}}
-\newcommand{\comment}[1]{}
-\newcommand{\gds}[1]{\editlabel{GDS}{Orange}{#1}}
-
 \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
 \begin{display}{Syntax of SES values and expressions, \js{v}, \js{e}}
   $\begin{array}{rll}
@@ -1218,7 +1211,7 @@ protected object during execution.
           \tjs{var MembraneRef = function(ref) \{...\}} \\
           \tjs{var kill = function() \{...\}} \\
           \logic{
-            alive(M, F_{MR}) \sep 
+            alive(M, F_{MR}) \sep
             \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
                    \js{access},\js{kill}) \sep {} \\
 
@@ -1232,7 +1225,7 @@ protected object during execution.
           } \\
           \tjs{var access = MembraneRef(ref);} \\
           \logic{
-            alive(M, F_{MR}) \sep 
+            alive(M, F_{MR}) \sep
             \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
                    \js{access},\js{kill}) \sep {} \\
 
@@ -1246,7 +1239,7 @@ protected object during execution.
           } \\
           \tjs{return \{access: access, kill: kill\};} \\
           \logic{
-            alive(M, F_{MR}) \sep 
+            alive(M, F_{MR}) \sep
             \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
                    \js{access},\js{kill}) \sep {} \\
 
@@ -1391,7 +1384,7 @@ protected object during execution.
       \tjs{var access = function(field) \{} \\
         \indblock{
           \logic{
-            \exists A \st \ls \doteq A : R_1 : M : \_ \sep 
+            \exists A \st \ls \doteq A : R_1 : M : \_ \sep
             \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
             alive(M, F_{MR}) \sep
             MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
@@ -1406,7 +1399,7 @@ protected object during execution.
             \indblock{
               \logic{
                 \exists A \st \ls \doteq A : R_1 : M : \_ \sep {} \\
-                alive(M, F_{MR}) \sep 
+                alive(M, F_{MR}) \sep
                 MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
                 MRset_M(Ls,T_1) \sep {} \\
 
@@ -1439,7 +1432,7 @@ protected object during execution.
           \tjs{\}} \\
             \logic{
               \exists A,R_2,F_{A_2} \st \args{
-                \ls \doteq A : R_1 : M : \_ \sep 
+                \ls \doteq A : R_1 : M : \_ \sep
                 \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
 
                 alive(M, F_{MR}) \sep

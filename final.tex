@@ -121,9 +121,7 @@
   it is envisaged that lapses in the encapsulation could inadvertantly occur due
   to programmer error.
 
-  % bullet pointing this stuff to get it done quickly:
-  % FIXME: EDIT INTO SHAPE
-
+  \FIXME{EDIT INTO SHAPE}
   It is useful to be able to verify that a program is correct according to a
   given specification.
 
@@ -159,7 +157,7 @@
 
   Opted not to discuss decidability of logic, nor to prove soundness against
   operational semantics, nor completeness... Basically nothing very formal
-  % END FIXME
+  \FIXME{}
 
 % TODO: Consider following for inclusion in introduction
 
@@ -396,6 +394,16 @@
   determined by the incomplete ES test suite), although this situation is slowly
   improving.
 
+  Although originally targeted to be a programming language that was easy to
+  learn and suitable for non-programmers to use, the language's variable scoping
+  rules, semantics of the \js{this} keyword and \js{with} syntax are unusual
+  and differ from most peoples' intuitions. In addition, the ability to
+  redefine, or \emph{monkey-patch} many primitives that define the semantics of
+  the language means that reasoning about programs can become impossible if
+  some unknown code can execute within the same execution environment as the
+  program under study.
+
+  \subsection{Formalisation}
   There have been several efforts to formally specify various aspects of the
   JavaScript language, notable mentions include Maffeis, Mitchell and Taly's
   production of an operational semantics for a wide range of ES3
@@ -406,27 +414,22 @@
   sharing many of the simple statements, this program logic was used as a
   starting point for the formalisation of SES.
 
-  % FIXME
-  Notable differences -
+  As with most formal models, they approximate and simplify actual behaviour
+  where it does not impact the aspects of the language under study. JavaScript
+  is a particularly large and awkward language, notable differences between the
+  model and the full language are that the syntax is flattened to be purely
+  expression-based and that the mechanism for automatic casting of types is
+  avoided by requiring the primitive type is specified where needed in command
+  pre-conditions.
 
-  * Flattening of statement/expression structure - dictated by syntax, assumes
-  all programs parse as valid ES, not big semantic impacts (ES syntax extremely
-  complex, eg ; insertion)
-
-  * Automatic type casting assumed, not modelled, would be very important in a
-  full logic, for now we skirt the issue by just enforcing that the primitive
-  type is supplied in the preconditions where required.
-
-  % END FIXME
-
-  Although originally targeted to be a programming language that was easy to
-  learn and suitable for non-programmers to use, the language's variable scoping
-  rules, semantics of the \js{this} keyword and \js{with} syntax are unusual
-  and differ from most peoples' intuitions. In addition, the ability to
-  redefine, or \emph{monkey-patch} many primitives that define the semantics of
-  the language means that reasoning about programs can become impossible if
-  some unknown code can execute within the same execution environment as the
-  program under study.
+  Once again, Hoare-style reasoning is adapted to suit the extensions of the
+  logic. The fault-avoiding semantics for the Hoare triple are maintained. The
+  basic set of Separation Logic axioms and inference rules (excluding those
+  referring directly to the C-style heap implementation) are used. One notable
+  difference is that the Frame rule loses its side condition as a result of all
+  variables now being on the heap -- the footprint of $C$ will be expressed in
+  the $P$ and $Q$ terms, so is necessarily disjoint from the framed $R$ portion of
+  the rule.
 
   \subsection{Data Structure}
 
@@ -437,7 +440,7 @@
   JavaScript program logic. However, a considerable number of complex predicates
   were required to accurately model the variable store and scoping rules.
 
-  %diagram
+  \TODO{diagram}
 
   A JavaScript object is identified by a location $l \in \loc$, each object may
   have fields $x \in \vars$ which map to values $v \in \vals$. The heap is
@@ -452,10 +455,11 @@
 
   Field lookup on an object proceeds by checking whether the field is present on
   the object, if not the \emph{prototypical} object stored on the $@proto$ field
-  is recursively checked for the field. This operation is performed by the
-  $\proto$ predicate in the Operational Semantics and Program Logic. The list of
+  is recursively checked for the field. The list of
   objects checked for field lookup is known as the \emph{prototype chain}
-  of an object.
+  of an object. The object lookup operation is performed by the $\proto$
+  predicate in the Operational Semantics and Program Logic, the corresponding
+  value retrieval operation is performed by $\getValue$.
 
   During execution a \emph{scope chain}, an ordered list of object locations, is
   maintained. This structure is somewhat alike to stack frames in other languages.
@@ -468,18 +472,13 @@
   variable was found -- this is so that the prototypical variable is overridden,
   but not overwritten.
 
-  % both the above examples need diagrams
+  \TODO{both the above examples need diagrams}
 
-  Once again, Hoare-style reasoning is adapted to suit the extensions of the
-  logic. The fault-avoiding semantics for the Hoare triple are maintained. The
-  basic set of Separation Logic axioms and inference rules (excluding those
-  referring directly to the C-style heap implementation) are used. One notable
-  difference is that the Frame rule loses its side condition as a result of all
-  variables now being on the heap -- the footprint of $C$ will be expressed in
-  the $P$ and $Q$ terms, so is necessarily disjoint from the framed $R$ portion of
-  the rule.
-
-\chapter{Operational Semantics}
+\chapter{Syntax \& Operational Semantics}
+  We now define the syntax of permissable expressions in this model of the SES
+  language and present the english definition of each expression along with the
+  Operational Semantics for the precise effect it has on the heap and program
+  state.
 
 \chapter{Program Logics}
 \section{Extending Separation Logic}
@@ -495,7 +494,7 @@
 \chapter{Conclusions \& Future Work}
 \section{Conclusions}
 \section{Future Work}
-% Conclusions and Future Work
+
 \bibliography{bibliography}
 \bibliographystyle{plainnat}
 
