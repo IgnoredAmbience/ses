@@ -235,8 +235,8 @@
 \dimen@\linewidth%
 \advance\dimen@\@totalleftmargin%
 \advance\dimen@-\dimen\@curtab%
-%\parbox[t]\dimen@{#1\ifhmode\strut\fi}%
-\parbox[t]\dimen@{\raggedright #1\ifhmode\strut\fi}%
+\parbox[t]\dimen@{#1\ifhmode\strut\fi}%
+%\parbox[t]\dimen@{\raggedright #1\ifhmode\strut\fi}%
 }
 
 % Negative phantom spacing
@@ -251,3 +251,11 @@
   \ifv@ \ht\tw@\ht\z@ \dp\tw@\dp\z@\fi
   \ifh@ \wd\tw@-\wd\z@\fi \box\tw@}
 \makeatother
+
+\newcommand{\editlabel}[3]{~\vg\nphantom{#1:}\colorbox{#2}{\textbf{#1:}}\tabfill{\textrm{ #3}}\\}
+\newcommand{\FIXME}[1]{\editlabel{FIXME}{red}{#1}}
+\newcommand{\TODO}[1]{\editlabel{TODO}{yellow}{#1}}
+\newcommand{\COMMENT}[1]{\editlabel{COMMENT}{YellowGreen}{#1}}
+\newcommand{\comment}[1]{}
+\newcommand{\gds}[1]{\editlabel{GDS}{Orange}{#1}}
+
