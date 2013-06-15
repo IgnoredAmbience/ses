@@ -866,9 +866,71 @@ conjunction $\sepish$ also simply extend by passing through the global heap stat
 \end{array}\]
 
 \subsection{Magic Wand}
-The second new operator to be defined is the \emph{box-wand}, $\boxwand$,
-introduced to counter a reduction of expressiveness of the existing wand
-operator, $\wand$.
+The separating implication, or magic wand, operator, $\wand$, is usually defined
+as follows:
+\[
+  h \satisfies P \wand Q \iff \forall h' \st (h' \satisfies P) \land h \disj
+    h' \impl (h \disju h' \satisfies Q)
+\]
+
+It means that if the heap is extended by a disjoint portion that satisfies $P$,
+then the resulting heap will satisfy $Q$.
+
+* Also the right adjoint of $\sep$:
+\[
+  h \disju h' \satisfies P \sep Q \impl R \text{ iff } h \satisfies P \impl Q
+  \wand R
+\]
+* Used for extending footprint of heap
+* Weakest preconditions of commands
+
+* We claim that both uses are incompatible under a global view of the heap
+
+Consider $x \pointsto 1 \sep (x \pointsto 2 \wand Q)$
+
+A standard derivation is:
+\begin{align*}
+           & x:1 \satisfies x \pointsto 1 \sep (x \pointsto 2 \wand Q) \\
+\text{iff } & x:1 \satisfies x \pointsto 1 \land \lemp \satisfies (x \pointsto 2 \wand Q) \\
+\text{iff } & x:1 \satisfies x \pointsto 1 \land x:2 \satisfies x \pointsto 2 \land (x:2 \disju \lemp) \satisfies Q
+\end{align*}
+
+Derivation for a naive definition of $\wand$ is unsound:
+\begin{align*}
+           & x:1,x:1 \satisfies x \pointsto 1 \sep (x \pointsto 2 \wand Q) \\
+\text{iff } & x:1,x:1 \satisfies x \pointsto 1 \land \lemp,x:1 \satisfies (x \pointsto 2 \wand Q) \\
+\text{iff } & x:1,x:1 \satisfies x \pointsto 1 \land x:2,x:1 \satisfies x \pointsto 2 \land (x:2 \disju \lemp,x:1) \satisfies Q
+\end{align*}
+Note that the local and global heap states do not agree in the derivation of the
+sub-assertions. The local portion of the heap should always be a subset of the
+global portion.
+
+To enforce this property, whilst maintaining the right-adjoint, we require it is
+for satisfaction of the $\wand$ operator.
+
+However, this prohibits us from using $\wand$ for hypothetical heap update
+operations, we hence need to introduce this to support this second use.
+
+The new operator to be defined is the \emph{box-wand}, $\boxwand$. In addition
+to the behaviour of the standard wand, the box-wand maintains consistency
+between the local and global heap states whilst evaluating the satisfaction of
+sub-assertions of the operator. This permits a state to be hypothesised that
+conflicts with the current global state of the heap.
+\[
+  h,h_g \satisfies P \boxwand Q \iff \forall h' \st (h',h_g[h'] \satisfies P)
+  \land h \disj h' \impl (h \disju h', h_g[h'] \satisfies Q)
+\]
+
+The derivation our example now behaves as expected, and the assertion is
+satisfied.
+\begin{align*}
+           & x:1,x:1 \satisfies x \pointsto 1 \sep (x \pointsto 2 \boxwand Q) \\
+\text{iff } & x:1,x:1 \satisfies x \pointsto 1 \land \lemp,x:1 \satisfies (x \pointsto 2 \boxwand Q) \\
+\text{iff } & x:1,x:1 \satisfies x \pointsto 1 \land x:2,x:2 \satisfies x \pointsto 2 \land (x:2 \disju \lemp,x:2) \satisfies Q
+\end{align*}
+
+\TODO{Need to find a complementary example to show why right-adjoint no longer
+holds}
 
 \subsection{Backpointer}
 We also define new operators to work with the newly introduced global heap
