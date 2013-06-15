@@ -704,7 +704,9 @@
   {H,L,\jsfun{x}{e} \evalsto H',l'}
 
   Creates a function object, assigning the body, parameter
-  declarations and the current scope to internal fields. A new object is also
+  declarations and the current scope to internal fields. The shape of this
+  function object is given by the $\fun$ auxiliary function, defined in
+  Appendix~\ref{app:opsems}. A new object is also
   created and assigned to the \js{prototype} field for use as the prototype of
   objects produced by using this function as a constructor.
 
@@ -713,7 +715,7 @@
     l_1 \pointsto \{@proto:\nil, y:l'\}}
   {H,L,\jsfun[y]{x}{e} \evalsto H',l'}
 
-  This syntax is the same as standard function creation,
+  This is the same as standard function creation,
   but also adds the name and a self-reference to the function to the function's
   scope record. This permits recursive functions to be created. \emph{Note:} the
   name of the function is not added to the current scope, it is permitted in the
