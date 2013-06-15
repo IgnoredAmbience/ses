@@ -416,8 +416,8 @@ frozen). This choice may need to be reviewed at a later point.
 \newcommand{\asrtline}[3][\pipe]{#1 & #2 & \text{#3}\\}
 \begin{display}{Assertions}
   $\begin{array}{rll}
-    \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
-    \false}{Boolean formulas}
+    \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \ltrue \pipe
+    \lfalse}{Boolean formulas}
     \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulas}
     \asrtline{\bigsep_{x \in \T{set}} P(x)}{Iterative $\sep$}
     \asrtline{P \boxwand Q}{Global `hypothesis' formula}
@@ -434,7 +434,7 @@ frozen). This choice may need to be reviewed at a later point.
 \begin{display}{Assertion satisfaction relation}
 \hspace{1.5em} \= $h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3$ \= $\iff$ \= \kill
 
-\assaxiom{\true} \\
+\assaxiom{\ltrue} \\
 %    h,h_g,L,\env \not\satisfies \false \\
 \asssat{P \land Q}{(h,h_g,L,\env \satisfies P) \land (h,h_g,L,\env \satisfies
 Q)}{} \\
