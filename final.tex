@@ -765,12 +765,14 @@ to initialize the newly created object.
 The \js{this} expression is context-dependent. When used
 outside of a
 function, it should evaluate to the most global accessible scope.
-When used within a function, if the function is called using Member Access, it
-will evaluate to the object on which that function was called. Otherwise
-(most likely function call directly via scope),
+When used within a function, if the function is called using Member Access (such
+as \js{ob.f()}), it
+will evaluate to the object on which that function was called (in this case: \js{ob}). Otherwise
+(most likely a direct function call such as \js{f()}),
 \js{this} returns undefined. Note that this is particularly
 problematic because functions can easily be aliased off of the object on which
-they appear to be defined.
+they appear to be defined. For this reason the code \js{g = ob.f ; ob.f()}
+may behave significantly differently from the code \js{g = ob.f ; g()}
 
   \subsection{SES-specific Expressions}
 
