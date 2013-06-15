@@ -475,14 +475,15 @@
   \TODO{both the above examples need diagrams}
 
 \chapter{SES Language Syntax \& Operational Semantics}
-  We now define the syntax of expressions in this model of the SES
-  language and present the English definition of each expression along with the
+  We now define the syntax and semantics of expressions in this model of the SES
+  language. We present the English definition of each expression along with the
   Operational Semantics for the precise effect it has on the heap and program
   state. We also discuss how SES differs from JavaScript and the rationale for
   these differences.
 
   \section{Syntax}
-    \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
+  \label{sec:syntax}
+  \newcommand{\syntaxline}[3][\pipe]{#1 & \js{#2} & \textit{#3}\\}
     \begin{display}{Syntax of SES values and expressions, \js{v}, \js{e}}
       $\begin{array}{rll}
         \syntaxline[\js{v} ::=]{n}{Number}
@@ -506,9 +507,9 @@
         \syntaxline{\jsfun{e}{e}}{Function creation}
         \syntaxline{\jsfun[x]{e}{e}}{Named function creation}
         \syntaxline{\jsnew{e}{e}}{Object construction}
-        \syntaxline{reval(e, e)}{Restricted evaluation}
-        \syntaxline{freeze(e)}{Freeze}
-        \syntaxline{def(e)}{Recursive freeze}
+        \syntaxline{reval(e, e)}{Restricted evaluation -- similar to \js{eval} in JavaScript}
+        \syntaxline{freeze(e)}{Freeze -- make one object immutable}
+        \syntaxline{def(e)}{Recursive freeze -- make many objects immutable}
       \end{array}$
     \end{display}
 
@@ -516,10 +517,10 @@
   only primitive values.
 
   \FIXME{This paragraph should \emph{partially} go somewhere else}
-  Although locations are values that are stored in the heap, they are
-  not able to be directly referred to by user programs. This means that
-  references to objects are not forgable, this is a key security concept in the
-  SES language, an object it must be passed a reference to another object to be
+  Although locations are values that are stored in the heap, they
+  may not be directly referred to by user programs. This means that
+  references to objects are not forgable. This is a key security concept in the
+  SES language: an object must be passed a reference to another object to be
   able to access it.
   Since all functions (including standard libraries and resources) are
   themselves objects, the concept of access extends to one of privilege when a
@@ -558,7 +559,7 @@
 
   An expression will be evaluated iff the preconditions above the line hold,
   these may be evaluations of subexpressions, or involve the use of predicates
-  that test or update the current state. 
+  that test or update the current state.
   Ordering of the evaluation of these preconditions is enforced through the
   labelling of the variables in each rule.
 
@@ -576,7 +577,7 @@
   are required.
 
   \stateaxiom{(Variable declaration)}{H,L,\jsvar{x} \evalsto H,\und}
-  
+
   The variable declaration expression is only checked on entry to a function
   body, they are treated as a no-op during execution.
 
