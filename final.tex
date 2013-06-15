@@ -331,6 +331,7 @@
   postcondition for a command is known, but the precondition is not.
 
   \subsection{Program Reasoning}
+  \label{subsec:programreasoning}
 
   Just as Hoare's logic was built atop of classical logic, we can extend
   Hoare's logic to the spatial logic including the separating conjunction,
@@ -547,6 +548,8 @@
 
   \section{Operational Semantics}
   \label{sec:opsems}
+
+  \TODO{Include/discuss my new axioms}
 
   We now describe the semantics of each expression given in the syntax, both
   informally in English, and formally with the big-step operational semantics
@@ -1063,6 +1066,51 @@ any backpointer assertions about that object.
 \gds{here you go}
 
 \section{Hoare Triples}
+Recall \ref{subsec:programreasoning} where Hoare reasoning was introduced, in
+this section, we extend Hoare reasoning to support our extensions to
+separation logic and we define inference rules for the SES language.  
+
+\subsection{Definition}
+We define the syntax $\tr{P}{\js{e}}{Q}$ to be a Hoare triple, where $P$ is the
+precondition, $\js{e}$ is the subexpression, and $Q$ is the
+postcondition that results from evaluating $\js{e}$ in a state that satisfies $P$.
+
+It is necessary that we relate the Hoare triples to the Operational Semantics of
+the language defined earlier. We define this soundness property as:
+\TODO{explain it}
+\[ (h, h \disju h_f, L, \env \satisfies P) \land h, L, \js{e} \leadsto h', v
+  \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
+
+As we are using the fault-avoiding Hoare triple semantics, we must also define a
+fault avoidance property to be able to verify that this is the case:
+\[ h, h_g, L, \env \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
+
+We also define the safety monotonicity and frame properties, which guarantee
+that the operational semantics and separation logic reasoning framework are
+consistent with regard to the spatial reasoning about the heap.
+Safety monotonicity:
+\[ (h, h_g, L, \env \satisfies P) \land h \disj h' \land h, L, \js{e} \not\leadsto
+  \fault \land h\subseteq h_g \impl h \disju h', L, \js{e} \not\leadsto \fault \]
+Frame property:
+\[ (h, h_g, L, \env \satisfies P) \land h, L, \js{e} \not\leadsto \fault \land
+  h \disju h', L, \js{e} \leadsto h_2' \land h\subseteq h_g\impl h, L, \js{e} \leadsto h_2 \land
+  h_2' = h_2 \disju h' \]
+
+Ideally, we would prove these properties hold of the operational semantics and
+program logic. These results generally provide little new intuition about the
+semantics or logic, so this exercise has been omitted from this project, in
+favour of more targeted real-world examples.
+
+\subsection{Inference Rules}
+* Rationale for auxiliary predicates
+  * $\beta$
+  * $\scopeBpsUpd$
+  * $\auxDefGet/\auxDefSet$
+
+* Discuss major changes
+  * Introduction of 'base case' bp sets for commands that create new objects
+  * Pass-through of bp sets where additions required
+  * 
 
 \chapter{Program Proofs}
 \section{Caretaker}
@@ -1220,7 +1268,7 @@ Soundness:
   \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
 Fault avoidance:
 \[ h, h_g, L, \env \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
-Safety monoticity:
+Safety monotonicity:
 \[ (h, h_g, L, \env \satisfies P) \land h \disj h' \land h, L, \js{e} \not\leadsto
   \fault \land h\subseteq h_g \impl h \disju h', L, \js{e} \not\leadsto \fault \]
 Frame property:
