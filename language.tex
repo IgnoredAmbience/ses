@@ -567,7 +567,8 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \vg
 
   \staterule{(Variable)}
-    {P = \scope(Ls_1, \ls, \js{x}, L) \sepish \getValue(Ls_2, \fld{L}{\js{x}}, V)}
+    {P = \scope(Ls_1, \ls, \js{x}, L) \sepish
+     \getValue(Ls_2, \fld{L}{\js{x}}, V) \sep L \not\doteq \nil}
     {\tr P {\js{x}} {P \sep \rv \doteq \fld{L}{\js{x}}}}
   \vg
 
