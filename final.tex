@@ -966,11 +966,44 @@ satisfied.
 holds}
 
 \subsection{Backpointer}
-We also define new operators to work with the newly introduced global heap
-state, the first of these is the \emph{backpointer}, $E_1 \bp E_2$, which
+We now define the operator that will primarily examine the global heap state,
+the \emph{backpointer}, $E_1 \bp E_2$, which
 specifies that any heap cell that has the $E_1$ as its value must appear in the
 set $E_2$. The set $E_2$ may additionally contain extra heap cell references to
 express permission that a given cell may point to $E_1$.
+
+We define the back pointer to have \emph{at-least} semantics, all the pointers
+to the object must at least be in the set.
+\begin{align*}
+  h, h_g \satisfies E_1 \bp E_2 \iff &
+    \forall (l,x) \in \dom(h_g) \st h_g(l,x) = \evalle{E_1}
+    \impl (l,x) \in \evalle{E_2} \land {} \\
+    & h \equiv (\evalle{E_1}, @bp) \pointsto \_
+\end{align*}
+
+Although the backpointer operator would at first seem to not require any
+footprint on the heap (that it would be a \emph{pure} operator), the operator's
+interactions with the spatial elements of the logic may result in unsoundness.
+
+For example, consider two rules that each use the backpointer set of a
+particular object
+
+$l \bp \{a\} \sep l \bp \{b\} \impl l \bp \{\}$
+
+\TODO{Need a more concrete example of how this could come about. I'm still not
+  entirely happy with this -- I suspect it comes from a lack of familiarity with
+  how pure assertions behave within Separation Logic (but I guess a part of this
+  project is to figure out exactly that!...)}
+
+Oops...
+
+Hence force a footprint to require that a rule consumes the already-present
+assertion
+
+The interaction between the backpointer operator and the consequence rule in the
+Hoare reasoning is particularly useful.
+For example, we can widen the backpointer set at any time necessary thanks to
+the implication $l \bp S \impl l \bp S \cup S'$.
 
 \section{Hoare Triples}
 
