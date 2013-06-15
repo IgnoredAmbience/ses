@@ -546,11 +546,12 @@
   immutable, \tjs{freeze(e)} and \tjs{def(e)}.
 
   \section{Operational Semantics}
+  \label{sec:opsems}
 
   We now describe the semantics of each expression given in the syntax, both
-  informally in English, and formally with the operational semantics rule, which
-  precisely describes how the program state is modified by execution of each
-  expression.
+  informally in English, and formally with the big-step operational semantics
+  rule, which precisely describes how the program state is modified by execution
+  of each expression.
 
   Although daunting at first, the rules are quite simple to follow. The syntax
   $H,L,\js{e} \evalsto H',r$ means that the heap $H$, scope chain $L$, and
