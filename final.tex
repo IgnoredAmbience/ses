@@ -1163,6 +1163,7 @@ duplicate - we get a branching of $s_n=s_{n+1}$ to $s_n' \neq s_{n+1}'$
 (Named Function creation)
 Main thing for these two is the use of $\scopeBps$ and $\scopeBpsUpd$ to
 get/update the set of backpointers for the objects in the scope chain.
+
 (Function call)
 (Object construction)
 (This)
@@ -1470,7 +1471,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
         \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
           \lop \bp s_1 \cup \{(L_1,@proto)\}  \sep {} \\
         % L_2 - function
-        \newfun_{L_2}((L_3:\ls), \js{x}, e, L_1) \sep
+        \newfun_{L_2}((L_3:\ls), \js{x}, \js{e}, L_1) \sep
           L_2 \bp \{(L_3,\js{y})\} \sep
           \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
         % L_3 - new scope object
