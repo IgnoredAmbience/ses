@@ -666,7 +666,9 @@
 
   Returns a reference to the named field of the object referenced by the first
   subexpression. For the computed member access, the second subexpression is
-  evaluated to a field name (casting details are omitted).
+  evaluated to a field name. In full JS and SES, these rules are additionally
+  complicated with details about type casting. For simplicity, here we focus on
+  the case where no type casting is necessary.
 
   \staterule{(Assignment)}
   {H,L,\js{e_1} \evalsto H_1,\fld{l}{x} \qquad
