@@ -825,9 +825,10 @@ separation logic.
 \TODO{My background is lacking here, (or I've forgotten it) -- discuss}
 \gds{How's that?}
 
-We first extend separation logic to be able to express reachability over
-pointers in the heap, and then produce a Hoare-triple axiom for each expression
-in the syntax of the language.
+We first extend separation logic to be able to express not only what can be
+accessed \emph{from} a given object, but also what paths exist to obtain access
+\emph{to} a given object. We then produce a Hoare-style inference rule for each
+expression in the syntax of the language.
 
 \section{Extending Separation Logic}
 We are aiming to reason about reachability through pointer accesses in the heap.
