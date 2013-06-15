@@ -1069,7 +1069,7 @@ any backpointer assertions about that object.
 \section{Hoare Triples}
 Recall Section~\ref{subsec:programreasoning} where Hoare reasoning was introduced, in
 this section, we extend Hoare reasoning to support our extensions to
-separation logic and we define inference rules for the SES language.  
+separation logic and we define inference rules for the SES language.
 
 \subsection{Definition}
 We define the syntax $\tr{P}{\js{e}}{Q}$ to be a Hoare triple, where $P$ is the
@@ -1103,6 +1103,7 @@ semantics or logic, so this exercise has been omitted from this project, in
 favour of more targeted real-world examples.
 
 \subsection{Inference Rules}
+\label{sec:infrules}
 * Rationale for auxiliary predicates
   * $\beta$
   * $\scopeBpsUpd$
@@ -1118,7 +1119,7 @@ favour of more targeted real-world examples.
   * Tripping over our own $\sep$s (Object)
   * Looseness with bp sets for $\lop$ in proofs...
 
-As with the operational semantics section of the project, the Inference Rules
+As with the operational semantics given in Section~\ref{sec:opsems}, the Inference Rules
 for the SES language are necessarily based upon the JS inference rules produced
 in~\cite{gms-popl}. However, here far many more adaptions were required to introduce
 the backpointer assertions required by the logic to track assignments.
