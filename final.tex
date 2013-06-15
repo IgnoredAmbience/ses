@@ -432,6 +432,7 @@
   the rule.
 
   \subsection{Data Structure}
+  \label{sec:intro:js:datastructure}
 
   A unique feature of the
   language is that the entire state is stored on the heap in a structure that
@@ -563,6 +564,10 @@
   Ordering of the evaluation of these preconditions is enforced through the
   labelling of the variables in each rule.
 
+  The semantics make use of several auxiliary functions defined in
+  Appendix~\ref{app:opsems} and described above in
+  Section~\ref{sec:intro:js:datastructure}. Recall that $\getValue$ is used to
+  dereferencing a JavaScript or SES reference value.
   As the dereferencing of references returned by subexpressions into values is a
   common activity, $\gevalsto$ is defined as shorthand for this:
   \[ H,L,\js{e} \gevalsto H',v \triangleq \exists r. (H,L,\js{e} \evalsto H',r
@@ -822,7 +827,1053 @@ via user-defined fields from the given object.
 
 \appendix
 \chapter{Operational Semantics}
+\label{app:opsems}
+\newcommand{\auxf}[2]{#1 & \triangleq & #2}
+\begin{display}{Auxillary Functions}
+  $\begin{array}{lcl}
+  \auxf{\obj(l,l')}{l \pointsto \{@proto: l', @frozen: \false\}}\\
+  \auxf{\istrue(v)}{v\not\in\{0,\emptystr,\nil,\und,\false\}}\\
+  \auxf{\isfalse(v)}{v\in   \{0,\emptystr,\nil,\und,\false\}}\\
+  \auxf{\fun(l',L,\js x,\js e,l)}{l'\mapsto\{@proto: \lfp, \js{prototype}:
+        l, @scope: L, @body: \lambda \js{x.e}, @frozen: \false\}}\\
+  \auxf{\pickThis(H, \fld{l}{x})}{l \phantom{\und} \quad
+        \text{if } (l,@this) \in \dom(H)}\\
+  \auxf{\pickThis(H, r)}{\und \phantom{l} \quad \text{otherwise}}\\
+  \auxf{\objOrGlob(l)}{l\phantom{_{op}} \quad l\in \loc}\\
+  \auxf{\objOrGlob(v)}{\lop \quad v\not\in\loc}\\
+  \auxf{\getBase(l,l')}{l' \qquad l \in \loc}\\
+  \auxf{\getBase(l,v)}{v \qquad v\not\in\loc}\\
+
+  \auxf{\act(l,\js{x},v,\js{e},l'')}{l\pointsto\{\js{x}:
+    v,@this: l'',@proto: \nil\}\disju \defs(\js{x},l,\js{e})}\\
+
+  \auxf{\auxDef(H,l,s)}{\begin{cases}
+      \emp & l \in s \lor l \not\in \loc\\
+      (l,@frozen) \mapsto \true \cup \bigcup_{(l,x_n) \in H, x_n \in \uvars}
+      \auxDef(H,H(l,x_n),s \cup\{l\}) & \mbox{otherwise} \\
+    \end{cases}}\\
+  \auxf{\ReadWrite(H, l)}{H(l, @frozen) = \false} \\
+  \end{array}$
+\end{display}
+  \begin{display}{Local Variable Declarations}
+    \jaxiom{\defs(\js{x},l,\jsvar{y})}{(l,y) \pointsto \und \quad$ \= if
+      $\js{x} \neq \js{y}} \\
+    \jaxiom{\defs(\js{x},l,\js{e_1 = e_2})}{\defs(\js{x},l,\js{e_1})} \\
+    \jaxiom{\defs(\js{x},l,\js{e_1;e_2})}{\defs(\js{x},l,\js{e_1}) \cup
+      \defs(\js{x},l,\js{e_2})} \\
+    \jaxiom{\defs(\js{x},l,\js{if(e_1)\{e_2\}\{e_3\}})}
+      {\defs(\js{x},l,\js{e_2}) \cup \defs(\js{x},l,\js{e_3})} \\
+    \jaxiom{\defs(\js{x},l,\js{while(e_1)\{e_2\}})}{\defs(\js{x},l,\js{e_2})} \\
+    \jaxiom{\defs(\js{x},l,\js{e})}{\emp$ \> otherwise$}
+  \end{display}
+
+  \begin{display}{Heap Update $H[H']$}
+    \jaxiom{H[\emp]}{H} \\
+    \jaxiom{H[(l,x) \pointsto v]}{H \disju (l,x) \pointsto v \qquad \mbox{if }
+      (l,x) \not\in \dom(H)} \\
+    \jaxiom{H[(l,x) \pointsto v \disju H']}{H[(l,x) \pointsto v][H']}
+  \end{display}
+
+  \begin{display}{Scope resolution: $\scope(H,l,x)$.}
+    \jaxiom{\scope(H,{\emptylist},\njs{x})}{\nil}{}\vg
+    \jrule{\scope(H,l\cons L,\njs{x})}{l}{\proto(H,l,\njs{x}) \neq \nil}\rsep
+    \jrule{\scope(H,l\cons L,\njs{x})}{\scope(H,L,\njs{x})}{\proto(H,l,\njs{x}) = \nil}
+  \end{display}
+  %
+  \begin{display}{Prototype resolution: $\proto(H,l,x)$.}
+    \jaxiom{\proto(H,\nil,\njs{x})}{\nil}{}\vg
+    \jrule{\proto(H,l,\njs{x})}{l}{(l,\njs{x}) \in\dom(H)}\rsep
+    \jrule{\proto(H,l,\njs{x})}{\proto(H,l',\njs{x})}{(l,\njs{x}) \not\in\dom(H) \qquad H(l,@proto) = l'}
+  \end{display}
+  %
+  \begin{display}{Dereferencing values: $\getValue(H,r)$.}
+    \jrule{\getValue(H,\njs{r})}{\njs{r}}{\njs{r}\neq \fld{l}{\js{x}}}~
+    \jrule{\getValue(H,\fld{l}{\js{x}})}{\und}{\proto(H,l,\js{x}) = \nil\\ l\neq \nil}~
+    \jrule{\getValue(H,\fld{l}{\js{x}})}{H(l',\js{x})}{\proto(H,l,\js{x}) = l'\\ l\neq \nil}
+  \end{display}
+
 \chapter{Program Logic}
+\newcommand{\defline}[2]{#1 & \qquad & \text{#2}\\}
+\begin{display}{Definitions}
+  $\begin{array}{lll}
+    \defline{h,h_g \in}{Abstract heap}
+    \defline{h,h_g,L,\env \satisfies P}{Satisfaction relation}
+    \defline{\tr{P}{\js{x}}{Q}}{Hoare triple}
+  \end{array}$
+\end{display}
+
+\newcommand{\asrtline}[3][\pipe]{#1 & #2 & \text{#3}\\}
+\begin{display}{Assertions}
+  $\begin{array}{rll}
+    \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
+    \false}{Boolean formulas}
+    \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulas}
+    \asrtline{\bigsep_{x \in \T{set}} P(x)}{Iterative $\sep$}
+    \asrtline{P \boxwand Q}{Global `hypothesis' formula}
+    \asrtline{(E,E) \pointsto E \pipe \lemp}{Heap formulas}
+    \asrtline{E \bp E}{Backpointer formula}
+    \asrtline{E = E}{Expression equality}
+    \asrtline{\forall X \st P \pipe \exists X \st P}{First-order formulas}
+  \end{array}$
+\end{display}
+
+\newcommand{\assaxiom}[1]{\>$h,h_g,L,\env \satisfies #1$}
+\newcommand{\asssat}[3]{\assaxiom{#1}\>$\iff$\>$#2$
+  \ifblank{#3}{}{\\\>\>\>\quad$#3$}}
+\begin{display}{Assertion satisfaction relation}
+\hspace{1.5em} \= $h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3$ \= $\iff$ \= \kill
+
+\assaxiom{\true} \\
+%    h,h_g,L,\env \not\satisfies \false \\
+\asssat{P \land Q}{(h,h_g,L,\env \satisfies P) \land (h,h_g,L,\env \satisfies
+Q)}{} \\
+\asssat{P \lor Q}{(h,h_g,L,\env \satisfies P) \lor (h,h_g,L,\env \satisfies
+Q)}{} \\
+\asssat{\lnot P}{\lnot(h,h_g,L,\env \satisfies P)}{} \\
+\asssat{P \sep Q}{\exists h_1,h_2 \st h \equiv h_1 \disju h_2 \land{}}
+  {(h_1,h_g,L,\env \satisfies P) \land (h_2,h_g,L,\env \satisfies Q)} \\
+\asssat{P \sepish Q}{\exists h_1,h_2,h_3 \st
+    h \equiv h_1 \disju h_2 \disju h_3 \land{}}
+  {(h_1 \disju h_3, h_g, L, \env \satisfies P) \land
+    (h_2 \disju h_3, h_g, L, \env \satisfies Q)} \\
+\asssat{P \wand Q}{\forall h' \st (h',h_g,L,\env \satisfies P) \land h \disj h'
+    \land h' \subseteq h_g}
+  {\impl (h \disju h', h_g, L, \env \satisfies Q)} \\
+%h,h_g,L,\env \satisfies \upd P}{h, h_g[h], L, \env \satisfies P }\\
+%h,h_g,L,\env \satisfies P?Q}{h, h_g[h], L, \env \satisfies P }\\
+%P \boxwand Q & \triangleq & P \wand P ? Q }\\
+\asssat{P \boxwand Q}{\forall h' \st (h',h_g[h'],L,\env \satisfies P)
+    \land h \disj h'}
+  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)} %\\
+\TODO{Infinite list handling}
+\asssat{\bigsep_{x\in\{\}}P(x)}{h,h_g,L,{\env}\satisfies\lemp}{} \\
+\asssat{\bigsep_{x\in\T{set}}P(x)}{y\in\T{set} \land h,h_g,L,{\env} \satisfies
+  P(y)\sep(\bigsep_{x\in(\T{set}\setminus y)}P(x))}{} \\
+\asssat{\lemp}{h = \emp}{} \\
+\asssat{(E_1,E_2) \pointsto E_3}{h \equiv (\evalle{E_1}, \evalle{E_2}) \pointsto
+  \evalle{E_3}}{} \\
+\asssat{E_1 \bp E_2}{h \equiv (\evalle{E_1}, @bp) \pointsto v \land
+  \forall (l,x) \in \dom(h_g) \st h_g(l,x) = \evalle{E_1}}
+  {\impl (l,x) \in \evalle{E_2}} \\
+\asssat{E_1 = E_2}{\evalle{E_1} = \evalle{E_2}}{} \\
+\asssat{\exists\V X \st P}{\exists \V{v} \st h,h_g,L,[{\env} | \V X\takes \V{v}]
+  \satisfies P}{} \\
+\asssat{\forall\V X \st P}{\forall \V{v} \st h,h_g,L,[{\env} | \V X\takes \V{v}]
+  \satisfies P}{}
+\end{display}
+\section{Hoare Triples}
+Definition:
+\[ \tr{P}{\js{e}}{Q} \]
+Soundness:
+\[ (h, h \disju h_f, L, \env \satisfies P) \land h, L, \js{e} \leadsto h', v
+  \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
+Fault avoidance:
+\[ h, h_g, L, \env \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
+Safety monoticity:
+\[ (h, h_g, L, \env \satisfies P) \land h \disj h' \land h, L, \js{e} \not\leadsto
+  \fault \land h\subseteq h_g \impl h \disju h', L, \js{e} \not\leadsto \fault \]
+Frame property:
+\[ (h, h_g, L, \env \satisfies P) \land h, L, \js{e} \not\leadsto \fault \land
+  h \disju h', L, \js{e} \leadsto h_2' \land h\subseteq h_g\impl h, L, \js{e} \leadsto h_2 \land
+  h_2' = h_2 \disju h' \]
+
+An alternative formulation which emphasises the relationship between the global
+view of the heap and the framing property ($h_g = h \disju h_f$) can also be
+produced, it should be noted that the meaning is subtly different (in that $h'
+\neq h_g$ in all cases).
+
+\TODO{More Auxiliary predicates}
+\begin{display}{Auxiliary Predicates}
+  \jaxiom{\obj_E(E_1:E'_1,...,E_n:E'_n)}{(E,E_1) \pointsto E'_1 \sep ... \sep
+    (E,E_n) \pointsto E'_n} \\
+  \jaxiom{\newobj_L(V_1,...,V_n)}{\bigsep_{V \in \vars \setminus
+    \{V_1,...,V_n\}} (L,V) \pointsto \none} \\
+  \jaxiom{\fullobj_E(E_1:E_1',\dots,E_n:E_n')}
+    {\obj_{E}(E_1:E_1',\dots,E_n:E_n') \sep \newobj_{E}(E_1,\dots,E_n)} \\
+  \jaxiom{\fun_F(E_1,E_2,E_3,E_4)}{(F, @scope) \pointsto E_1 \sep
+    (F, @body) \pointsto \lambda E_2.E_3 \sep (F, \js{prototype}) \pointsto E_4
+    \sep (F, @proto) \pointsto \lfp} \\
+  \jaxiom{\newfun_{E}(E_1,E_2,E_3,E_4)}{\fun_{E}(E_1,E_2,E_3,E_4) \sep
+    \newobj_{E}(@proto, \js{prototype}, @scope, @body)} \\
+  \jaxiom{\scopeBpsUpd(Ls, s, s', n)}{\bigsep_{0\leq i<\length(Ls)}(
+    \lstitem(i,Ls) \bp \lstitem(i,s') \sep \lstitem(i,s') \doteq \lstitem(i,s)
+    \cup n)} \\
+  \jaxiom{\scopeBps(Ls, s)}{\scopeBpsUpd(Ls, s, s, \{\})} \\
+  \jaxiom{\bpGen(V,\_,\_,\_)}{V \notdotin \loc} \\
+  \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s} \\
+  \jaxiom{\auxDefGet(V,s)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
+    s} \\
+  \jaxiom{\auxDefGet(V,s)}{(V, @frozen) \pointsto \_ \sep (\bigsepish_{x_n \in
+    \uvars} (V,x_n) \pointsto V' \sepish \auxDefGet(V', s\cup\{V\}))} \\
+  \jaxiom{\auxDefSet(V,s,b)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
+    s} \\
+  \jaxiom{\auxDefSet(V,s,b)}{(V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
+    \uvars} (V,x_n) \pointsto V' \sepish \auxDefSet(V', s\cup\{V\}, b))} \\
+  \jaxiom{\ReadWrite(L)}{(L, @frozen) \pointsto \false} \\
+  \jaxiom{\decls(X,L,\js{e})}{\js{x_1},...,\js{x_n} \quad \text{where }
+    (L,\js{x_i}) \in \dom(\defs(X,L,\js{e}))} \\
+  \jaxiom{\pickThis(\fld{L}{\_},L)}{(L,@this) \pointsto \none} \\
+  \jaxiom{\pickThis(\fld{L}{\_},\und)}{\exists V \st (L,@this) \pointsto V \sep V
+    \not\doteq \none}
+\end{display}
+
+\begin{display}{Local Variable Definitions}
+  \jaxiom{\defs(X,L,\jsvar{y})}{(l,y) \pointsto \und \sep X \not\doteq \js{y}} \\
+  \jaxiom{\defs(X,L,\js{e_1 = e_2})}{\defs(X,L,\js{e_1})} \\
+  \jaxiom{\defs(X,L,\js{e_1;e_2})}{\defs(X,L,\js{e_1}) \sepish
+    \defs(X,L,\js{e_2})} \\
+  \jaxiom{\defs(X,L,\js{if(e_1)\{e_2\}\{e_3\}})}
+    {\defs(X,L,\js{e_2}) \sepish \defs(X,L,\js{e_3})} \\
+  \jaxiom{\defs(X,L,\js{while(e_1)\{e_2\}})}{\defs(X,L,\js{e_2})} \\
+  \jaxiom{\defs(X,L,\js{e})}{\lemp \quad \text{otherwise}}
+\end{display}
+
+\begin{display}{Inference Rules}
+  \stateaxiom{(Declaration)}
+    {\tr {\lemp} {\jsvar{x}} {\rv \doteq \und}}
+  \vg
+
+  \stateaxiom{(Value)}
+    {\tr {\lemp} {\js{v}} {\rv \doteq \js{v}}}
+  \vg
+
+  \staterule{(Variable)}
+    {P = \scope(Ls_1, \ls, \js{x}, L) \sepish \getValue(Ls_2, \fld{L}{\js{x}}, V)}
+    {\tr P {\js{x}} {P \sep \rv \doteq \fld{L}{\js{x}}}}
+  \vg
+
+  \staterule{(Member Access)}
+    {\tr P {\js{e}} {Q \sep \rv \doteq V} \quad Q = R \sep \getValue(Ls, V, L)
+      \sep L \not\doteq \nil \sep L\dotin\loc}
+    {\tr P {\js{e.x}} {Q \sep \rv \doteq \fld{L}{\js{x}}}}
+  \vg
+
+  \staterule{(Computed Access)}
+    {
+      \tr {P} {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep
+      \getValue(Ls_1, V_1, L) \sep L \not\doteq \nil \sep L\dotin\loc\\
+      \tr {R} {\js{e_2}} {Q \sep X \dotin \uvars \sep \rv \doteq V_2}
+      \quad Q = S_2 \sep \getValue(Ls_2, V_2, X)
+    }
+    {\tr {P} {\js{e_1[e_2]}} {Q \sep \rv \doteq \fld{L}{X}}}
+  \vg
+
+  \staterule{(Bin Op)}
+    {
+      \tr P {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls_1,
+      V_1, V_3) \\
+      \tr R {\js{e_2}} {Q \sep \rv \doteq V_2} \quad Q = S_2 \sep \getValue(Ls_2,
+      V_2, V_4) \\
+      V = V_3 \mathbin{\bar\oplus} V_4
+    }
+    {\tr P {\js{e_1} \oplus \js{e_2}} {Q \sep \rv \doteq V}}
+  \vg
+
+  \staterule{(Assign)}
+    {
+      \tr P {\js{e_1}} {R \sep \rv \doteq \fld{L}{X}} \\
+      \tr R {\js{e_2}} {Q \sep (L,X) \pointsto V_3 \sep \rv \doteq V_1} \\
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L) \sep
+      \bpGen(V_2, L, X, s)
+    }
+    {\tr P {\js{e_1 = e_2}} {Q \sep (L,X) \pointsto V_2 \sep \rv \doteq V_2}}
+  \vg
+
+  \staterule{(This)}
+  { P = \scope(Ls_1, \ls, @this, L_1) \sepish \proto(Ls_2, L_1, @this, L_2)
+    \sepish (L_2,@this) \pointsto V }
+  {\tr P {\js{this}} {P \sep \rv \doteq V}}
+  \vg
+
+  \staterule{(Function)}
+  {
+    P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \scopeBps(\ls, ss) \\
+      Q = \exists L_1,L_2 \st \left(\begin{array}{l}
+        % L_1 - prototype object
+        \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
+          \lop \bp s_1 \cup \{(L_1,@proto)\}  \sep {} \\
+        % L_2 - function
+        \newfun_{L_2}(\ls, \js{x}, \js{e}, L_1) \sep L_2 \bp \{\} \sep
+          \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
+        % Other bits
+        \rv \doteq L_2 \sep
+        \scopeBpsUpd(\ls, ss, ss', \{(L_2, @scope)\})
+    \end{array}\right)
+  }
+  {\tr P {\jsfun{x}{e}} Q}
+  \vg
+
+  \staterule{(Named Function)}
+    {
+      P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \scopeBps(\ls, ss)  \\
+      Q = \exists L_1, L_2, L_3 \st \left(\begin{array}{l}
+        % L_1 - prototype object
+        \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
+          \lop \bp s_1 \cup \{(L_1,@proto)\}  \sep {} \\
+        % L_2 - function
+        \newfun_{L_2}((L_3:\ls), \js{x}, e, L_1) \sep
+          L_2 \bp \{(L_3,\js{y})\} \sep
+          \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
+        % L_3 - new scope object
+        \fullobj_{L_3}(@proto:\nil,\js{y}:L_2) \sep L_3 \bp \{(L_2,@scope)\} \sep {} \\
+        % Other bits
+        \rv \doteq L_2 \sep
+        \scopeBpsUpd(\ls, ss, ss', \{(L_2, @scope)\})
+      \end{array}\right)
+    }
+    {\tr P {\jsfun[y]{x}{e}} Q}
+  \vg
+
+  \staterule{(Object)}
+    {
+      \forall i \in 1..n \st \left(\begin{array}{l}
+        P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \sep
+          X_i \bp s_i \\
+        \tr {P_{i-1}} {\js{e_i}} {P_i \sep \rv \doteq Y_i} \\
+      \end{array}\right) \\
+      P_n = R \sep \lop \bp s_{op} \\
+      Q = R \sep
+      \exists L \st \left(\begin{array}{l}
+        \newobj_L(@proto, \js{x_1},...,\js{x_n}) \sep {} \\
+        \bigsep_{1 \leq i \leq n} (
+          (L, \js{x_i}) \pointsto X_i \sep \bpGen(X_i, L,\js{x_i}, s_i)
+        ) \sep {} \\
+        (L,@proto) \pointsto \lop \sep \lop \bp s_{op} \cup \{(L,@proto)\} \sep {} \\
+        \rv \doteq L \sep L \bp \{\} \\
+      \end{array}\right) \\
+      \js{x_1} \neq \dots \neq \js{x_n} \qquad \rv \not\in \fv(P_n)
+    }
+    {\tr {P_0} {\js{\{x_1:e_1, ..., x_n:e_n\}}} Q}
+  \vg
+
+  \staterule{(Function Call)}
+    {
+      \tr P {\js{e_1}} {R_1 \sep \rv \doteq F_1} \\
+      R_1 = \left(\begin{array}{l}
+          S_1 \sepish \pickThis(F_1, T) \sepish \getValue(Ls_1, F_1, F_2) \sep {} \\
+          (F_2, @body) \pointsto \lambda X.\js{e_3} \sep (F_2, @scope) \pointsto
+          Ls_2
+      \end{array}\right) \\
+      \tr {R_1} {\js{e_2}} {R_2 \sep T \bp s \sep \bpGen(V_2,\_,\_,s') \sep
+        \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
+      R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
+      R_3 = R_2 \sep \exists L \st \left(\begin{array}{l}
+          \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
+          \sep (L, @this) \pointsto T \sep (L, @proto) \pointsto \nil \sep
+          \defs(X,L,\js{e_3}) \sep {} \\
+          \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e_3})) \sep
+          L \bp \{\} \sep T \bp \{(L,@this)\} \cup s \sep
+          \bpGen(V_2, L, X, s')
+      \end{array}\right) \\
+      \tr {R_3} {\js{e_3}} {\exists L \st Q \sep \ls \doteq L:Ls_2} \qquad
+      \ls \notin \fv(Q) \cup \fv(R_2)
+    }
+    {\tr P {\js{e_1(e_2)}} {\exists L \st Q \sep \ls \doteq Ls_3}}
+  \vg
+
+  \staterule{(New)}
+    {}
+    {}
+%  \vg
+
+  % SES-specific
+  \staterule{(Restricted evaluation)}
+    {
+      \tr{P}{\js{e_1}}{R_1 \sep \rv \doteq V_1} \\
+      R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \text{String} \\ %% FIXME: STRING
+      \parse(V_2) = \js{e_3} \\
+      \tr{R_1}{\js{e_2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls \sep \gv \doteq g} \\
+      R_2 = \left(\begin{array}{l}
+        S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep {} \\
+        \exists L \st R_3 \sep
+        \newobj_L(@proto,@this,\vardecls(...,\js{e_3})) \sep {} \\
+        \obj_L(@this: V_2, @proto: \nil) \sep \defs(...,\js{e_3}) \\
+      \end{array}\right) \\
+      R_3 = (\ls \doteq L:[V_2] \sep \gv \doteq V_2) \\
+      \tr{R_2}{\js{e_3}}{\exists L \st Q \sep R_3}
+    }
+    {\tr{P}{\js{reval(e_1,e_2)}}{\exists L \st Q \sep \ls \doteq Ls \sep \gv \doteq g}}
+  \vg
+
+  \staterule{(Freeze)}
+    {
+      \tr{P}{\js{e}}{Q \sep \rv \doteq V_1 \sep (V_2, @frozen) \pointsto V_3} \\
+      Q = \getValue(Ls,V_1,V_2) \sep S
+    }
+    {\tr{P}{\js{freeze(e)}}{Q \sep (V_2, @frozen) \pointsto \true \sep \rv \doteq V_2}}
+  \vg
+
+  \staterule{(Recusive freeze)}
+    {
+      \tr{P}{\js{e}}{Q \sep \rv \doteq V_2 \sep \auxDefGet(V_2, \{\})} \\
+      Q = \getValue(Ls,V_1,V_2) \sep S
+    }
+    {\tr{P}{\js{def(e)}}{Q \sep \rv \doteq V_2 \sep \auxDefSet(V_2, \{\}, \true)}}
+  \vg
+
+  % Control flow
+  \staterule{(Sequence)}
+    {\tr P {\js{e_1}} R \quad \tr R {\js{e_2}} Q}
+    {\tr P {\js{e_1; e_2}} Q}
+  \vg
+
+  \staterule{(If True)}
+    {\tr P {\js{e_1}}{S\sep \istrue(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
+     S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
+     \tr {S}{\js{e_2}} Q}
+    {\tr P {\js{if(e_1)\{e_2\}else\{e_3\}}} Q}
+  \vg
+
+  \staterule{(If False)}
+    {\tr P {\js{e_1}}{S\sep \isfalse(\E{V_2})\sep\rv\doteq\E{V_1}} \qquad
+     S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
+     \tr {S}{\js{e_3}} Q}
+    {\tr P {\js{if(e_1)\{e_2\}else\{e_3\}}} Q}
+  \vg
+
+  \staterule{(While)}
+    {\tr P {\js{e_1}} {S\sep\rv\doteq\E{V_1}} \qquad
+    S = R \sep \getValue(Ls,\E{V_1},\E{V_2})\\
+     \tr {S \sep \istrue(\E{V_2})} {\js{e_2}} P\\
+     Q = S \sep \isfalse(\E{V_2})\sep\rv\doteq\und\qquad
+     \rv\not\in \fv(R)}
+    {\tr P {\js{while(e_1)\{e_2\}}} Q}
+  \vg
+
+  % Standard
+  \staterule{(Frame)}
+    {\tr P {\js{e}} Q}
+    {\tr {P \sep R} {\js{e}} {Q \sep R}}
+
+  \staterule{(Consequence)}
+    {\tr {P'} {\js{e}} {Q'} \\
+     P \impl P' \quad Q' \impl Q}
+    {\tr P {\js{e}} Q}
+  \vg
+
+  \staterule{(Elimination)}
+    {\tr P {\js{e}} Q}
+    {\tr {\exists X \st P} {\js{e}} {\exists X \st Q}}
+
+  \staterule{(Disjunction)}
+    {\tr{P_1}{\js{e}}{Q_1} \quad \tr{P_2}{\js{e}}{Q_2}}
+    {\tr{P_1 \lor P_2}{\js{e}}{Q_1 \lor Q_2}}
+
+\end{display}
+
 \chapter{Proofs}
+\subsection{Revocable Reference}
+Used to provide a restricted execution context with a reference to an object
+that may be revoked by the provider.
+\emph{Note: By itself, this is not safe, since accessed references are returned
+  raw. See next section, Membrane, for solution.}
+
+\begin{verbatim}
+var RevocableRef = function(ref) {
+  var protected = ref;
+  var access = function(field) { return protected[field]; }
+  var kill = function() { protected = null; }
+  return {access: access, kill: kill};
+}
+\end{verbatim}
+
+Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
+
+% RevocableRef body call
+%
+% I've generally unwrapped all \scope, \proto, \getValue operations down to
+%   their requirements
+% Introduction of new elements into an existing backpointer set seems clumsy
+% There must be better ways of generating these proofs other than by hand?
+\begin{figure}
+\[
+  \begin{array}{l}
+    \jsvar{RevocableRef = function(ref) \{}\\
+    \indblock{
+      \logic{
+        % function
+        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
+        % ar
+          \exists L \st \ls \doteq L:Ls \sep {} \\
+          \fullobj_L\left(
+            \begin{array}{l}
+              \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
+              \js{protected}: \und,\js{access}: \und,\js{kill}: \und %  and defs()
+            \end{array}
+          \right) \sep {} \\
+        % bp
+          L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
+          \lop \bp s_3 \sep \lfp \bp s_4 \sep
+          \scopeBps(Ls, ss)
+      } \\
+      \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
+      \logic{
+        % var(protected,ref), assign(@frozen)
+          \obj_L(\js{protected}: \und, \js{ref}: V, @frozen: \false) \sep {} \\
+        % assign
+          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
+      } \\
+      \jsvar{protected = ref;} \\
+      \logic{
+        % var *2
+          \obj_L(\js{protected}: V, \js{ref}: V, @frozen: \false) \sep {} \\
+        % assign
+          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
+      } \\
+      \step{Frames/cons} \\
+      \logic{
+        % var(access), assign(@frozen)
+          \obj_L(\js{access}: \und, @frozen: \false) \sep {} \\
+        % fun pre
+        \lop \bp s_3 \sep \lfp \bp s_4 \sep
+        L \bp \{\} \sep \scopeBps(Ls,ss) \sep \ls\doteq{L:Ls}
+      } \\
+      \jsvar{access = function(field) \{b_a\};} \\
+      \logic{
+        \exists A, A_p \st \left(\begin{array}{l}
+          % var, assign
+          \obj_L(\js{access}: A, @frozen: \false) \sep
+            A \bp s_7 \sep s_7 \doteq \{(L, \js{access})\} \sep {} \\
+          % fun pre
+          \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
+            \cup \{(A, @proto)\} \sep {} \\
+            L \bp \{(A,@scope)\} \sep \scopeBpsUpd(Ls, ss, ss_1, \{(A,@scope)\}) \sep {} \\
+          % fun post
+          \fullobj_{A_p}(@proto: \lop) \sep A_p \bp \{(A, \js{prototype})\} \sep {}\\
+          \newfun_A(\ls, \js{field}, b_a, A_p)
+        \end{array}\right) \sep \ls\doteq{L:Ls}
+      } \\
+      \step{Frames/cons} \\
+      \logic{
+        % var(access), assign(@frozen)
+          \obj_L(\js{kill}: \und, @frozen: \false) \sep {} \\
+        % fun pre
+        \lop \bp s_5 \sep \lfp \bp s_6 \sep
+        L \bp \{(A, @scope)\} \sep \scopeBpsUpd(Ls, ss_1) \sep \ls\doteq{L:Ls}
+      } \\
+      \jsvar{kill = function() \{b_k\};} \\
+      \logic{
+        \exists K, K_p \st
+        \left(\begin{array}{l}
+          % var, assign
+          \obj_L(\js{kill}: K, @frozen: \false) \sep
+            K \bp s_8 \sep s_8 \doteq \{(L, \js{kill})\} \sep {} \\
+          % fun pre
+          \lop \bp s_9 \sep s_9 \doteq s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
+            \cup \{(K, @proto)\} \sep {} \\
+            L \bp \{(A,@scope),(K,@scope)\} \sep {} \\
+            \scopeBpsUpd(Ls, ss_1, ss_2, \{(K,@scope)\}) \sep {} \\
+          % fun post
+          \fullobj_{K_p}(@proto: \lop) \sep K_p \bp \{(K, \js{prototype})\} \sep {} \\
+          \newfun_K(\ls, \_, b_k, K_p)
+        \end{array}\right)\sep \ls\doteq{L:Ls}
+      } \\
+      \step{Frames} \\
+      \logic{
+        \obj_L(\js{access}:A, \js{kill}:K) \sep
+        A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9 \sep \ls \doteq L : Ls
+      } \\
+      \js{return\ \{access: access, kill: kill\};} \\
+      \logic{
+        \exists O \st
+        \left(\begin{array}{l}
+          \obj_L(\js{access}:A, \js{kill}:K) \sep {} \\
+          \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
+          A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
+            \sep {} \\
+          \lop \bp s_9 \cup \{(O,@proto)\} \sep O \bp \{\} \sep \rv \doteq O
+        \end{array}\right)
+        \sep \ls \doteq L : Ls
+      } \\
+      \step{Frames} \\
+      \logic{
+        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
+        \exists L, A, A_p, K, K_p, O \st {} \\
+        \fullobj_L\left(\begin{array}{l}
+          \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
+          \js{protected}: V,\js{access}: A,\js{kill}: K
+        \end{array}\right) \sep {} \\
+        \fullobj_{A_p}(@proto: \lop) \sep \fullobj_{K_p}(@proto: \lop) \sep {} \\
+        \newfun_A(\ls,\js{field},b_a,A_p) \sep \newfun_K(\ls,\_,b_k,K_p) \sep {} \\
+        \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
+
+        \lop \bp s_3 \cup \{(A_p,@proto),(K_p,@proto),(O,@proto)\} \sep {} \\
+        \lfp \bp s_4 \cup \{(A,@proto),(K,@proto)\} \sep {} \\
+        A   \bp \{(L,\js{access}),(O,\js{access})\} \sep
+        A_p \bp \{(A,\js{prototype}) \sep {} \\
+        K   \bp \{(L,\js{kill}),(O,\js{kill})\} \sep
+        K_p \bp \{(K,\js{prototype}) \sep {} \\
+        V   \bp s_1 \cup \{(L,\js{ref}),(L,\js{protected})\} \sep {} \\
+        \scopeBpsUpd(Ls,ss,ss_2,\{(A,@scope),(K,@scope))\}) \sep {} \\
+        L   \bp \{(A,@scope),(K,@scope)\} \sep
+        O   \bp \{\} \sep
+
+        \rv \doteq O \sep \ls \doteq L : Ls
+      }
+    }
+    \js{\}}
+  \end{array}
+\]
+\caption{RevocableRef: Main body}
+\label{rr-main}
+\end{figure}
+
+% RevocableRef#kill body call
+\begin{figure}
+\[
+  \begin{array}{l}
+    \jsvar{kill = function() \{} \\
+    \indblock{
+      \logic{
+        (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
+        \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
+        \obj_L(\js{protected}: V, @frozen: \false)
+      } \\
+      \step{Frame/exists} \\
+      \logic{
+        obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
+        obj_L(\js{protected}: V, @frozen: \false) \sep {} \\
+        \ls \doteq L':L:Ls
+      } \\
+      \js{protected = null;} \\
+      \logic{
+        obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
+        obj_L(\js{protected}: \nil, @frozen: \false) \sep {} \\
+        \ls \doteq L':L:Ls \sep \rv \doteq \nil
+      } \\
+      \step{Frame/exists} \\
+      \logic{
+        (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
+        \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
+        \obj_L(\js{protected}: \nil, @frozen: \false) \sep \rv \doteq \nil
+      }
+    }
+    \js{\}}
+  \end{array}
+\]
+\caption{RevocableReference kill function body}
+\label{rr-kill}
+\end{figure}
+
+\begin{figure}
+% RevocableRef#access body call
+\[
+  \begin{array}{l}
+    \jsvar{access = function(field) \{} \\
+    \indblock{
+      \logic{
+        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
+          (A, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep
+          L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
+        \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
+          \sep {} \\
+        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+          \sep X \dotin \uvars
+      } \\
+      \step{Frame/exists} \\
+      \logic{
+        \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
+        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+          \sep {} \\
+        X \dotin \uvars \sep \ls \doteq L':L:Ls
+      } \\
+      \js{return\ protected[field];} \\
+      \logic{
+        \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
+        (L, \js{protected}) \mapsto P \sep
+        P \not\doteq \nil \sep P \dotin \loc \sep {} \\
+        X \dotin \uvars \sep \ls \doteq L':L:Ls \sep \rv \doteq \fld{P}{X}
+      } \\
+      \step{Frame/exists} \\
+      \logic{
+        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
+          (A, @scope) \mapsto L:Ls \sep {} \\
+        \exists L' \st \ls \doteq L' : L : Ls \sep
+          L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
+        \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
+          \sep {} \\
+        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+          \sep X \dotin \uvars \sep \rv \doteq \fld{P}{X}
+      }
+    }
+    \js{\}}
+  \end{array}
+\]
+\caption{RevocableReference access function body}
+\label{rr-access}
+\end{figure}
+
+\TODO{Extend to writing to objects via the proxy. Take careful note of
+  \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
+{Nov-11 es-discuss thread} (theft of \js{protected} by using \js{\_\_proto\_\_}
+or through redefining/hiding a \emph{trusted prototypical} method (eg on Array))}
+
+\COMMENT{Idea: Pre-set $\lop \bp \loc \times \vars$, since anything can
+potentially point at our frozen language globals. How does this interact with
+the consequence rule? (I'd guess that without an explicit $(a,b) \not\pointsto
+\lop$, then we cannot remove it from the set?) This is inspired by the use of
+$\top$ in Abstract Interpretation...}
+
+\subsection{Membrane}
+\label{sec:membrane}
+A Membrane is a transitive Revocable Reference, in addition to protecting all
+interactions with a particular object, a Membrane also protects all subsequent
+products of interactions with the protected object.
+
+This is achieve by wrapping all returned objects in a Membrane Reference that
+shares its kill switch with its parent. When the Membrane is killed, all
+references to the parent object and anything it created are blocked
+simultaneously.
+
+\begin{verbatim}
+var Membrane = function(ref) {
+  var killed = false;
+
+  var MembraneRef = function(ref) {
+    var access = function(field) {
+      if(!killed) return MembraneRef(ref[field]);
+    }
+    if(primitive(ref)) { return ref; } else { return access; }
+  }
+
+  var access = MembraneRef(ref);
+  var kill = function() { killed = true; }
+  return {access: access, kill: kill};
+}
+\end{verbatim}
+
+Notation:
+\begin{itemize}
+  \item $MRef_{MR}(M,r,F_A,S,T)$ \qquad Membrane reference for Membrane $M$ protecting object
+$r$, corresponding access function $F_A$, (safe-side) backpointer set $S$ for
+$r$, membrane-constructed backpointer set $T$.
+\begin{align*}
+  MRef_{MR}(M,r,F_A,S,T) &= \fun_{F_A}(MR:M:\_, \js{field}, \lambda_A, \_) \sep {} \\
+                         & \fullobj_{MR}(\js{ref}: r, \js{access}: F_A, @this: \_, @proto: \nil) \sep
+    r \bp S \cup T
+\end{align*}
+
+Note: We cannot use the $\newfun$ predicate here as we return this function out
+to the usercode, it may be tampered with by having fields added, this does not
+impact upon the function call, since all the information used by the proofs is
+placed into internal fields, or within the function's scope chain.
+(The corresponding $\newobj$ produced in proofs is framed off for clarity)
+
+  \item $MRset_M(Ls,T)$ \qquad Membrane-backpointer constructor. Given a list of
+constructed $MR$s (access functions thereon?), provide (maximal) backpointer set
+for protected references for the Membrane $M$.
+\[ MRset_M([], \{(M, \js{ref})\}) = \lemp \]
+\[ MRset_M(L:Ls, Ts') = MRset_M(Ls, Ts) \sep Ts' \doteq Ts \cup \{(L, \js{ref})\}\]
+
+  \item $alive(M, F_{MR})$ and $dead(M, F_{MR})$ \qquad encapsulates Membrane data object (AR),
+    on which is contained initial reference to $r$, the killswitch, (kill
+    function), MembraneRef constructor. (Use $membraneInstance$?)
+    \begin{align*}
+      MembraneInstance(M, F_{MR}) =& \obj_M(\js{ref}: \_, @this: \_, @proto: \nil,
+      \js{MembraneRef}: F_{MR}, \js{kill}: F_{K}) \sep {} \\
+  & \newfun_{F_{MR}}(M:\_, \js{ref}, \lambda_{MR}, \_) \\
+alive(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \false \\
+ dead(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \true
+    \end{align*}
+
+    Note: We are safe to use $\newfun$ here, as the $F_{MR}$ function is
+    internal to the Membrane, it is guaranteed not to be tampered with.
+
+  \item $kill(F_K, M)$ \qquad Represents the kill function $F_K$ for membrane $M$.
+\[ kill(F_K, M) = \fun_{F_K}(M:\_, \_ , \lambda_K, \_) \]
+
+\end{itemize}
+
+We specify that the Membrane is not allowed to cause the creation of more
+references to the protected object. And that a reference to the protected object
+may not be returned.
+
+Notes: our predicate needs to track all MembraneRefs created, we can do this
+with rules in the proof that simply grow the set by the new objects.
+This implies that security properties may require far larger footprints for
+verification than safety properties.
+
+Potential issue: Code within the membrane that creates new references to the
+protected object during execution.
+
+\begin{figure}[b]
+  \[
+    \begin{array}{l}
+      \logic{
+        ref \bp S \sep ref \dotin \loc \sep \ls \doteq Ls
+      } \\
+      \js{Membrane(ref);} \\
+      \logic{
+        \exists M, F_K, F_A, F_{MR}, MR, L \st \args{
+          alive(M, F_{MR}) \sep
+          kill(F_K,M) \sep
+          MRef_{MR}(M, ref, F_A, S, T) \sep {} \\
+          MRset([MR],T) \sep
+          \fullobj_L(\js{access}:F_A,\js{kill}:F_K) \sep
+          \rv \doteq L
+        }
+      } \\
+      \\
+      \tjs{var Membrane = function(ref) \{} \\
+        \indblock{
+          \logic{
+            \fullobj_M \args{
+              \js{ref}: ref, @this: \_, @proto: \nil, \js{killed}: \und, \\
+              \js{MembraneRef}: \und, \js{access}: \und, \js{kill}: \und
+            } \sep {} \\
+            MRset_M([], T) \sep
+            ref \bp S \cup T \sep
+            ref \dotin \loc \sep
+            \ls \doteq M:Ls
+          } \\
+          \tjs{var killed = false;} \\
+          \tjs{var MembraneRef = function(ref) \{...\}} \\
+          \tjs{var kill = function() \{...\}} \\
+          \logic{
+            alive(M, F_{MR}) \sep
+            \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
+                   \js{access},\js{kill}) \sep {} \\
+
+            kill(F_K,M) \sep
+            (M,\js{access}) \pointsto \und \sep {} \\
+
+            MRset_M([], T) \sep
+            ref \bp S \cup T \sep
+            ref \dotin \loc \sep
+            \ls \doteq M:Ls
+          } \\
+          \tjs{var access = MembraneRef(ref);} \\
+          \logic{
+            alive(M, F_{MR}) \sep
+            \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
+                   \js{access},\js{kill}) \sep {} \\
+
+            kill(F_K,M) \sep
+            (M,\js{access}) \pointsto F_A \sep {} \\
+
+            MRset_M([MR], T') \sep
+            MRef_{MR}(M,ref,F_A,S,T') \sep
+            ref \dotin \loc \sep
+            \ls \doteq M:Ls
+          } \\
+          \tjs{return \{access: access, kill: kill\};} \\
+          \logic{
+            alive(M, F_{MR}) \sep
+            \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
+                   \js{access},\js{kill}) \sep {} \\
+
+            kill(F_K,M) \sep
+            (M,\js{access}) \pointsto F_A \sep {} \\
+
+            MRset_M([MR], T') \sep
+            MRef_{MR}(M,ref,F_A,S,T') \sep
+            ref \dotin \loc \sep {} \\
+
+            \fullobj_L(\js{access}:F_A,\js{kill}:F_K) \sep
+            \ls \doteq M:Ls \sep
+            \rv \doteq L
+          }
+        }
+        \tjs{\}} \\
+        \\
+        \\
+        \logic{
+          (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep (alive(M, F_{MR}) \lor dead(M, F_{MR}))
+        } \\
+        \js{kill()} \\
+        \logic{
+          (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep dead(M)
+        } \\
+        \gds{\dots and this is what you meant in your email about the $(\_,\js{kill})\pointsto F_k$, I see. I think what you've done is fine, because these lines aren't part of any proof. They're for illustration only - ``this is the sort of thing you can prove using the lemma below and the function call rule''. Make it clear that these things are informal aids to intuition, and your notation is fine.}
+        \\
+        \tjs{var kill = function() \{} \\
+        \indblock{
+          \logic{
+            \exists A \st \ls \doteq A : M : \_ \sep
+            \fullobj_A(@proto: \nil, @this: \_) \sep
+            (alive(M, F_{MR}) \lor dead(M, F_{MR}))
+          } \\
+          \tjs{killed = true;} \\
+          \logic{
+            \exists A \st \ls \doteq A : M : \_ \sep
+            \fullobj_A(@proto: \nil, @this: \_) \sep
+            dead(M)
+          }
+        }
+        \tjs{\}}
+    \end{array}
+  \]
+  \caption{Proof \emph{outline} for \js{Membrane} and its \js{kill} function}
+\end{figure}
+
+\begin{figure}
+  \gds{You might need ${} \sep \ls\doteq\dots$ in your $\tjs{MembraneRef}$ and $\tjs{access}$ specs.}
+  \[
+    \begin{array}{l}
+      \logic{
+        (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
+        alive(M, F_{MR}) \sep MRset_M(Ls,T) \sep ref \bp S \cup T \sep ref \dotin \loc
+      } \\
+      \tjs{MembraneRef(ref);} \\
+      \logic{
+        \exists R, F_A \st \args{
+          (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
+          alive(M, F_{MR}) \sep MRset_M(R:Ls,T') \sep {} \\
+          MRef_{R}(M,ref,F_A,S,T') \sep ref \dotin \loc \sep \rv \doteq F_A
+        }
+      } \\
+      \\
+      \tjs{var MembraneRef = function(ref) \{} \\
+        \indblock{
+          \logic{
+            \exists R \st \args{
+              alive(M, F_{MR}) \sep  \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+                \und) \sep {} \\
+              ref \dotin \loc \sep
+              MRset_M(R:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq R:M:Ls
+            }
+          } \\
+          \tjs{var access = function(field) \{...\}} \\
+          \logic{
+            \exists R,F_A \st \args{
+              alive(M, F_{MR}) \sep \fullobj_{MR}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+                F_A) \sep {} \\
+              \newfun_{F_A}(R:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
+              \loc \sep {} \\
+              MRset_M(R:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq R:M:Ls
+            }
+          } \\
+          \tjs{if(primitive(ref)) \{...\} else \{} \\
+            \indblock{
+              \tjs{return access;} \\
+            }
+          \tjs{\}} \\
+          \logic{
+            \exists R,F_A \st \args{
+              alive(M, F_{MR}) \sep \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+                F_A) \sep {} \\
+              \newfun_{F_A}(R:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
+              \loc \sep {} \\
+              MRset_M(R:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq R:M:Ls
+                \sep {} \\
+              \rv \doteq F_A
+            }
+          } \\
+          \step{subst} \\
+          \logic{
+            \exists R,F_A \st \args{
+              alive(M, F_{MR}) \sep MRset_M(R:Ls,T') \sep MRef_{R}(M,ref,F_A,S,T') \sep
+                {} \\
+              ref \dotin \loc \sep rv \doteq F_A \sep \ls \doteq R:M:Ls
+            }
+          }
+        }
+      \tjs{\}} \\
+      \\
+      \\
+      \gds{As you noted in your email you need to pick some notation for naming the function in these informal intuition-aid spec illustrations. I prefer the style above to the ``dot-equals'' style below. What's your preference?}
+      \logic{
+        alive(M, F_{MR}) \sep
+        access \doteq F_{A_1} \sep
+        MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+        MRset(Ls,T_1) \sep {} \\
+
+        field \dotin \uvars \sep
+        (ref, field) \pointsto V \sep
+        V \dotin \loc \sep
+        V \bp S_2
+      } \\
+      \js{access(field)} \\
+      \logic{
+        \exists R_2, F_{A_2} \st \args{
+          alive(M, F_{MR}) \sep
+          access \doteq F_{A_1} \sep
+          MRef_{R_1}(M,ref,F_{A_1},S_1,T_2) \sep {} \\
+
+          MRset(R_2:Ls,T_2) \sep
+          MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep
+          \rv \doteq F_{A_2} \sep {} \\
+
+          field \dotin \uvars \sep
+          (ref, field) \pointsto V \sep
+          V \dotin \loc
+        }
+      } \\
+      \\
+      \tjs{var access = function(field) \{} \\
+        \indblock{
+          \logic{
+            \exists A \st \ls \doteq A : R_1 : M : \_ \sep
+            \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
+            alive(M, F_{MR}) \sep
+            MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+            MRset(Ls,T_1) \sep {} \\
+
+            field \dotin \uvars \sep
+            (ref, field) \pointsto V \sep
+            V \dotin \loc \sep
+            V \bp S_2
+          } \\
+          \tjs{if(!killed) \{} \\
+            \indblock{
+              \logic{
+                \exists A \st \ls \doteq A : R_1 : M : \_ \sep {} \\
+                alive(M, F_{MR}) \sep
+                MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+                MRset_M(Ls,T_1) \sep {} \\
+
+                (A, \js{field}) \pointsto field \sep
+                field \dotin \uvars \sep {} \\
+
+                (ref, field) \pointsto V \sep
+                V \dotin \loc \sep
+                V \bp S_2 \cup T_1
+              } \\
+              \tjs{return MembraneRef(ref[field]);} \\
+              \logic{
+                \exists A,R_2,F_{A_2} \st \args {
+                  \ls \doteq A : R_1 : M : \_ \sep
+                  alive(M, F_{MR}) \sep {} \\
+
+                  MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+                  MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep {} \\
+
+                  MRset_M(R_2:Ls,T_2) \sep
+                  \rv \doteq F_{A_2} \sep {} \\
+
+                  (A, \js{field}) \pointsto field \sep
+                  field \dotin \uvars \sep
+                  (ref, field) \pointsto V \sep
+                  V \dotin \loc
+                }
+              } \\
+            }
+          \tjs{\}} \\
+            \logic{
+              \exists A,R_2,F_{A_2} \st \args{
+                \ls \doteq A : R_1 : M : \_ \sep
+                \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
+
+                alive(M, F_{MR}) \sep
+                MRef_{R_1}(M,ref,F_{A_1},S_1,T_2) \sep {} \\
+
+                MRset(R_2:Ls,T_2) \sep
+                MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep
+                \rv \doteq F_{A_2} \sep {} \\
+
+                field \dotin \uvars \sep
+                (ref, field) \pointsto V \sep
+                V \dotin \loc
+              }
+            }
+        }
+      \tjs{\}}
+    \end{array}
+  \]
+  \caption{Proof \emph{outlines} for the nested \js{MembraneRef} and \js{access} functions}
+\end{figure}
 
 \end{document}
