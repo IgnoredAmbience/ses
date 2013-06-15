@@ -904,32 +904,47 @@ P \sep Q \entails R \text{ iff } P \entails Q \wand R
     hypothesising use of the wand. If we define the adjoint wand in our context,
     we get the footprint-extending wand, but not the hypothesising one.
 
-Consider $x \pointsto 1 \sep (x \pointsto 2 \wand Q)$
+Since separation logic usually defines  $\wand$
+as follows:
+\[
+  h \satisfies P \wand Q \iff \forall h' \st (h' \satisfies P) \land h \disj
+    h' \impl (h \disju h' \satisfies Q)
+\]
 
-A standard derivation is:
+We might \emph{naively} define $\wand$ in our context like so:
+\[
+  h,h_g \satisfies P \wand Q \iff \forall h' \st (h',h_g \satisfies P) \land h \disj
+    h' \impl (h \disju h',h_g \satisfies Q)
+\]
+
+Now consider $x \pointsto 1 \sep (x \pointsto 2 \wand Q)$
+
+ In regular separation logic, this assertion is satisfiable. Consider the heap
+ $x:1$ as follows:
 \begin{align*}
            & x:1 \satisfies x \pointsto 1 \sep (x \pointsto 2 \wand Q) \\
 \text{iff } & x:1 \satisfies x \pointsto 1 \land \lemp \satisfies (x \pointsto 2 \wand Q) \\
 \text{iff } & x:1 \satisfies x \pointsto 1 \land x:2 \satisfies x \pointsto 2 \land (x:2 \disju \lemp) \satisfies Q
 \end{align*}
 
-Derivation for a naive definition of $\wand$ is unsound:
+But with our naive definition of $\wand$, this assertion is
+\emph{unsatisfiable}. Consider again the heap $x:1$, which satisfied the regular
+separation logic version of this assertion:
 \begin{align*}
            & x:1,x:1 \satisfies x \pointsto 1 \sep (x \pointsto 2 \wand Q) \\
 \text{iff } & x:1,x:1 \satisfies x \pointsto 1 \land \lemp,x:1 \satisfies (x \pointsto 2 \wand Q) \\
 \text{iff } & x:1,x:1 \satisfies x \pointsto 1 \land x:2,x:1 \satisfies x \pointsto 2 \land (x:2 \disju \lemp,x:1) \satisfies Q
 \end{align*}
 Note that the local and global heap states do not agree in the derivation of the
-sub-assertions. The local portion of the heap should always be a subset of the
-global portion.
+sub-assertions. But the local portion of the heap should always be a subset of the
+global portion! Since we cannot find local and global heaps for these
+sub-derivations which agree, the heap $x:1$ does not satisfy our original assertion.
 
-To enforce this property, whilst maintaining the right-adjoint, we require it is
-for satisfaction of the $\wand$ operator.
+This behaviour prevents us from using $\wand$ for hypothetical heap update
+operations. To support this use-case, we introduce a new logical operator.
 
-However, this prohibits us from using $\wand$ for hypothetical heap update
-operations, we hence need to introduce this to support this second use.
-
-The new operator to be defined is the \emph{box-wand}, $\boxwand$. In addition
+The new operator to be defined is the \emph{box-wand}, $\boxwand$ or
+``hypothesising separating implication''. In addition
 to the behaviour of the standard wand, the box-wand maintains consistency
 between the local and global heap states whilst evaluating the satisfaction of
 sub-assertions of the operator. This permits a state to be hypothesised that
