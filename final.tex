@@ -864,6 +864,7 @@ conjunction $\sepish$ also simply extend by passing through the global heap stat
 \end{array}\]
 
 \subsection{Magic Wand}
+\label{sec:wand}
 The separating implication, or magic wand, operator, $\wand$, is usually defined
 as follows:
 \[
@@ -875,11 +876,20 @@ It means that if the heap is extended by a disjoint portion that satisfies $P$,
 then the resulting heap will satisfy $Q$.
 
 * Also the right adjoint of $\sep$:
+\newcommand{\entails}{\vdash}
 \[
-  h \disju h' \satisfies P \sep Q \impl R \text{ iff } h \satisfies P \impl Q
-  \wand R
+P \sep Q \entails R \text{ iff } P \entails Q \wand R
 \]
+% I think these two things may be equivalent - but I think staying at the logic
+% level has two advantages:
+%   1) I think it's easier to understand
+%   2) It still makes sense when you have both local /and/ global heaps in the model.
+% \[
+%   h \disju h' \satisfies P \sep Q \impl R \text{ iff } h \satisfies P \impl Q
+%   \wand R
+% \]
 * Used for extending footprint of heap
+
 * Weakest preconditions of commands
 
 * We claim that both uses are incompatible under a global view of the heap
