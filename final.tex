@@ -799,7 +799,7 @@ the final statement of the source to be executed.
    H' = H''[(l, @frozen) \pointsto \true]}
   {H,L,\js{freeze(e)} \evalsto H', l}
 
-Makes the provided object read-only, prevents field additions,
+Makes the provided object read-only. This prevents field additions,
 modifications and deletions.
 Note that the ES5 spec has a bug, meaning that frozen fields on an object's
 prototype are not permitted to be overridden, some browsers opt to ``fix'' the spec bug.
