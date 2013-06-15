@@ -831,14 +831,19 @@ accessed \emph{from} a given object, but also what paths exist to obtain access
 expression in the syntax of the language.
 
 \section{Extending Separation Logic}
-We are aiming to reason about reachability through pointer accesses in the heap.
-Separation logic is inherently unable to reason about these since the
-information required to satisfy such assertions is inherently framed off to
-the part of the assertion that deals with the operational aspects of the command.
+\label{sec:extendingseplog}
+To reason about the security properties of SES programs, we need to be able to
+assert that only trusted objects contain references to sensitive data.
+Separation logic is inherently unable to make statements like this, since the
+statement is inherently \emph{non-local}. If we attempt to make such a
+statement, then at any time, we might use the frame rule to introduce an object
+which contradicts the statement we made.
 
-We extend the logic to support this by reintroducing a global heap state to the
-assertion satisfaction relation and redefine the existing logical operators to
-carry around the global heap state without examining it.
+We extend the logic to support these sorts of statements by: reintroducing a global heap state to the
+assertion satisfaction relation; redefining the existing logical operators to
+carry around the global heap state without examining it; and introducing new
+logical operators that allow us to make limited non-local assertions without
+breaking the frame rule.
 
 \subsection{Existing Separation Logic Operators}
 The pure assertions, $\ltrue,\lfalse,\land,\lor,\lnot$ extend trivially with the
