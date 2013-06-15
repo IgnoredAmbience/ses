@@ -822,8 +822,6 @@ allows us to reason at the level of abstraction best suited to the particular
 program we would like to verify. Since so much of the behaviour of JS and SES is
 dependant on the state of the program heap, it is natural to start with
 separation logic.
-\TODO{My background is lacking here, (or I've forgotten it) -- discuss}
-\gds{How's that?}
 
 We first extend separation logic to be able to express not only what can be
 accessed \emph{from} a given object, but also what paths exist to obtain access
@@ -834,7 +832,7 @@ expression in the syntax of the language.
 \label{sec:extendingseplog}
 To reason about the security properties of SES programs, we need to be able to
 assert that only trusted objects contain references to sensitive data.
-Separation logic is inherently unable to make statements like this, since the
+Separation logic is unable to make statements like this, since the
 statement is inherently \emph{non-local}. If we attempt to make such a
 statement, then at any time, we might use the frame rule to introduce an object
 which contradicts the statement we made.
