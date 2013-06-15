@@ -843,6 +843,37 @@ carry around the global heap state without examining it; and introducing new
 logical operators that allow us to make limited non-local assertions without
 breaking the frame rule.
 
+\subsection{Intuition}
+\label{sec:extendingseplog:intuition}
+
+Regular separation logic for JS assertions are defined using a
+\emph{satisfaction relation} of the following form:
+
+\[
+h,L,\env \satisfies P \iff \text{ some conditions }
+\]
+
+In this relation: $h$ is the portion of the JS heap currently under
+consideration; $L$ is a list of pointers to objects in the heap which are
+currently serving as an emulated variable store; and $\env$ is a logical
+environment which defines the meanings of the logical variables used in the
+assertion $P$.
+
+In order to allow limited assertions about the global heap, we must define our
+assertions slightly differently. We use a satisfaction relation of the following
+form:
+
+\[
+h,h_g,L,\env \satisfies P \iff \text{ some conditions }
+\]
+
+The one change is the addition of the \emph{global heap} $h_g$. We require that
+$h$ must always be a sub-heap of $h_g$. That is to say: the portion of the heap
+under consideration must be a part of the whole heap. In the following sections
+we describe how this change threads through the definitions of the existing
+regular separation logic assertions, and how it allows us to create new sorts of
+assertion.
+
 \subsection{Existing Separation Logic Operators}
 The pure assertions, $\ltrue,\lfalse,\land,\lor,\lnot$ extend trivially with the
 addition of the new heap state, for example,the new definition of $\land$ is:
