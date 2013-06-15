@@ -568,6 +568,8 @@
   \wedge \getValue(H',r) = v) \]
 
   \subsection{Structural Expressions}
+  All of these semantics are common across most imperitive languages.
+
   \stateaxiom{(Value)}{H,L,\js{v} \evalsto H,v}
 
   A value simply evaluates to itself, the heap is not modified. No preconditions
@@ -635,6 +637,45 @@
     {\scope(H,L,x) = l' \quad l' \neq \nil}
     {H,L,\js x \evalsto H, \fld{l'}{x}}
 
+  The $\scope$ predicate is used to search the scope chain for an object which
+  contains the field matching the variable name. A reference to the \emph{scope}
+  object and the field is returned.
+
+  If the scope object cannot be found, fail to evaluate -- this
+  behaviour differs from JS, which would return the reference
+  $\fld{\nil}{\js{x}}$.  JS assigned write attempts to the \nil object to the
+  \emph{global} object -- this posed an obvious isolation problem.
+  This new behaviour enforces that all variables must be declared before use.
+
+  \staterule{(Member access)}
+  {H,L,\js e \gevalsto H',l' \\
+   l' \neq \nil}
+  {H,L,\js{e.x} \evalsto H', \fld{l'}{x}}
+\qquad
+  \staterule{(Computed member access)}
+  {H,L,\js{e_1} \gevalsto H'',l' \\
+   l' \neq \nil \\
+   H'',L,\js{e_2} \evalsto H', x}
+  {H,L,\js{e_1[e_2]} \evalsto H',\fld{l'}{x}}
+
+  Returns a reference to the named field of the object referenced by the first
+  subexpression. For the computed member access, the second subexpression is
+  evaluated to a field name (casting details are omitted).
+
+  \staterule{(Assignment)}
+  {H,L,\js{e_1} \evalsto H_1,\fld{l}{x} \qquad
+   \ReadWrite(H_1, l) \\
+   H_1,L,\js{e_2} \gevalsto H_2, v \\
+   H' = H_2[(l,x) \pointsto v]}
+  {H,L,\js{e_1 = e_2} \evalsto H', v}
+
+  Assigns the value on the right hand side to the subexpression evaluating to a
+  reference on the left. The object being assigned to must be readable (see
+  later).
+
+  Assignments to undeclared variables are forbidden (enforced by the Variable
+  rule).
+
   \staterule{(Object creation)}
     {H_0 = H \disju \obj(l,\lop)\\
      \forall i\in 1..n \st \left(\begin{array}{l}
@@ -648,41 +689,70 @@
   \js{e_1, \ldots, e_n} when evaluated in order at creation. The location of the
   new object is returned.
 
-\paragraph{Assignment} Assigns the value on the right hand side to the named
-field on the left. Assignments to undeclared variables are forbidden (enforced
-by the Variable rule), this is consistent with ES5-strict.
+  \subsection{Function-related Expressions}
 
-\paragraph{Member access} Returns the value of the named field of the object referenced by
-the subexpression.
+  \staterule{(Function creation)}
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',L,\js{x},\js{e},l)}
+  {H,L,\jsfun{x}{e} \evalsto H',l'}
 
-\paragraph{Computed member access} As Member access, but the field name is derived from
-the expression in \js{[]}.
+  Creates a function object, assigning the body, parameter
+  declarations and the current scope to internal fields. A new object is also
+  created and assigned to the \js{prototype} field for use as the prototype of
+  objects produced by using this function as a constructor.
 
-\paragraph{Function creation} Creates a function object, assigning the body, parameter
-declarations and the current scope to internal fields. A new object is also
-created and assigned to the \js{prototype} field for use as the prototype of
-objects produced by using this function as a constructor (this permits
-emulation of a class-based language).
+  \staterule{(Named function creation)}
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',l_1 \cons L,\js{x},\js{e},l) \disju
+    l_1 \pointsto \{@proto:\nil, y:l'\}}
+  {H,L,\jsfun[y]{x}{e} \evalsto H',l'}
 
-\paragraph{Named function creation} This syntax is the same as standard function creation,
-but also adds the name and a self-reference to the function to the function's
-scope record. This permits recursive functions to be created. \emph{Note:} the
-name of the function is not added to the current scope, it is permitted in the
-actual language, but is considered to be syntactic sugar, combining creation and
-assignment.
+  This syntax is the same as standard function creation,
+  but also adds the name and a self-reference to the function to the function's
+  scope record. This permits recursive functions to be created. \emph{Note:} the
+  name of the function is not added to the current scope, it is permitted in the
+  actual language, but is considered to be syntactic sugar, combining creation and
+  assignment.
 
-\paragraph{Function call} Executes the body of the function, using the passed expression
+  \staterule{(Function call)}
+  {H,L,\js{e_1} \evalsto H_1,r_1\qquad
+   \pickThis(H_1,r_1)=l_2\qquad
+   \getValue(H_1,r_1)=l_1\\
+   H_1(l_1,@body)=\lambda \js{x.e_3}\qquad
+   H_1(l_1,@scope)= L'\\
+   H_1,L,\js{e_2} \gevalsto H_2,v\\
+   H_3 = H_2\disju\act(l,\js x,v,\js{e_3},l_2) \\
+   H_3,l \cons L',\js{e_3} \gevalsto H',v'}
+  {H,L,\js{e_1(e_2)} \evalsto H',v'}
+
+Executes the body of the function, using the passed expression
 as the value to bind to the parameter. The body of the function is executed in
 the scope stored with the function, any variables defined within the function
 body are defined on an activation record so that they are lexically scoped.
 
-\paragraph{Object construction} Constructs an object using the given function, an object
+  \staterule{(Object construction)}
+  {H,L,\js{e_1} \gevalsto H_1,l_1 \qquad
+   l_1\neq \nil\qquad
+   H_1(l_1,@body)=\lambda \js{x.e_3}\\
+   H_1(l_1,@scope)= L'\qquad
+   H_1(l_1,\js{prototype})= v\\
+   H_1,L,\js{e_2} \gevalsto H_2,v_1  \qquad
+   l_2 = \objOrGlob(v) \\
+   H_3 = H_2\disju \obj(l_3,l_2) \disju\act(l,\js x,v_1,\js{e_3},l_3)\\
+   H_3,l \cons L',\js{e_3} \gevalsto H',v_2\qquad
+   \getBase(l_3,v_2) = l'}
+  {H,L,\jsnew{e_1}{e_2} \evalsto H',l'}
+
+Constructs an object using the given function, an object
 is created as usual, it's prototype is assigned to that of the function's
 \js{prototype} field. The body of the function is then exectuted, commonly used
 to initialize the newly created object.
 
 % ES5-Strict definition, plus reval global - matches caja impl (and intuition).
-\paragraph{\js{this}} The \js{this} expression is context-dependent. When used
+  \staterule{(This)}
+  {\scope(H,L,@this)=l \\
+   (l,@this) \pointsto l'}
+  {H,L,\js{this} \evalsto H,l'}
+
+The \js{this} expression is context-dependent. When used
 outside of a
 function, it should evaluate to the most global accessible scope.
 When used within a function, if the function is called using Member Access, it
@@ -692,7 +762,18 @@ will evaluate to the object on which that function was called. Otherwise
 problematic because functions can easily be aliased off of the object on which
 they appear to be defined.
 
-\paragraph{Restricted evaluation} Parse the first given expression as SES code.
+  \subsection{SES-specific Expressions}
+
+  \staterule{(Restricted evaluation)}
+  {H,L,\js{e_1} \gevalsto H_1,v \qquad
+   \js{e_3} = \parse(v) \\
+   H_1,L,\js{e_2} \gevalsto H_2, l \\
+   H_3 = H_2 \disju l' \pointsto \{@this:l, @proto:\nil\} \disju
+     \defs(\_, l', \js{e_3}) \\
+   H_3, l' \cons [l], \js{e_3} \gevalsto H',v }
+  {H,L,\js{reval(e_1, e_2)} \evalsto H',v}
+
+Parse the first given expression as SES code.
 A new scope chain is prepared, its root is the
 object specified by the second parameter, the \emph{imports} to the restricted
 environment.
@@ -701,14 +782,23 @@ source is then appended. This may cause imported objects to be shadowed.
 The return value of the restricted evaluation statement is the same as that of
 the final statement of the source to be executed.
 
-\paragraph{Freeze} Makes the provided object read-only, prevents field additions,
+  \staterule{(Freeze)}
+  {H,L,\js{e} \gevalsto H'', l\\
+   H' = H''[(l, @frozen) \pointsto \true]}
+  {H,L,\js{freeze(e)} \evalsto H', l}
+
+Makes the provided object read-only, prevents field additions,
 modifications and deletions.
 Note that the ES5 spec has a bug, meaning that frozen fields on an object's
-prototype are not permitted to be overridden\footnote{See
-ses/repairES5.js\#makeTamperProof()}, some browsers opt to ``fix'' the spec bug.
+prototype are not permitted to be overridden, some browsers opt to ``fix'' the spec bug.
 This bug does not occur in these semantics.
 
-\paragraph{Recursive freeze} Recursively calls freeze on all objects reachable
+  \staterule{(Recursive freeze)}
+  {H,L,\js{e} \gevalsto H'', l \\
+   H' = H''[\auxDef(H'', l, \{\})]}
+  {H,L,\js{def(e)} \evalsto H', l}
+
+Recursively calls freeze on all objects reachable
 via user-defined fields from the given object.
 
 \chapter{Program Logics}
@@ -716,6 +806,7 @@ via user-defined fields from the given object.
 \subsection{Global Heap View}
 \subsection{Magic Wand}
 \subsection{Backpointer}
+\section{Hoare Triples}
 
 \chapter{Program Proofs}
 \section{Caretaker}

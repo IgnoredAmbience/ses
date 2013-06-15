@@ -309,8 +309,9 @@ via user-defined fields from the given object.
 %  traversing) (Also assume that $\lgo$ has $@this$ set directly) We can also drop
 %  $\getValue$ to just use $\scope$?}
   \staterule{(This)}
-  {\scope(H,L,@this)=l}
-  {H,L,\js{this} \evalsto H,l}
+  {\scope(H,L,@this)=l \\
+   (l,@this) \pointsto l'}
+  {H,L,\js{this} \evalsto H,l'}
 \vg
 
   \staterule{(Function call)}
