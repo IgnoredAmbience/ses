@@ -997,6 +997,7 @@ satisfied.
 holds}
 
 \subsection{Backpointer}
+\label{sec:backpointers}
 We now define the operator that will primarily examine the global heap state,
 the \emph{backpointer}, $E_1 \bp E_2$, which
 specifies that any heap cell that has the $E_1$ as its value must appear in the
@@ -1016,20 +1017,39 @@ Although the backpointer operator would at first seem to not require any
 footprint on the heap (that it would be a \emph{pure} operator), the operator's
 interactions with the spatial elements of the logic may result in unsoundness.
 
-For example, consider two rules that each use the backpointer set of a
-particular object
+For example, consider the following \emph{broken} proof outline:
 
-$l \bp \{a\} \sep l \bp \{b\} \impl l \bp \{\}$
+\[
+\begin{array}{l}
+  \{\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
+  \text{[Consequence]}\\
+  \{(\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x}\}) \sep (a \bp \{\js{x}\} \land \emp) \}\\
+  \text{[Frame off]}\\
+  \{\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
+  \text{[Consequence]}\\
+  \{\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x},\js{y}\} \}\\
+  \js{y = x;}\\
+  \{\js{y}\pointsto a \sep \js{x} \pointsto a \land a \bp \{\js{x},\js{y}\} \}\\
+  \text{[Frame on]}\\
+  \{(\js{y}\pointsto a \sep \js{x} \pointsto a \land a \bp \{\js{x},\js{y}\}) \sep (a \bp \{\js{x}\} \land \emp) \}\\
+  \text{[Consequence]}\\
+  \{\js{y}\pointsto a \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
+\end{array}
+\]
+
+Notice that in this \emph{broken} program proof, we appear to have proved that
+our program ensures that both \js{y} and \js{x} point to $a$ and \emph{also}
+that the only location pointing to $a$ is \js{x}. To prevent these sorts of
+shenanigans, we insist that two backpointer assertions about the same location
+cannot be separated. The mechanism we use to enforce this requirement is a
+notional internal field $@bp$ on each SES object. This field is the footprint of
+any backpointer assertions about that object.
 
 \TODO{Need a more concrete example of how this could come about. I'm still not
   entirely happy with this -- I suspect it comes from a lack of familiarity with
   how pure assertions behave within Separation Logic (but I guess a part of this
   project is to figure out exactly that!...)}
-
-Oops...
-
-Hence force a footprint to require that a rule consumes the already-present
-assertion
+\gds{here you go}
 
 The interaction between the backpointer operator and the consequence rule in the
 Hoare reasoning is particularly useful.
