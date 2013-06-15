@@ -1036,6 +1036,12 @@ Hoare reasoning is particularly useful.
 For example, we can widen the backpointer set at any time necessary thanks to
 the implication $l \bp S \impl l \bp S \cup S'$.
 
+We are also able to shrink the set if it is known that the elements being
+removed definitely do not point to the object in question:
+\[
+  a \bp \{(b,c)\} \sep (b,c) \pointsto d \impl a \bp \{\} \sep (b,c) \pointsto d
+\]
+
 \section{Hoare Triples}
 
 \chapter{Program Proofs}
