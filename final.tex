@@ -999,13 +999,13 @@ holds}
 \subsection{Backpointer}
 \label{sec:backpointers}
 We now define the operator that will primarily examine the global heap state,
-the \emph{backpointer}, $E_1 \bp E_2$, which
-specifies that any heap cell that has the $E_1$ as its value must appear in the
-set $E_2$. The set $E_2$ may additionally contain extra heap cell references to
-express permission that a given cell may point to $E_1$.
+the \emph{backpointer}, $E_1 \bp E_2$, which specifies that any heap cell that
+has the $E_1$ as its value must appear in the set $E_2$. The set $E_2$ may
+additionally contain extra heap cell references. This allows us to express the
+permission that a given cell may be changed to point to $E_1$ in the future.
 
-We define the back pointer to have \emph{at-least} semantics, all the pointers
-to the object must at least be in the set.
+The assertion $E_1 \bp E_2$ means that the location $E_1$ may be pointed to by
+\emph{at most} the locations in $E_2$.
 \begin{align*}
   h, h_g \satisfies E_1 \bp E_2 \iff &
     \forall (l,x) \in \dom(h_g) \st h_g(l,x) = \evalle{E_1}
