@@ -814,11 +814,16 @@ Recursively calls freeze on all objects reachable
 via user-defined fields from the given object.
 
 \chapter{Program Logics}
+\label{chap:proglogic}
 Although the operational semantics provide a precise description of how a
-program will execute, their use for practical program verification is limited by
-a lack of expressivity and compositionality that would be achieved with use of a
-logic-based set of axioms.
+program will execute, their use for practical program verification is
+long-winded, tedious and error-prone. Instead, we use a program logic, which
+allows us to reason at the level of abstraction best suited to the particular
+program we would like to verify. Since so much of the behaviour of JS and SES is
+dependant on the state of the program heap, it is natural to start with
+separation logic.
 \TODO{My background is lacking here, (or I've forgotten it) -- discuss}
+\gds{How's that?}
 
 We first extend separation logic to be able to express reachability over
 pointers in the heap, and then produce a Hoare-triple axiom for each expression
