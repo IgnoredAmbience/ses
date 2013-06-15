@@ -889,10 +889,20 @@ P \sep Q \entails R \text{ iff } P \entails Q \wand R
 %   \wand R
 % \]
 * Used for extending footprint of heap
+    ...for example, in the weakest precondition of object creation.
+
+* Used for speculating/hypothesising different values in the existing heap
+    ...for example, in the weakest precondition of over-writing assignment.
+
+    ...or in the proof of the store predicate over-writing assignment case.
 
 * Weakest preconditions of commands
 
 * We claim that both uses are incompatible under a global view of the heap
+
+    .... no - the incompatibility is between the adjoint property and the
+    hypothesising use of the wand. If we define the adjoint wand in our context,
+    we get the footprint-extending wand, but not the hypothesising one.
 
 Consider $x \pointsto 1 \sep (x \pointsto 2 \wand Q)$
 
