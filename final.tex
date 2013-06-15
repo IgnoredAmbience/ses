@@ -234,15 +234,15 @@
   in the context of a proof. The axiom asserts that the post-condition will hold
   if the \emph{precondition} has the variable replaced by
   the assigned value. This axiom makes more sense if it is considered to be used
-  whilst reasoning backwards. For example, to prove $\tr{\true}{r := x; q :=
+  whilst reasoning backwards. For example, to prove $\tr{\ltrue}{r := x; q :=
   0}{x = r + y \times q}$:
 
   \begin{tabular}{ll}
-    $\{\true \impl x = x + y \times 0 \}$ & Axiom \\
+    $\{\ltrue \impl x = x + y \times 0 \}$ & Axiom \\
     $\tr{x = x + y \times 0}{r:=x}{x = r + y \times 0}$ & Assignment \\
     $\tr{x = r + y \times 0}{q:=0}{x = r + y \times q}$ & Assignment \\
-    $\tr{\true}{r:=x}{x = r + y \times 0}$ & Consequence \\
-    $\tr{\true}{r:=x; q:=0}{x = r + y \times q}$ & Composition\\
+    $\tr{\ltrue}{r:=x}{x = r + y \times 0}$ & Consequence \\
+    $\tr{\ltrue}{r:=x; q:=0}{x = r + y \times q}$ & Composition\\
   \end{tabular}
 
   It is noted that proofs in this format are long and tedious, but it is
@@ -252,7 +252,7 @@
   presented as follows:
 
   \begin{tabular}{l}
-    $\{\true\}$ \\
+    $\{\ltrue\}$ \\
     $\{x = x + y \times 0\}$ \\
     $\ r:=x$ \\
     $\{x = r + y \times 0\}$ \\
@@ -912,8 +912,8 @@ via user-defined fields from the given object.
 \newcommand{\asrtline}[3][\pipe]{#1 & #2 & \text{#3}\\}
 \begin{display}{Assertions}
   $\begin{array}{rll}
-    \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \true \pipe
-    \false}{Boolean formulas}
+    \asrtline[P ::=]{P \land P \pipe P \lor P \pipe \lnot P \pipe \ltrue \pipe
+    \lfalse}{Boolean formulas}
     \asrtline{P \sep P \pipe P \wand P \pipe P \sepish P}{Structural formulas}
     \asrtline{\bigsep_{x \in \T{set}} P(x)}{Iterative $\sep$}
     \asrtline{P \boxwand Q}{Global `hypothesis' formula}
@@ -930,7 +930,7 @@ via user-defined fields from the given object.
 \begin{display}{Assertion satisfaction relation}
 \hspace{1.5em} \= $h,h_g,L,\env \satisfies (E_1,E_2) \pointsto E_3$ \= $\iff$ \= \kill
 
-\assaxiom{\true} \\
+\assaxiom{\ltrue} \\
 %    h,h_g,L,\env \not\satisfies \false \\
 \asssat{P \land Q}{(h,h_g,L,\env \satisfies P) \land (h,h_g,L,\env \satisfies
 Q)}{} \\
