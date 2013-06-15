@@ -1013,6 +1013,17 @@ The assertion $E_1 \bp E_2$ means that the location $E_1$ may be pointed to by
     & h \equiv (\evalle{E_1}, @bp) \pointsto \_
 \end{align*}
 
+Note that the interaction between the backpointer operator and the consequence rule in the
+Hoare reasoning is particularly useful.
+For example, we can widen the backpointer set at any time necessary thanks to
+the implication $l \bp S \impl l \bp S \cup S'$.
+
+We are also able to shrink the set if it is known that the elements being
+removed definitely do not point to the object in question:
+\[
+  a \bp \{(b,c)\} \sep (b,c) \pointsto d \sep a \not\doteq d \impl a \bp \{\} \sep (b,c) \pointsto d
+\]
+
 Although the backpointer operator would at first seem to not require any
 footprint on the heap (that it would be a \emph{pure} operator), the operator's
 interactions with the spatial elements of the logic may result in unsoundness.
@@ -1050,17 +1061,6 @@ any backpointer assertions about that object.
   how pure assertions behave within Separation Logic (but I guess a part of this
   project is to figure out exactly that!...)}
 \gds{here you go}
-
-The interaction between the backpointer operator and the consequence rule in the
-Hoare reasoning is particularly useful.
-For example, we can widen the backpointer set at any time necessary thanks to
-the implication $l \bp S \impl l \bp S \cup S'$.
-
-We are also able to shrink the set if it is known that the elements being
-removed definitely do not point to the object in question:
-\[
-  a \bp \{(b,c)\} \sep (b,c) \pointsto d \impl a \bp \{\} \sep (b,c) \pointsto d
-\]
 
 \section{Hoare Triples}
 
