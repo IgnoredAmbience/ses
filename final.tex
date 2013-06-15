@@ -114,11 +114,11 @@
   executed within a restricted context, safe from the possibility of unintended
   leak.
   Restricted execution permits fine-grained control over the permissions that
-  untrusted executing code has by restricting the set of accessable references
+  untrusted executing code has by restricting the set of accessible references
   to other objects.
   This is a particularly powerful method as it is possible for unrestricted code
   to interact with code under restricted execution, it is in this situation that
-  it is envisaged that lapses in the encapsulation could inadvertantly occur due
+  it is envisaged that lapses in the encapsulation could inadvertently occur due
   to programmer error.
 
   \FIXME{EDIT INTO SHAPE}
@@ -210,7 +210,7 @@
   that describe different semantics for overflow in sets of finite integers.
 
   A number of axioms and inference rules are universal or common to nearly all
-  imperitive languages, Hoare presents four of these:
+  imperative languages, Hoare presents four of these:
   \begin{display}{}
     \stateaxiom{(Assign)}
     {\tr{P[f/x]}{x := f}{P}} \qquad
@@ -280,7 +280,7 @@
   attempts to axiomatize use of the heap would result in assertions
   that rapidly grew in complexity, both in terms of length, but also from
   universal quantification, for the need to assert that the rest of the heap was
-  not modfified along with the location of interest.
+  not modified along with the location of interest.
 
   Burstall considered a local approach to this reasoning in 1972
   \cite{burstall1972some}, but the approach featured little further research and
@@ -304,7 +304,7 @@
   The separating conjunction only enforces disjointedness of the storage
   locations of values, it is permitted to point to other heap locations from
   within the heap. For example $(x \mapsto 4, y) \sep (y \mapsto 3, x)$ is
-  permissable and required to be able to build complex data structures.
+  permissible and required to be able to build complex data structures.
 
   % diagram of (x -> 4, y) * (y -> 3, x) ?
 
@@ -476,7 +476,7 @@
 
 \chapter{SES Language Syntax \& Operational Semantics}
   We now define the syntax of expressions in this model of the SES
-  language and present the english definition of each expression along with the
+  language and present the English definition of each expression along with the
   Operational Semantics for the precise effect it has on the heap and program
   state. We also discuss how SES differs from JavaScript and the rationale for
   these differences.
@@ -522,7 +522,7 @@
   SES language, an object it must be passed a reference to another object to be
   able to access it.
   Since all functions (including standard libraries and resources) are
-  themselves objects, the concept of access extends to one of privelege when a
+  themselves objects, the concept of access extends to one of privilege when a
   security-sensitive interface needs to be protected.
 
   We model SES as an expression-based language, the full language follows
@@ -546,7 +546,7 @@
   \section{Operational Semantics}
 
   We now describe the semantics of each expression given in the syntax, both
-  informally in english, and formally with the operational semantics rule, which
+  informally in English, and formally with the operational semantics rule, which
   precisely describes how the program state is modified by execution of each
   expression.
 
@@ -568,7 +568,7 @@
   \wedge \getValue(H',r) = v) \]
 
   \subsection{Structural Expressions}
-  All of these semantics are common across most imperitive languages.
+  All of these semantics are common across most imperative languages.
 
   \stateaxiom{(Value)}{H,L,\js{v} \evalsto H,v}
 
@@ -587,9 +587,8 @@
   \nopagebreak
 
   The sequencing operator specifies that the expression on the left should be
-  evaluated, followed by the expresion on the right. The result of the right
-  subexpression is returned. This definitiion is standard for imperitive
-  languages.
+  evaluated, followed by the expression on the right. The result of the right
+  subexpression is returned.
 
   \staterule{(Binary operator)}
     {H,L,\js{e_1} \gevalsto H'',v_1 \\
@@ -743,7 +742,7 @@ body are defined on an activation record so that they are lexically scoped.
 
 Constructs an object using the given function, an object
 is created as usual, it's prototype is assigned to that of the function's
-\js{prototype} field. The body of the function is then exectuted, commonly used
+\js{prototype} field. The body of the function is then executed, commonly used
 to initialize the newly created object.
 
 % ES5-Strict definition, plus reval global - matches caja impl (and intuition).
