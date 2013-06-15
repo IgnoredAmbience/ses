@@ -578,6 +578,7 @@
   \wedge \getValue(H',r) = v) \]
 
   \subsection{Structural Expressions}
+  \label{subsec:structuralexpressions}
   All of these semantics are common across most imperative languages.
 
   \stateaxiom{(Value)}{H,L,\js{v} \evalsto H,v}
@@ -1066,7 +1067,7 @@ any backpointer assertions about that object.
 \gds{here you go}
 
 \section{Hoare Triples}
-Recall \ref{subsec:programreasoning} where Hoare reasoning was introduced, in
+Recall Section~\ref{subsec:programreasoning} where Hoare reasoning was introduced, in
 this section, we extend Hoare reasoning to support our extensions to
 separation logic and we define inference rules for the SES language.  
 
@@ -1110,7 +1111,64 @@ favour of more targeted real-world examples.
 * Discuss major changes
   * Introduction of 'base case' bp sets for commands that create new objects
   * Pass-through of bp sets where additions required
-  * 
+  * (Introduction of $\gv$)
+  * Null
+
+* Discuss side issues
+  * Tripping over our own $\sep$s (Object)
+  * Looseness with bp sets for $\lop$ in proofs...
+
+As with the operational semantics section of the project, the Inference Rules
+for the SES language are necessarily based upon the JS inference rules produced
+in~\cite{gms-popl}. However, here far many more adaptions were required to introduce
+the backpointer assertions required by the logic to track assignments.
+
+All of the inference rules for Structural Expressions listed in
+Section~\ref{subsec:structuralexpressions} and the standard Separation Logic
+axioms of Frame, Elimination, Consequence and Disjunction are used unmodified.
+
+It is useful to note that the Operational Semantics rules need not necessarily
+map to Hoare triple inference rules. Indeed, in the case of the while statement,
+the two operational semantics rules for the true/false cases are mapped down to
+the single Hoare triple inference rule.
+
+(Variable) Prohibited null object references from being returned - language
+difference
+
+(Member access) No change
+(Computed access) No change
+
+(Assignment) Dual JS rules merged into one - no need to deal with global
+assignment.
+Introduction of RW check.
+Discuss the meaning of $\beta$ as being like $\bp$ but capable of handling all
+types of values, not just locations. In most cases, it is only the bp that
+requires this distinction, the rest of the rule is type-ambivolent. It makes
+sense that rather than case splitting it into two rules (a lot), we just
+predicate it out to handle both cases. In fact, this is /required/ for object
+creation, where splitting out to two rules just isn't possible.
+
+(Object creation) Fun!
+
+Rule originally cascades through assigned expressions, collecting required
+pre-conditions into overall precondition for obj. We add to this that we need
+the bp set for the returned value, so that we can add to it.
+
+This rule is sound but not complete, the enforced separation fails for the
+situation $X_n = X_{n+1}$, since we don't collect the sets together, just
+duplicate - we get a branching of $s_n=s_{n+1}$ to $s_n' \neq s_{n+1}'$
+
+(Function creation)
+(Named Function creation)
+Main thing for these two is the use of $\scopeBps$ and $\scopeBpsUpd$ to
+get/update the set of backpointers for the objects in the scope chain.
+(Function call)
+(Object construction)
+(This)
+
+(Restricted evaluation)
+(Freeze)
+(Def)
 
 \chapter{Program Proofs}
 \section{Caretaker}
@@ -1337,7 +1395,8 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \vg
 
   \staterule{(Variable)}
-    {P = \scope(Ls_1, \ls, \js{x}, L) \sepish \getValue(Ls_2, \fld{L}{\js{x}}, V)}
+    {P = \scope(Ls_1, \ls, \js{x}, L) \sepish
+      \getValue(Ls_2, \fld{L}{\js{x}}, V) \sep L \not\doteq \nil}
     {\tr P {\js{x}} {P \sep \rv \doteq \fld{L}{\js{x}}}}
   \vg
 
