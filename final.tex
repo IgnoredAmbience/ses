@@ -653,6 +653,7 @@
   false, \und is returned. This is the standard loop unrolling definition.
 
   \subsection{Heap-based Expressions}
+  \label{sec:opsem:heapexprs}
   \staterule{(Variable Resolution)}
     {\scope(H,L,x) = l' \quad l' \neq \nil}
     {H,L,\js x \evalsto H, \fld{l'}{x}}
@@ -1148,6 +1149,7 @@ axioms of Frame, Elimination, Consequence and Disjunction are used unmodified.
 I will discuss the Binary Operator inference rule in detail to explain how to
 interpret some of the techniques used in the these rules.
 
+\subsubsection{How to Read Hoare Triple Inference Rules}
   \staterule{(Binary Operator)}
     {
       \tr P {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls_1,
@@ -1197,22 +1199,88 @@ value for the expression.
   * Looseness with bp sets for $\lop$ in proofs...
 \FIXME{END TODO}
 
-(Variable) Prohibited null object references from being returned - language
-difference
+\subsubsection{Heap-based Expressions}
+\staterule{(Variable Resolution)}
+  {P = \scope(Ls_1, \ls, \js{x}, L) \sepish
+   \getValue(Ls_2, \fld{L}{\js{x}}, V) \sep L \not\doteq \nil}
+  {\tr P {\js{x}} {P \sep \rv \doteq \fld{L}{\js{x}}}}
 
-(Member access) No change
-(Computed access) No change
+  This rule searches the current scope chain, $\ls$ for the variable \js{x},
+  placing all searched heap cells into the assertion. In addition to the
+  counterpart operational semantics rule, permission to get the value of the
+  found variable must also be specified as \emph{partially} disjoint to the
+  scope chain search, as both make reference to the same target heap cell.
 
-(Assignment) Dual JS rules merged into one - no need to deal with global
-assignment.
-Introduction of RW check.
-Discuss the meaning of $\beta$ as being like $\bp$ but capable of handling all
-types of values, not just locations. In most cases, it is only the bp that
-requires this distinction, the rest of the rule is type-ambivolent. It makes
-sense that rather than case splitting it into two rules (a lot), we just
-predicate it out to handle both cases. In fact, this is /required/ for object
-creation, where splitting out to two rules just isn't possible -- at one point
-we had 4 variations of this rule, before fixing on the language.
+  The returned reference is required to be not on the \nil object by the SES
+  language, this requirement is not enforced by JS, as discussed in
+  Section~\ref{sec:opsem:heapexprs}.
+
+\staterule{(Member access)}
+  {\tr P {\js{e}} {Q \sep \rv \doteq V} \quad Q = R \sep \getValue(Ls, V, L)
+    \sep L \not\doteq \nil \sep L\dotin\loc}
+  {\tr P {\js{e.x}} {Q \sep \rv \doteq \fld{L}{\js{x}}}}
+
+\staterule{(Computed member access)}
+  {
+    \tr {P} {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep
+    \getValue(Ls_1, V_1, L) \sep L \not\doteq \nil \sep L\dotin\loc\\
+    \tr {R} {\js{e_2}} {Q \sep X \dotin \uvars \sep \rv \doteq V_2}
+    \quad Q = S_2 \sep \getValue(Ls_2, V_2, X)
+  }
+  {\tr {P} {\js{e_1[e_2]}} {Q \sep \rv \doteq \fld{L}{X}}}
+
+  Member access and Computed member access rules are the same as for JS. The
+  checks for value type being a location or a user-definable field
+  ($L \dotin \loc$ and $X \dotin \uvars$) are implicit in
+  the operational semantics, but explicit in the logic.
+
+  \staterule{(Assign)}
+    {
+      \tr P {\js{e_1}} {R \sep \rv \doteq \fld{L}{X}} \\
+      \tr R {\js{e_2}} {Q \sep (L,X) \pointsto V_3 \sep
+        \bpGen(V_2, s) \sep \rv \doteq V_1} \\
+      Q = S \sep \getValue(Ls, V_1, V_2) \sep \ReadWrite(L)
+    }
+    {\tr P {\js{e_1 = e_2}} {Q \sep (L,X) \pointsto V_2 \sep \bpGen(V_2, L, X,
+    s) \sep \rv \doteq V_2}}
+
+    The assignment rule has been considerably simplified as a result of SES not
+    permitting assignments to undeclared variables. JS had two rules for this
+    case, one to handle assignment to the global object in the case where (\nil,
+    X) was the target field, the other to handle the regular assignment, as
+    shown above.
+
+    To support the new SES \js{freeze()} command, we introduce a check that the
+    object being assigned to is readable using the $\ReadWrite$ predicate:
+    \[  \ReadWrite(L) \triangleq (L,@frozen) \pointsto \false  \]
+
+    Where it does not harm readability, it is good to have inference rules that
+    are as general as possible. It is often the case in the inference rules that
+    we do not know what type will be present in a heap cell. The $\bp$ operator
+    is defined over only heap locations, and not pure values, so it would be
+    incorrect to use the $\bp$ operator with any value that we cannot guarantee
+    must be a location. Given that it is arduous to introduce multiple inference
+    rules to handle these cases (and impossible when an unknown number of
+    subexpressions are being handled), we instead introduce the $\bpGen$
+    predicate, which has the purpose of being a type-agnostic version of the
+    $\bp$ operator:
+    \begin{align*}
+      \bpGen(V,\_) & \triangleq V \notdotin \loc \\
+      \bpGen(V,s) & \triangleq  V \dotin \loc \sep V \bp s \\
+    \end{align*}
+    We additionally also define a 4-ary version to simplify the oft-used
+    extension of the backpointer set $s$ by the heap cell $(L,x)$:
+    \begin{align*}
+      \bpGen(V,\_,\_,\_) & \triangleq  V \notdotin \loc \\
+      \bpGen(V,L,x,s) & \triangleq  V \dotin \loc \sep V \bp \{(L,x)\} \cup s
+    \end{align*}
+
+    Note that the assign rule could also be written with a single, 4-ary
+    instance of $\bpGen$ as part of the definition of $Q$
+    This alternative definition relies on the backpointer set
+    widening consequence/implication as discussed in
+    Section~\ref{sec:backpointers}. However, it is the author's preference to
+    give the explicit widenings in the rule definition.
 
 (Object creation) Fun!
 
