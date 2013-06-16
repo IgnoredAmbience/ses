@@ -690,6 +690,9 @@ produced, it should be noted that the meaning is subtly different (in that $h'
     changing the $\bigsep$ to a $\bigsepish$ --  \emph{may} be ok, but then
     soundness relies on the $\js{x_1} \neq \dots \neq \js{x_n}$ to prevent us
     from proving postcondition False for the program \js{ob = \{x:1,x:2\}}}
+  \TODO{Another bug case: What if a later expression modifies the pointer set
+    for an earlier? We store the early one in the logical environment, and then try
+    and enforce it later. Another incompleteness problem}
   \vg
 
   \staterule{(Function Call)}
