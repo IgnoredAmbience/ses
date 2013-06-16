@@ -547,7 +547,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 \end{display}
 
 \begin{display}{Local Variable Definitions}
-  \jaxiom{\defs(X,L,\jsvar{y})}{(l,y) \pointsto \und \sep X \not\doteq \js{y}} \\
+  \jaxiom{\defs(X,L,\jsvar{y})}{(L,\js{y}) \pointsto \und \sep X \not\doteq \js{y}} \\
   \jaxiom{\defs(X,L,\js{e_1 = e_2})}{\defs(X,L,\js{e_1})} \\
   \jaxiom{\defs(X,L,\js{e_1;e_2})}{\defs(X,L,\js{e_1}) \sepish
     \defs(X,L,\js{e_2})} \\
@@ -703,16 +703,17 @@ produced, it should be noted that the meaning is subtly different (in that $h'
           (F_2, @body) \pointsto \lambda X.\js{e_3} \sep (F_2, @scope) \pointsto
           Ls_2
       \end{array}\right) \\
-      \tr {R_1} {\js{e_2}} {R_2 \sep T \bp s \sep \bpGen(V_2,\_,\_,s') \sep
+      \tr {R_1} {\js{e_2}} {R_2 \sep T \bp s \sep \bpGen(V_2,s') \sep
         \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
       R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
       R_3 = R_2 \sep \exists L \st \left(\begin{array}{l}
-          \ls \doteq L:Ls_2 \sep (L, X) \pointsto V_2
-          \sep (L, @this) \pointsto T \sep (L, @proto) \pointsto \nil \sep
-          \defs(X,L,\js{e_3}) \sep {} \\
-          \newobj(L,@proto,@this,\js{x},\vardecls(X, L, \js{e_3})) \sep
-          L \bp \{\} \sep T \bp \{(L,@this)\} \cup s \sep
-          \bpGen(V_2, L, X, s')
+          (L, X) \pointsto V_2 \sep \bpGen(V_2, L, X, s') \sep {} \\
+          (L, @this) \pointsto T \sep T \bp \{(L,@this)\} \cup s \sep
+          (L, @proto) \pointsto \nil \sep {} \\
+          \defs(X,L,\js{e_3}) \sep
+          \newobj_L(@proto,@this,\js{x},\vardecls(X, L, \js{e_3})) \sep {} \\
+          L \bp \{\} \sep
+          \ls \doteq L:Ls_2
       \end{array}\right) \\
       \tr {R_3} {\js{e_3}} {\exists L \st Q \sep \ls \doteq L:Ls_2} \qquad
       \ls \notin \fv(Q) \cup \fv(R_2)
