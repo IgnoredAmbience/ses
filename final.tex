@@ -20,16 +20,16 @@
 \begin{document}
 \begin{titlepage}
 \begin{center}
-  \textsc{\Large Imperial College London} \\[0.1cm]
-  \textsc{\Large Department of Computing}
+  \textsc{\large Imperial College London} \\[0.1cm]
+  \textsc{\large Department of Computing}
 
   \vfill
 
   % Still rough title
-  {\Huge A Program Logic for Verification of Security Properties in Secure
+  {\LARGE A Program Logic for Verification of Security Properties in Secure
   ECMAScript} \\[1cm]
 
-  {\LARGE Thomas Wood} \\[1cm]
+  {\Large Thomas Wood} \\[1cm]
 
   {\large Supervisors:\\
   Dr. Gareth Smith \\
@@ -290,7 +290,7 @@
   collaboration with O'Hearn, Ishtiaq and Yang produced Separation Logic, a
   combination of the spatial Bunched Implication logic with Hoare's methods for
   reasoning about programs
-  \cite{Ishtiaq2001BI,OHearn2001Local,reynolds2000intuitionistic,Reynolds2002Separation}.
+  \cite{Ishtiaq2001BI,OHearn2001Local,Reynolds2002Separation}.
 
   \subsection{Semantics of Separating Operators}
 
@@ -306,7 +306,8 @@
   within the heap. For example $(x \mapsto 4, y) \sep (y \mapsto 3, x)$ is
   permissible and required to be able to build complex data structures.
 
-  % diagram of (x -> 4, y) * (y -> 3, x) ?
+  \TODO{Make heap cells single value}
+  \TODO{diagram of (x -> 4, y) * (y -> 3, x)}
 
   $x \mapsto -$ is shorthand meaning that there is some value stored at heap
   location $x$.
@@ -329,6 +330,12 @@
   used to generate the weakest precondition for a command given a desired
   postcondition. This is often used for backwards reasoning, where a
   postcondition for a command is known, but the precondition is not.
+
+  In separation logic, an assertion is \emph{pure} if it does not make reference
+  to the heap. Expressions $P \sep Q$ where $P$ is pure and Q is not, may have
+  multiple derivations through splitting of the heap in different ways. To
+  prevent this, it is convention to use $a \doteq b$ as an abbreviation for
+  $a = b \land \lemp$, and similarly for $\dotin$.
 
   \subsection{Program Reasoning}
   \label{subsec:programreasoning}
@@ -546,10 +553,13 @@
   these are restricted evaluation, \tjs{reval(e,e)}, and methods to make objects
   immutable, \tjs{freeze(e)} and \tjs{def(e)}.
 
+
   \section{Operational Semantics}
   \label{sec:opsems}
 
   \TODO{Include/discuss my new axioms}
+  \TODO{Discuss methods for obtaining details of semantics for new functionality
+  of semantics for new/existing operations}
 
   We now describe the semantics of each expression given in the syntax, both
   informally in English, and formally with the big-step operational semantics
@@ -1104,6 +1114,73 @@ favour of more targeted real-world examples.
 
 \subsection{Inference Rules}
 \label{sec:infrules}
+Inference rules for hoare triples are similar in nature to those for operational
+semantics. Derivation of the pre- and post-conditions for the Hoare triple of a
+given expression usually requires the recursive derivation of its
+subexpressions, along with some structural operations on their intermediary
+assertions to build the overall pre- and post-conditions.
+
+The compositional nature (and the power of the Frame rule) of Separation
+logic is clear from the structure
+of the inference rules, only the information required to prove the particular
+operation is required -- all assertions required to satisfy subexpressions are
+transparently passed through to them and assertions that are not required for a
+particular sub-derivation can be hidden by the frame rule.
+
+The benefits of separation logic over the operational semantics are also clear
+here -- the pre- and post-conditions of a given expression will state clearly 
+what the expression will access.
+
+As with the operational semantics section of the project, the Inference Rules
+for the SES language are necessarily based upon the JS inference rules produced
+in~\cite{gms-popl}. However, here far many more adaptions were required to
+introduce the backpointer assertions required by the logic to track assignments.
+
+It is useful to note that the Operational Semantics rules need not necessarily
+map to Hoare triple inference rules. Indeed, in the case of the while statement,
+the two operational semantics rules for the true/false cases are mapped down to
+the single Hoare triple inference rule.
+
+All of the inference rules for Structural Expressions listed in
+Section~\ref{subsec:structuralexpressions} and the standard Separation Logic
+axioms of Frame, Elimination, Consequence and Disjunction are used unmodified.
+
+I will discuss the Binary Operator inference rule in detail to explain how to
+interpret some of the techniques used in the these rules.
+
+  \staterule{(Binary Operator)}
+    {
+      \tr P {\js{e_1}} {R \sep \rv \doteq V_1} \quad R = S_1 \sep \getValue(Ls_1,
+      V_1, V_3) \\
+      \tr R {\js{e_2}} {Q \sep \rv \doteq V_2} \quad Q = S_2 \sep \getValue(Ls_2,
+      V_2, V_4) \\
+      V = V_3 \mathbin{\bar\oplus} V_4
+    }
+    {\tr P {\js{e_1} \oplus \js{e_2}} {Q \sep \rv \doteq V}}
+
+It is first useful to note the overall `flow' of the assertions, here, $P$ is
+the overall precondition as well as the precondition to \js{e_1}, whose
+post-condition is the pre-condition to \js{e_2}, whose post-condition is also
+that of the entire expression.
+
+We next look at the return value for each sub-expression, $\rv$. It is presented
+as being extra to $Q$ and $R$, both so that its value may be used, and so that
+is is not passed into the pre-condition of the next sub-expression.
+
+The structure of the intermediary assertion $R$ is stated as having the
+form $S_1 \sep \getValue(Ls_1, V_1, V_3)$, which has the meaning `get value', it
+must be a part of $R$, since the derivation for \js{e_1} may use it (or even
+produce it) and, if not, it will be passed through from $P$ by the frame rule.
+
+The $\getValue$ predicate has been lifted to the logic from the semantics, the
+definition is unchanged from~\cite{gms-popl} and is given in
+Appendix~\ref{app:logicauxpreds}.
+
+Finally, from the retrieved values, $V_3$ and $V_4$, $V$ is calculated using the
+operator $\bar\oplus$ (lifted to the logic), and the value set as the return
+value for the expression.
+
+\FIXME{TODO}
 * Rationale for auxiliary predicates
   * $\beta$
   * $\scopeBpsUpd$
@@ -1118,20 +1195,7 @@ favour of more targeted real-world examples.
 * Discuss side issues
   * Tripping over our own $\sep$s (Object)
   * Looseness with bp sets for $\lop$ in proofs...
-
-As with the operational semantics given in Section~\ref{sec:opsems}, the Inference Rules
-for the SES language are necessarily based upon the JS inference rules produced
-in~\cite{gms-popl}. However, here far many more adaptions were required to introduce
-the backpointer assertions required by the logic to track assignments.
-
-All of the inference rules for Structural Expressions listed in
-Section~\ref{subsec:structuralexpressions} and the standard Separation Logic
-axioms of Frame, Elimination, Consequence and Disjunction are used unmodified.
-
-It is useful to note that the Operational Semantics rules need not necessarily
-map to Hoare triple inference rules. Indeed, in the case of the while statement,
-the two operational semantics rules for the true/false cases are mapped down to
-the single Hoare triple inference rule.
+\FIXME{END TODO}
 
 (Variable) Prohibited null object references from being returned - language
 difference
@@ -1147,7 +1211,8 @@ types of values, not just locations. In most cases, it is only the bp that
 requires this distinction, the rest of the rule is type-ambivolent. It makes
 sense that rather than case splitting it into two rules (a lot), we just
 predicate it out to handle both cases. In fact, this is /required/ for object
-creation, where splitting out to two rules just isn't possible.
+creation, where splitting out to two rules just isn't possible -- at one point
+we had 4 variations of this rule, before fixing on the language.
 
 (Object creation) Fun!
 
@@ -1163,14 +1228,23 @@ duplicate - we get a branching of $s_n=s_{n+1}$ to $s_n' \neq s_{n+1}'$
 (Named Function creation)
 Main thing for these two is the use of $\scopeBps$ and $\scopeBpsUpd$ to
 get/update the set of backpointers for the objects in the scope chain.
+Initialise bps for 2 or 3 objects, function object ($L_2$), prototype object
+($L_1$), and named function scope oject ($L_3$)
+Also $\lop$ and $\lfp$ updated.
 
-(Function call)
-(Object construction)
-(This)
+(Function call) Nothing much interesting here, 
+(Object construction) Write the rule!
+Bp for this object, and for object passed as parameter.
+Bp created for new activation record.
 
-(Restricted evaluation)
-(Freeze)
-(Def)
+(This) Unchanged.
+
+(Restricted evaluation) New definition, but of itself has no bp assertions, they
+may be passed through to code executing within, though. Key effect is
+redefinition of $\ls$. We may be able to drop bold g.
+
+(Freeze) Boring
+(Def) Describe auxDef.
 
 \chapter{Program Proofs}
 \section{Caretaker}
@@ -1342,6 +1416,7 @@ produced, it should be noted that the meaning is subtly different (in that $h'
 \neq h_g$ in all cases).
 
 \TODO{More Auxiliary predicates}
+\label{app:logicauxpreds}
 \begin{display}{Auxiliary Predicates}
   \jaxiom{\obj_E(E_1:E'_1,...,E_n:E'_n)}{(E,E_1) \pointsto E'_1 \sep ... \sep
     (E,E_n) \pointsto E'_n} \\
