@@ -1318,7 +1318,8 @@ value for the expression.
     This rule is sound, but is known not to be complete -- it fails for
     the creation of objects which assign the same location to multiple fields.
     Further work is needed to fix this.
-
+  
+  \subsubsection{Function-related Expressions}
   \staterule{(Function)}
   {
     P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \scopeBps(\ls, ss) \\
@@ -1397,12 +1398,12 @@ value for the expression.
           (F_2, @body) \pointsto \lambda X.\js{e_3} \sep (F_2, @scope) \pointsto
           Ls_2
       \end{array}\right) \\
-      \tr {R_1} {\js{e_2}} {R_2 \sep T \bp s \sep \bpGen(V_2,s') \sep
+      \tr {R_1} {\js{e_2}} {R_2 \sep \bpGen(T,s) \sep \bpGen(V_2,s') \sep
         \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
       R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
       R_3 = R_2 \sep \exists L \st \left(\begin{array}{l}
           (L, X) \pointsto V_2 \sep \bpGen(V_2, L, X, s') \sep {} \\
-          (L, @this) \pointsto T \sep T \bp \{(L,@this)\} \cup s \sep
+          (L, @this) \pointsto T \sep \bpGen(T,L,@this,s) \sep
           (L, @proto) \pointsto \nil \sep {} \\
           \defs(X,L,\js{e_3}) \sep
           \newobj_L(@proto,@this,\js{x},\vardecls(X, L, \js{e_3})) \sep {} \\
@@ -1414,14 +1415,58 @@ value for the expression.
     }
     {\tr P {\js{e_1(e_2)}} {\exists L \st Q \sep \ls \doteq Ls_3}}
 
-Bp for this object, and for object passed as parameter.
-Bp created for new activation record.
+    The function call rule is largely unchanged from the JS version, changes are
+    made to introduce backpointer set updates for the object assigned to the
+    @this internal variable, the parameter of the function, and created for the
+    activation record object.
 
-(This) Unchanged.
+  \staterule{(This)}
+  { P = \scope(Ls_1, \ls, @this, L_1) \sepish \proto(Ls_2, L_1, @this, L_2)
+    \sepish (L_2,@this) \pointsto V }
+  {\tr P {\js{this}} {P \sep \rv \doteq V}}
 
-(Restricted evaluation) New definition, but of itself has no bp assertions, they
-may be passed through to code executing within, though. Key effect is
-redefinition of $\ls$. We may be able to drop bold g.
+  The This rule is the same as in the JS language. The object that this is bound
+  to is determined by the value of the internal @this variable, set on
+  function activation records and the object at the bottom of the scope chain.
+
+  \subsubsection{SES-specific Expressions}
+  \staterule{(Restricted evaluation)}
+    {
+      \tr{P}{\js{e_1}}{R_1 \sep \rv \doteq V_1} \\
+      R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \Strings \\
+      \parse(V_2) = \js{e_3} \\
+      \tr{R_1}{\js{e_2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls} \\
+      R_2 = \left(\begin{array}{l}
+        S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep V_4 \bp s
+        \cup \{(L,@this)\} \sep {} \\
+        \exists L \st R_3 \sep
+        \newobj_L(@proto,@this,\vardecls(\_,L,\js{e_3})) \sep {} \\
+        \obj_L(@this: V_4, @proto: \nil) \sep \defs(\_,L,\js{e_3}) \\
+      \end{array}\right) \\
+      R_3 = (\ls \doteq L:[V_4]) \\
+      \tr{R_2}{\js{e_3}}{\exists L \st Q \sep R_3}
+    }
+    {\tr{P}{\js{reval(e_1,e_2)}}{\exists L \st Q \sep \ls \doteq Ls}}
+
+    This is a new definition. The first subexpression, the untrusted code, is
+    resolved to a string
+    which is parsed into a suitable form for analysis (details out of
+    scope of this formalisation). The second subexpression is resolved to an
+    object, which is used as the base object for a new scope chain. The
+    untrusted code is then executed within the context of the new scope chain.
+    Its pre- and post-conditions are incorporated into those of the whole
+    expression.
+
+    We assume that a Hoare triple for the untrusted code is available, or
+    derivable. If not, an arbitrary triple could be substituted, say one that is
+    designed to be \emph{maximally malicious}. If the security of the restricted
+    evaluation of this program can be proven, then all programs run in this
+    context should be safe.
+
+    It is the case that the object resolved by the second subexpression of
+    a call to restricted evaluation should be considered security critical. It
+    is reachability from this object to privileged objects that should be
+    checked by axioms that verify security properties.
 
 (Freeze) Boring
 (Def) Describe auxDef.
@@ -1769,12 +1814,12 @@ produced, it should be noted that the meaning is subtly different (in that $h'
           (F_2, @body) \pointsto \lambda X.\js{e_3} \sep (F_2, @scope) \pointsto
           Ls_2
       \end{array}\right) \\
-      \tr {R_1} {\js{e_2}} {R_2 \sep T \bp s \sep \bpGen(V_2,s') \sep
+      \tr {R_1} {\js{e_2}} {R_2 \sep \bpGen(T,s) \sep \bpGen(V_2,s') \sep
         \ls \doteq Ls_3 \sep \rv \doteq V_1} \\
       R_2 = S_2 \sep \getValue(Ls_4, V_1, V_2) \\
       R_3 = R_2 \sep \exists L \st \left(\begin{array}{l}
           (L, X) \pointsto V_2 \sep \bpGen(V_2, L, X, s') \sep {} \\
-          (L, @this) \pointsto T \sep T \bp \{(L,@this)\} \cup s \sep
+          (L, @this) \pointsto T \sep \bpGen(T,L,@this,s) \sep
           (L, @proto) \pointsto \nil \sep {} \\
           \defs(X,L,\js{e_3}) \sep
           \newobj_L(@proto,@this,\js{x},\vardecls(X, L, \js{e_3})) \sep {} \\
@@ -1796,19 +1841,20 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Restricted evaluation)}
     {
       \tr{P}{\js{e_1}}{R_1 \sep \rv \doteq V_1} \\
-      R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \text{String} \\ %% FIXME: STRING
+      R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \Strings \\
       \parse(V_2) = \js{e_3} \\
-      \tr{R_1}{\js{e_2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls \sep \gv \doteq g} \\
+      \tr{R_1}{\js{e_2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls} \\
       R_2 = \left(\begin{array}{l}
-        S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep {} \\
+        S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep V_4 \bp s
+        \cup \{(L,@this)\} \sep {} \\
         \exists L \st R_3 \sep
-        \newobj_L(@proto,@this,\vardecls(...,\js{e_3})) \sep {} \\
-        \obj_L(@this: V_2, @proto: \nil) \sep \defs(...,\js{e_3}) \\
+        \newobj_L(@proto,@this,\vardecls(\_,L,\js{e_3})) \sep {} \\
+        \obj_L(@this: V_4, @proto: \nil) \sep \defs(\_,L,\js{e_3}) \\
       \end{array}\right) \\
-      R_3 = (\ls \doteq L:[V_2] \sep \gv \doteq V_2) \\
+      R_3 = (\ls \doteq L:[V_4]) \\
       \tr{R_2}{\js{e_3}}{\exists L \st Q \sep R_3}
     }
-    {\tr{P}{\js{reval(e_1,e_2)}}{\exists L \st Q \sep \ls \doteq Ls \sep \gv \doteq g}}
+    {\tr{P}{\js{reval(e_1,e_2)}}{\exists L \st Q \sep \ls \doteq Ls}}
   \vg
 
   \staterule{(Freeze)}

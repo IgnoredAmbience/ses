@@ -731,19 +731,20 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Restricted evaluation)}
     {
       \tr{P}{\js{e_1}}{R_1 \sep \rv \doteq V_1} \\
-      R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \text{String} \\ %% FIXME: STRING
+      R_1 = S_1 \sep \getValue(\_, V_1, V_2) \sep V_2 \dotin \Strings \\
       \parse(V_2) = \js{e_3} \\
-      \tr{R_1}{\js{e_2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls \sep \gv \doteq g} \\
+      \tr{R_1}{\js{e_2}}{R_2 \sep \rv \doteq V_3 \sep \ls \doteq Ls} \\
       R_2 = \left(\begin{array}{l}
-        S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep {} \\
+        S_2 \sep \getValue(\_, V_3, V_4) \sep V_4 \dotin \loc \sep V_4 \bp s
+        \cup \{(L,@this)\} \sep {} \\
         \exists L \st R_3 \sep
-        \newobj_L(@proto,@this,\vardecls(...,\js{e_3})) \sep {} \\
-        \obj_L(@this: V_2, @proto: \nil) \sep \defs(...,\js{e_3}) \\
+        \newobj_L(@proto,@this,\vardecls(\_,L,\js{e_3})) \sep {} \\
+        \obj_L(@this: V_4, @proto: \nil) \sep \defs(\_,L,\js{e_3}) \\
       \end{array}\right) \\
-      R_3 = (\ls \doteq L:[V_2] \sep \gv \doteq V_2) \\
+      R_3 = (\ls \doteq L:[V_4]) \\
       \tr{R_2}{\js{e_3}}{\exists L \st Q \sep R_3}
     }
-    {\tr{P}{\js{reval(e_1,e_2)}}{\exists L \st Q \sep \ls \doteq Ls \sep \gv \doteq g}}
+    {\tr{P}{\js{reval(e_1,e_2)}}{\exists L \st Q \sep \ls \doteq Ls}}
   \vg
 
   \staterule{(Freeze)}
