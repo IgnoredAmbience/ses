@@ -1184,7 +1184,6 @@ value for the expression.
 
 \FIXME{TODO}
 * Rationale for auxiliary predicates
-  * $\beta$
   * $\scopeBpsUpd$
   * $\auxDefGet/\auxDefSet$
 
@@ -1282,23 +1281,113 @@ value for the expression.
     Section~\ref{sec:backpointers}. However, it is the author's preference to
     give the explicit widenings in the rule definition.
 
-(Object creation) Fun!
+  \staterule{(Object creation)}
+    {
+      \forall i \in 1..n \st \left(\begin{array}{l}
+        P_i = R_i \sep \getValue(Ls_i, Y_i, X_i) \sep
+          \bpGen(X_i,s_i) \\
+        \tr {P_{i-1}} {\js{e_i}} {P_i \sep \rv \doteq Y_i} \\
+      \end{array}\right) \\
+      P_n = R \sep \lop \bp s_{op} \\
+      Q = R \sep
+      \exists L \st \left(\begin{array}{l}
+        \newobj_L(@proto, \js{x_1},...,\js{x_n}) \sep {} \\
+        \bigsep_{1 \leq i \leq n} (
+          (L, \js{x_i}) \pointsto X_i \sep \bpGen(X_i, L,\js{x_i}, s_i)
+        ) \sep {} \\
+        (L,@proto) \pointsto \lop \sep \lop \bp s_{op} \cup \{(L,@proto)\} \sep {} \\
+        \rv \doteq L \sep L \bp \{\} \\
+      \end{array}\right) \\
+      \js{x_1} \neq \dots \neq \js{x_n} \qquad \rv \not\in \fv(P_n)
+    }
+    {\tr {P_0} {\js{\{x_1:e_1, ..., x_n:e_n\}}} Q}
+    
+    This rule traverses the sub-expressions in the construction in left-to-right
+    order, collecting the required pre-conditions and post-conditions to
+    satisfy all expressions. For each sub-expression, the return value and
+    backpointer set for each object that is returned is stored for the
+    assignment.
 
-Rule originally cascades through assigned expressions, collecting required
-pre-conditions into overall precondition for obj. We add to this that we need
-the bp set for the returned value, so that we can add to it.
+    The object is then created, assigning the values stored in the first pass,
+    and updating their backpointer sets as necessary.
+    The prototype of the object is set to the language constant $\lop$ (the
+    object prototype) and
+    its backpointer set updated appropriately. Finally, a backpointer assertion
+    for the newly created object is produced for the new object.
 
-This rule is sound but not complete, the enforced separation fails for the
-situation $X_n = X_{n+1}$, since we don't collect the sets together, just
-duplicate - we get a branching of $s_n=s_{n+1}$ to $s_n' \neq s_{n+1}'$
+    This rule is sound, but is known not to be complete -- it fails for
+    the creation of objects which assign the same location to multiple fields.
+    Further work is needed to fix this.
 
-(Function creation)
-(Named Function creation)
-Main thing for these two is the use of $\scopeBps$ and $\scopeBpsUpd$ to
-get/update the set of backpointers for the objects in the scope chain.
-Initialise bps for 2 or 3 objects, function object ($L_2$), prototype object
-($L_1$), and named function scope oject ($L_3$)
-Also $\lop$ and $\lfp$ updated.
+  \staterule{(Function)}
+  {
+    P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \scopeBps(\ls, ss) \\
+      Q = \exists L_1,L_2 \st \left(\begin{array}{l}
+        % L_1 - prototype object
+        \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
+          \lop \bp s_1 \cup \{(L_1,@proto)\}  \sep {} \\
+        % L_2 - function
+        \newfun_{L_2}(\ls, \js{x}, \js{e}, L_1) \sep L_2 \bp \{\} \sep
+          \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
+        % Other bits
+        \rv \doteq L_2 \sep
+        \scopeBpsUpd(\ls, ss, ss', \{(L_2, @scope)\})
+    \end{array}\right)
+  }
+  {\tr P {\jsfun{x}{e}} Q}
+
+  \staterule{(Named Function)}
+    {
+      P = \lop \bp s_1 \sep \lfp \bp s_2 \sep \scopeBps(\ls, ss)  \\
+      Q = \exists L_1, L_2, L_3 \st \left(\begin{array}{l}
+        % L_1 - prototype object
+        \fullobj_{L_1}(@proto:\lop) \sep L_1 \bp \{(L_2, \js{prototype})\} \sep
+          \lop \bp s_1 \cup \{(L_1,@proto)\}  \sep {} \\
+        % L_2 - function
+        \newfun_{L_2}((L_3:\ls), \js{x}, \js{e}, L_1) \sep
+          L_2 \bp \{(L_3,\js{y})\} \sep
+          \lfp \bp s_2 \cup \{(L_2,@proto)\} \sep {} \\
+        % L_3 - new scope object
+        \fullobj_{L_3}(@proto:\nil,\js{y}:L_2) \sep L_3 \bp \{(L_2,@scope)\} \sep {} \\
+        % Other bits
+        \rv \doteq L_2 \sep
+        \scopeBpsUpd(\ls, ss, ss', \{(L_2, @scope)\})
+      \end{array}\right)
+    }
+    {\tr P {\jsfun[y]{x}{e}} Q}
+
+    Prior to the extension of the logic, both these functions required just
+    $\lemp$ for their preconditions, they now require 3 backpointer assertions,
+    the first two are for the language constants $\lop$ and $\lfp$ (the object
+    and function prototypes). The third of these assertions, $\scopeBps$
+    fetches the backpointer sets for each of the objects in the scope chain,
+    $\ls$, and places them in the list $ss$ of backpointer sets.
+
+    The post-conditions for these commands construct 2 or 3 objects: the
+    function itself ($L_2$); a prototype object ($L_1$); and, for the named
+    variant, a scope record ($L_3$) binding the function's name to itself for
+    use in recursive calls.
+    Fresh backpointer assertions are made for each of these new objects.
+
+    Since functions store the scope in which they are created the set of objects
+    in the scope chain also require their
+    backpointer sets updating. This is because the body of the function, and
+    thus the function itself now potentially provides a means of accessing those
+    objects. The $\scopeBpsUpd$ predicate uses the $ss$ list stored by the
+    $\scopeBps$ predicate in the precondition to achieve this.
+    \begin{align*}
+      \scopeBpsUpd(Ls, ss, ss', n) & \triangleq \bigsep_{0\leq i<\length(Ls)}(
+        \lstitem(i,Ls) \bp \lstitem(i,ss') \sep \lstitem(i,ss') \doteq
+        \lstitem(i,ss)
+        \cup n) \\
+      \scopeBps(Ls, ss) & \triangleq \scopeBpsUpd(Ls, ss, ss, \{\})
+    \end{align*}
+    The following equivalence for the $\scopeBpsUpd$ predicate is useful to note
+    for use in proofs:
+    \[
+      \scopeBpsUpd(L:Ls, s:ss, (s \cup n):ss', n) \iff L \bp s \cup n \sep
+      \scopeBpsUpd(Ls, ss, ss', n)
+    \]
 
 (Function call) Nothing much interesting here, 
 (Object construction) Write the rule!
