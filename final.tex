@@ -1182,22 +1182,6 @@ Finally, from the retrieved values, $V_3$ and $V_4$, $V$ is calculated using the
 operator $\bar\oplus$ (lifted to the logic), and the value set as the return
 value for the expression.
 
-\FIXME{TODO}
-* Rationale for auxiliary predicates
-  * $\scopeBpsUpd$
-  * $\auxDefGet/\auxDefSet$
-
-* Discuss major changes
-  * Introduction of 'base case' bp sets for commands that create new objects
-  * Pass-through of bp sets where additions required
-  * (Introduction of $\gv$)
-  * Null
-
-* Discuss side issues
-  * Tripping over our own $\sep$s (Object)
-  * Looseness with bp sets for $\lop$ in proofs...
-\FIXME{END TODO}
-
 \subsubsection{Heap-based Expressions}
 \staterule{(Variable Resolution)}
   {P = \scope(Ls_1, \ls, \js{x}, L) \sepish
@@ -1509,10 +1493,11 @@ value for the expression.
   satisfied if the same location is encountered a second time.
 
   The sepish operator, $\sepish$, must be used to collect the heap cells into a
-  single assertion as although we guarantee to terminate on the second traversal
+  single assertion. Although we guarantee to terminate on the second traversal
   of a loop, we must also take into account heap structures that have the same
   object reachable via different paths, for example the object \js{\{a:l,b:l\}}
-  would be unsatisfiable under the predicates if $\sep$ were used. Use of
+  would be unsatisfiable under the predicates if $\sep$ were used, since they
+  are not guaranteed to be disjoint. Use of
   $\sepish$ is sound in the update case, since the updates are consistent, the
   same value is written to all the overlapping heap cells.
 
