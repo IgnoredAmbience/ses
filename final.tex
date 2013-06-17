@@ -27,8 +27,8 @@
   \vfill
 
   % Still rough title
-  {\LARGE A Program Logic for Verification of Security Properties in Secure
-  ECMAScript} \\[1cm]
+  {\LARGE A Program Logic for Verification of Security Properties of Secure
+  ECMAScript Programs} \\[1cm]
 
   {\Large Thomas Wood} \\[1cm]
 
@@ -1536,13 +1536,6 @@ The Caretaker, or Revocable Reference pattern is a rudimentary pattern that
 demonstrates the ability to encapsulate a reference within a function. The
 implementation is shown in Figure~\ref{fig:code:caretaker}.
 
-When invoked by the trusted code with an object to protect, two functions are
-returned, an \js{access} function and a \js{kill} function. The trusted code keeps the
-\js{kill} function to call when the reference is to be revoked. The \js{access} function
-is passed to the untrusted code.
-The \js{access} function permits fields of the protected object to be accessed until
-the Caretaker is killed, at which point it must stop functioning.
-
 \begin{figure}[h!]
   \label{fig:code:caretaker}
 \begin{verbatim}var RevocableRef = function(ref) {
@@ -1553,6 +1546,13 @@ the Caretaker is killed, at which point it must stop functioning.
 }\end{verbatim}
   \caption{Implementation of the Caretaker pattern}
 \end{figure}
+
+When invoked by the trusted code with an object to protect, two functions are
+returned, an \js{access} function and a \js{kill} function. The trusted code keeps the
+\js{kill} function to call when the reference is to be revoked. The \js{access} function
+is passed to the untrusted code.
+The \js{access} function permits fields of the protected object to be accessed until
+the Caretaker is killed, at which point it must stop functioning.
 
 The only guarantee that the Caretaker pattern provides is that the \js{access}
 function will not succeed if the reference has been revoked.
@@ -1579,16 +1579,236 @@ $(A, @scope)$ and $(K, @scope)$, namely the externally-inacessable scope chains
 of the \js{access} and \js{kill} functions. We have already verified that these
 functions are correct, so the property holds.
 
+\begin{adjustbox}{width=\textwidth,height=\textheight,keepaspectratio,rotate=0,caption=Caretaker main body proof,label=rr-main,figure=p}
+  $\begin{array}{l}
+    \jsvar{RevocableRef = function(ref) \{}\\
+    \indblock{
+      \logic{
+        % function
+        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
+        % ar
+          \exists L \st \ls \doteq L:Ls \sep {} \\
+          \fullobj_L\left(
+            \begin{array}{l}
+              \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
+              \js{protected}: \und,\js{access}: \und,\js{kill}: \und %  and defs()
+            \end{array}
+          \right) \sep {} \\
+        % bp
+          L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
+          \lop \bp s_3 \sep \lfp \bp s_4 \sep
+          \scopeBps(Ls, ss)
+      } \\
+      \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
+      \logic{
+        % var(protected,ref), assign(@frozen)
+          \obj_L(\js{protected}: \und, \js{ref}: V, @frozen: \false) \sep {} \\
+        % assign
+          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
+      } \\
+      \jsvar{protected = ref;} \\
+      \logic{
+        % var *2
+          \obj_L(\js{protected}: V, \js{ref}: V, @frozen: \false) \sep {} \\
+        % assign
+          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
+      } \\
+      \step{Frames/cons} \\
+      \logic{
+        % var(access), assign(@frozen)
+          \obj_L(\js{access}: \und, @frozen: \false) \sep {} \\
+        % fun pre
+        \lop \bp s_3 \sep \lfp \bp s_4 \sep
+        L \bp \{\} \sep \scopeBps(Ls,ss) \sep \ls\doteq{L:Ls}
+      } \\
+      \jsvar{access = function(field) \{b_a\};} \\
+      \logic{
+        \exists A, A_p \st \left(\begin{array}{l}
+          % var, assign
+          \obj_L(\js{access}: A, @frozen: \false) \sep
+            A \bp s_7 \sep s_7 \doteq \{(L, \js{access})\} \sep {} \\
+          % fun pre
+          \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
+            \cup \{(A, @proto)\} \sep {} \\
+            L \bp \{(A,@scope)\} \sep \scopeBpsUpd(Ls, ss, ss_1, \{(A,@scope)\}) \sep {} \\
+          % fun post
+          \fullobj_{A_p}(@proto: \lop) \sep A_p \bp \{(A, \js{prototype})\} \sep {}\\
+          \newfun_A(\ls, \js{field}, b_a, A_p)
+        \end{array}\right) \sep \ls\doteq{L:Ls}
+      } \\
+      \step{Frames/cons} \\
+      \logic{
+        % var(access), assign(@frozen)
+          \obj_L(\js{kill}: \und, @frozen: \false) \sep {} \\
+        % fun pre
+        \lop \bp s_5 \sep \lfp \bp s_6 \sep
+        L \bp \{(A, @scope)\} \sep \scopeBpsUpd(Ls, ss_1) \sep \ls\doteq{L:Ls}
+      } \\
+      \jsvar{kill = function() \{b_k\};} \\
+      \logic{
+        \exists K, K_p \st
+        \left(\begin{array}{l}
+          % var, assign
+          \obj_L(\js{kill}: K, @frozen: \false) \sep
+            K \bp s_8 \sep s_8 \doteq \{(L, \js{kill})\} \sep {} \\
+          % fun pre
+          \lop \bp s_9 \sep s_9 \doteq s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
+            \cup \{(K, @proto)\} \sep {} \\
+            L \bp \{(A,@scope),(K,@scope)\} \sep {} \\
+            \scopeBpsUpd(Ls, ss_1, ss_2, \{(K,@scope)\}) \sep {} \\
+          % fun post
+          \fullobj_{K_p}(@proto: \lop) \sep K_p \bp \{(K, \js{prototype})\} \sep {} \\
+          \newfun_K(\ls, \_, b_k, K_p)
+        \end{array}\right)\sep \ls\doteq{L:Ls}
+      } \\
+      \step{Frames} \\
+      \logic{
+        \obj_L(\js{access}:A, \js{kill}:K) \sep
+        A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9 \sep \ls \doteq L : Ls
+      } \\
+      \js{return\ \{access: access, kill: kill\};} \\
+      \logic{
+        \exists O \st
+        \left(\begin{array}{l}
+          \obj_L(\js{access}:A, \js{kill}:K) \sep {} \\
+          \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
+          A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
+            \sep {} \\
+          \lop \bp s_9 \cup \{(O,@proto)\} \sep O \bp \{\} \sep \rv \doteq O
+        \end{array}\right)
+        \sep \ls \doteq L : Ls
+      } \\
+      \step{Frames} \\
+      \logic{
+        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
+        \exists L, A, A_p, K, K_p, O \st {} \\
+        \fullobj_L\left(\begin{array}{l}
+          \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
+          \js{protected}: V,\js{access}: A,\js{kill}: K
+        \end{array}\right) \sep {} \\
+        \fullobj_{A_p}(@proto: \lop) \sep \fullobj_{K_p}(@proto: \lop) \sep {} \\
+        \newfun_A(\ls,\js{field},b_a,A_p) \sep \newfun_K(\ls,\_,b_k,K_p) \sep {} \\
+        \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
+
+        \lop \bp s_3 \cup \{(A_p,@proto),(K_p,@proto),(O,@proto)\} \sep {} \\
+        \lfp \bp s_4 \cup \{(A,@proto),(K,@proto)\} \sep {} \\
+        A   \bp \{(L,\js{access}),(O,\js{access})\} \sep
+        A_p \bp \{(A,\js{prototype}) \sep {} \\
+        K   \bp \{(L,\js{kill}),(O,\js{kill})\} \sep
+        K_p \bp \{(K,\js{prototype}) \sep {} \\
+        V   \bp s_1 \cup \{(L,\js{ref}),(L,\js{protected})\} \sep {} \\
+        \scopeBpsUpd(Ls,ss,ss_2,\{(A,@scope),(K,@scope))\}) \sep {} \\
+        L   \bp \{(A,@scope),(K,@scope)\} \sep
+        O   \bp \{\} \sep
+
+        \rv \doteq O \sep \ls \doteq L : Ls
+      }
+    }
+    \js{\}}
+  \end{array}$
+\end{adjustbox}
+
+\begin{figure}
+  \[
+    \begin{array}{l}
+      \jsvar{kill = function() \{} \\
+      \indblock{
+        \logic{
+          (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
+          \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
+          \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
+          \obj_L(\js{protected}: V, @frozen: \false)
+        } \\
+        \step{Frame/exists} \\
+        \logic{
+          obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
+          obj_L(\js{protected}: V, @frozen: \false) \sep {} \\
+          \ls \doteq L':L:Ls
+        } \\
+        \js{protected = null;} \\
+        \logic{
+          obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
+          obj_L(\js{protected}: \nil, @frozen: \false) \sep {} \\
+          \ls \doteq L':L:Ls \sep \rv \doteq \nil
+        } \\
+        \step{Frame/exists} \\
+        \logic{
+          (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
+          \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
+          \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
+          \obj_L(\js{protected}: \nil, @frozen: \false) \sep \rv \doteq \nil
+        }
+      }
+      \js{\}}
+    \end{array}
+  \]
+  \caption{Caretaker \js{kill} function body}
+  \label{rr-kill}
+\end{figure}
+
+\begin{figure}
+  \[
+    \begin{array}{l}
+      \jsvar{access = function(field) \{} \\
+      \indblock{
+        \logic{
+          (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
+            (A, @scope) \mapsto L:Ls \sep {} \\
+          \exists L' \st \ls \doteq L' : L : Ls \sep
+            L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
+          \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
+            \sep {} \\
+          (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+            \sep X \dotin \uvars
+        } \\
+        \step{Frame/exists} \\
+        \logic{
+          \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
+          (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+            \sep {} \\
+          X \dotin \uvars \sep \ls \doteq L':L:Ls
+        } \\
+        \js{return\ protected[field];} \\
+        \logic{
+          \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
+          (L, \js{protected}) \mapsto P \sep
+          P \not\doteq \nil \sep P \dotin \loc \sep {} \\
+          X \dotin \uvars \sep \ls \doteq L':L:Ls \sep \rv \doteq \fld{P}{X}
+        } \\
+        \step{Frame/exists} \\
+        \logic{
+          (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
+            (A, @scope) \mapsto L:Ls \sep {} \\
+          \exists L' \st \ls \doteq L' : L : Ls \sep
+            L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
+          \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
+            \sep {} \\
+          (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
+            \sep X \dotin \uvars \sep \rv \doteq \fld{P}{X}
+        }
+      }
+      \js{\}}
+    \end{array}
+  \]
+  \caption{Caretaker \js{access} function body}
+  \label{rr-access}
+\end{figure}
+
+\clearpage
+
 \section{Membrane}
 \label{sec:membrane}
-A Membrane is a transitive Revocable Reference, in addition to protecting all
+The Membrane pattern is an enhanced version of Caretaker, but in addition to
+protecting all
 interactions with a particular object, a Membrane also protects all subsequent
 products of interactions with the protected object.
 
-This is achieve by wrapping all returned objects in a Membrane Reference that
-shares its kill switch with its parent. When the Membrane is killed, all
-references to the parent object and anything it created are blocked
-simultaneously.
+This is achieved by wrapping all returned objects in a Membrane Reference that
+shares its `kill switch' with the parent Membrane. When the Membrane is killed,
+all references to the parent object and any references that have been passed as
+a result of the parent are revoked simultaneously.
+
+A simple Membrane implementation is shown in Figure~\ref{fig:code:membrane}.
 
 \begin{figure}[h!]
 \begin{verbatim}var Membrane = function(ref) {
@@ -1605,82 +1825,166 @@ simultaneously.
   var kill = function() { killed = true; }
   return {access: access, kill: kill};
 }\end{verbatim}
-  \label{fig:code:membrane}
   \caption{Implementation of the Membrane pattern}
+  \label{fig:code:membrane}
 \end{figure}
 
-Notation:
-\begin{itemize}
-  \item $MRef_{MR}(M,r,F_A,S,T)$ \qquad Membrane reference for Membrane $M$ protecting object
-$r$, corresponding access function $F_A$, (safe-side) backpointer set $S$ for
-$r$, membrane-constructed backpointer set $T$.
+In order to prove the correctness of the Membrane, we take a more principled
+approach than we did for the considerably simpler Caretaker. We begin by
+defining predicates that will help us simplify the desired specifications for
+the Membrane functionality.
+
+We begin by defining the assertion for an instance of a Membane, along with the
+more refined definitions of an alive and a dead membrane. These definitions
+encapsulate the Membrane's activation record, $M$, on which the killswitch and
+supporting functions are initially defined, one of which is the MembraneRef
+constructor, $F_{MR}$, which is used recursively by the Membrane implementation.
 \begin{align*}
-  MRef_{MR}(M,r,F_A,S,T) &= \fun_{F_A}(MR:M:\_, \js{field}, \lambda_A, \_) \sep {} \\
-                         & \fullobj_{MR}(\js{ref}: r, \js{access}: F_A, @this: \_, @proto: \nil) \sep
+  MembraneInstance(M, F_{MR}, F_K) & \triangleq \obj_M(\js{ref}: \_, @this: \_, @proto: \nil,
+      \js{MembraneRef}: F_{MR}, \js{kill}: F_{K}) \sep {} \\
+      & \phantom{{} \triangleq {}} \newfun_{F_{MR}}(M:\_, \js{ref}, \lambda_{MR}, \_) \\
+  alive(M, F_{MR}, F_K) & \triangleq MembraneInstance(M, F_{MR}, F_K) \sep (M, killed) \pointsto \false \\
+  dead(M, F_{MR}, F_K) & \triangleq MembraneInstance(M, F_{MR}, F_K) \sep (M, killed) \pointsto \true
+\end{align*}
+
+The kill function $F_K$ for the Membrane $M$, is simply defined as:
+\[ kill(F_K, M) \triangleq \fun_{F_K}(M:\_, \_ , \lambda_K, \_) \]
+
+We next define predicates for the MembraneRef objects, $MR$, that are created as
+a result of using the Membrane, $M$. Each MembraneRef protects a potentially
+different object, $r$. $F_A$ is the corresponding access function for the
+MembraneRef. Finally, it is specified that the only objects that may point at
+$r$ are in the sets $S$, references in the trusted code, and $T$, references
+created by the Membrane.
+
+Note that the $\newfun$ predicate cannot be used to describe $F_A$ here, since
+it is passed into untrusted code. Although the untrusted code may add new fields
+to the function, it will have no impact upon the proof, as the function only
+accesses variables through its scope chain. In the case of additional fields
+being added, the $\newobj$ part of the $\newfun$ predicate would prevent proof
+of any such code.
+\begin{align*}
+  MRef_{MR}(M,r,F_A,S,T) &\triangleq \fun_{F_A}(MR:M:\_, \js{field}, \lambda_A, \_) \sep {} \\
+         &\phantom{{} \triangleq {}} \fullobj_{MR}(\js{ref}: r, \js{access}: F_A, @this: \_, @proto: \nil) \sep
     r \bp S \cup T
 \end{align*}
 
-Note: We cannot use the $\newfun$ predicate here as we return this function out
-to the usercode, it may be tampered with by having fields added, this does not
-impact upon the function call, since all the information used by the proofs is
-placed into internal fields, or within the function's scope chain.
-(The corresponding $\newobj$ produced in proofs is framed off for clarity)
+Finally, we must define the set of references, $T$, created by the Membrane
+which are permitted to have references to protected objects. The $Ls$ parameter
+is a list of $MRef$ objects constructed by the Membrane, $M$. The list $Ls$ is
+updated in the specification of \js{MembraneRef}.
+\begin{align*}
+  MRset_M([], \{(M, \js{ref})\}) &\triangleq \lemp \\
+  MRset_M(L:Ls, Ts') &\triangleq MRset_M(Ls, Ts) \sep Ts' \doteq Ts \cup \{(L, \js{ref})\}
+\end{align*}
 
-  \item $MRset_M(Ls,T)$ \qquad Membrane-backpointer constructor. Given a list of
-constructed $MR$s (access functions thereon?), provide (maximal) backpointer set
-for protected references for the Membrane $M$.
-\[ MRset_M([], \{(M, \js{ref})\}) = \lemp \]
-\[ MRset_M(L:Ls, Ts') = MRset_M(Ls, Ts) \sep Ts' \doteq Ts \cup \{(L, \js{ref})\}\]
+We now specify the properties required of Membrane and its associated functions.
+The \js{Membrane} function should take a reference, and produce an alive
+Membrane, with a kill function, an access function for the reference, and return
+these in a simple object.
+\[
+  \begin{array}{l}
+    \logic{
+      (\_, \js{ref}) \pointsto ref \sep
+      ref \bp S \sep
+      ref \dotin \loc \sep
+      \ls \doteq Ls
+    } \\
+    \js{Membrane(ref);} \\
+    \logic{
+      (\_, ref) \pointsto ref \sep
+      ref \dotin \loc \sep
+      \ls \doteq Ls \sep {} \\
+      \exists M, F_K, F_A, F_{MR}, MR, L \st \args{
+        alive(M, F_{MR}, F_K) \sep
+        kill(F_K,M) \sep
+        MRef_{MR}(M, ref, F_A, S, T) \sep {} \\
+        MRset([MR],T) \sep
+        \fullobj_L(\js{access}:F_A,\js{kill}:F_K) \sep
+        \rv \doteq L
+      }
+    }
+  \end{array}
+\]
+The kill function specification is self-explanatory.
+\[
+  \begin{array}{l}
+    \logic{
+      (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep (dead(M, F_{MR}, F_K)
+      \lor alive(M, F_{MR}, F_K))
+    } \\
+    \js{kill();} \\
+    \logic{
+      (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep dead(M, F_{MR}, F_K)
+    } \\
+  \end{array}
+\]
+The internal MembraneRef function takes a Membrane, the set of objects
+constructed by the membrane, and a reference to be protected. It leaves the
+Membrane unchanged, constructs a new MRef object, extends the list of MRef
+objects constructed, and returns the MRef's associated access function.
+\[
+  \begin{array}{l}
+    \logic{
+      (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
+      alive(M, F_{MR}, F_K) \sep
+      MRset_M(Ls,T) \sep {} \\
+      (\_, \js{ref}) \pointsto ref \sep
+      ref \dotin \loc \sep
+      ref \bp S \cup T
+    } \\
+    \tjs{MembraneRef(ref);} \\
+    \logic{
+      (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
+      alive(M, F_{MR}, F_K) \sep {} \\
+      \exists R, F_A \st \args{
+        MRset_M(R:Ls,T') \sep
+        MRef_{R}(M,ref,F_A,S,T') \sep \rv \doteq F_A
+      } \sep {} \\
+      (\_, \js{ref}) \pointsto ref \sep
+      ref \dotin \loc
+    } \\
+  \end{array}
+\]
+The access function is inherently associated with an MRef object, which it must
+have permission to. The field being accessed must be a user-accessible field on
+the object protected by the MRef and it must point to an object.
+\[
+  \begin{array}{l}
+    \logic{
+      (\_,\js{access}) \pointsto F_{A_1} \sep
+      alive(M, F_{MR}, F_K) \sep
+      MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
+      MRset(Ls,T_1) \sep {} \\
 
-  \item $alive(M, F_{MR})$ and $dead(M, F_{MR})$ \qquad encapsulates Membrane data object (AR),
-    on which is contained initial reference to $r$, the killswitch, (kill
-    function), MembraneRef constructor. (Use $membraneInstance$?)
-    \begin{align*}
-      MembraneInstance(M, F_{MR}) =& \obj_M(\js{ref}: \_, @this: \_, @proto: \nil,
-      \js{MembraneRef}: F_{MR}, \js{kill}: F_{K}) \sep {} \\
-  & \newfun_{F_{MR}}(M:\_, \js{ref}, \lambda_{MR}, \_) \\
-alive(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \false \\
- dead(M, F_{MR}) =& MembraneInstance(M, F_{MR}) \sep (M, killed) \pointsto \true
-    \end{align*}
+      (\_, \js{field}) \pointsto F \sep F \dotin \uvars \sep
+      \getValue(\_, \fld{ref}{F}, V) \sep
+      V \dotin \loc \sep
+      V \bp S_2
+    } \\
+    \js{access(field);} \\
+    \logic{
+      (\_, access) \pointsto F_{A_1} \sep
+      alive(M, F_{MR}, F_K) \sep
+      MRef_{R_1}(M,ref,F_{A_1},S_1,T_2) \sep {} \\
+      \exists R_2, F_{A_2} \st \args{
+        MRset(R_2:Ls,T_2) \sep
+        MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep
+        \rv \doteq F_{A_2}
+      } \sep {} \\
+      (\_, \js{field}) \pointsto F \sep F \dotin \uvars \sep
+      \getValue(\_, \fld{ref}{F}, V) \sep
+      V \dotin \loc
+    }
+  \end{array}
+\]
 
-    Note: We are safe to use $\newfun$ here, as the $F_{MR}$ function is
-    internal to the Membrane, it is guaranteed not to be tampered with.
-
-  \item $kill(F_K, M)$ \qquad Represents the kill function $F_K$ for membrane $M$.
-\[ kill(F_K, M) = \fun_{F_K}(M:\_, \_ , \lambda_K, \_) \]
-
-\end{itemize}
-
-We specify that the Membrane is not allowed to cause the creation of more
-references to the protected object. And that a reference to the protected object
-may not be returned.
-
-Notes: our predicate needs to track all MembraneRefs created, we can do this
-with rules in the proof that simply grow the set by the new objects.
-This implies that security properties may require far larger footprints for
-verification than safety properties.
-
-Potential issue: Code within the membrane that creates new references to the
-protected object during execution.
+Proof outlines for these specifications are shown in
+figures~\ref{fig:proof:membrane} and \ref{fig:proof:membraneref}.
 
 \begin{figure}[b]
   \[
     \begin{array}{l}
-      \logic{
-        ref \bp S \sep ref \dotin \loc \sep \ls \doteq Ls
-      } \\
-      \js{Membrane(ref);} \\
-      \logic{
-        \exists M, F_K, F_A, F_{MR}, MR, L \st \args{
-          alive(M, F_{MR}) \sep
-          kill(F_K,M) \sep
-          MRef_{MR}(M, ref, F_A, S, T) \sep {} \\
-          MRset([MR],T) \sep
-          \fullobj_L(\js{access}:F_A,\js{kill}:F_K) \sep
-          \rv \doteq L
-        }
-      } \\
-      \\
       \tjs{var Membrane = function(ref) \{} \\
         \indblock{
           \logic{
@@ -1697,7 +2001,7 @@ protected object during execution.
           \tjs{var MembraneRef = function(ref) \{...\}} \\
           \tjs{var kill = function() \{...\}} \\
           \logic{
-            alive(M, F_{MR}) \sep
+            alive(M, F_{MR}, F_K) \sep
             \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
                    \js{access},\js{kill}) \sep {} \\
 
@@ -1711,7 +2015,7 @@ protected object during execution.
           } \\
           \tjs{var access = MembraneRef(ref);} \\
           \logic{
-            alive(M, F_{MR}) \sep
+            alive(M, F_{MR}, F_K) \sep
             \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
                    \js{access},\js{kill}) \sep {} \\
 
@@ -1725,7 +2029,7 @@ protected object during execution.
           } \\
           \tjs{return \{access: access, kill: kill\};} \\
           \logic{
-            alive(M, F_{MR}) \sep
+            alive(M, F_{MR}, F_K) \sep
             \newobj_M(\js{ref},@this,@proto,\js{killed},\js{MembraneRef},
                    \js{access},\js{kill}) \sep {} \\
 
@@ -1743,58 +2047,35 @@ protected object during execution.
         }
         \tjs{\}} \\
         \\
-        \\
-        \logic{
-          (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep (alive(M, F_{MR}) \lor dead(M, F_{MR}))
-        } \\
-        \js{kill()} \\
-        \logic{
-          (\_,\js{kill}) \pointsto F_K \sep kill(F_K,M) \sep dead(M)
-        } \\
-        \gds{\dots and this is what you meant in your email about the $(\_,\js{kill})\pointsto F_k$, I see. I think what you've done is fine, because these lines aren't part of any proof. They're for illustration only - ``this is the sort of thing you can prove using the lemma below and the function call rule''. Make it clear that these things are informal aids to intuition, and your notation is fine.}
-        \\
         \tjs{var kill = function() \{} \\
         \indblock{
           \logic{
             \exists A \st \ls \doteq A : M : \_ \sep
             \fullobj_A(@proto: \nil, @this: \_) \sep
-            (alive(M, F_{MR}) \lor dead(M, F_{MR}))
+            (alive(M, F_{MR}, F_K) \lor dead(M, F_{MR},F_K))
           } \\
           \tjs{killed = true;} \\
           \logic{
             \exists A \st \ls \doteq A : M : \_ \sep
             \fullobj_A(@proto: \nil, @this: \_) \sep
-            dead(M)
+            dead(M, F_{MR}, F_K)
           }
         }
         \tjs{\}}
     \end{array}
   \]
-  \caption{Proof \emph{outline} for \js{Membrane} and its \js{kill} function}
+  \caption{Proof outlines for \js{Membrane} and its nested \js{kill} function}
+  \label{fig:proof:membrane}
 \end{figure}
 
 \begin{figure}
-  \gds{You might need ${} \sep \ls\doteq\dots$ in your $\tjs{MembraneRef}$ and $\tjs{access}$ specs.}
   \[
     \begin{array}{l}
-      \logic{
-        (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
-        alive(M, F_{MR}) \sep MRset_M(Ls,T) \sep ref \bp S \cup T \sep ref \dotin \loc
-      } \\
-      \tjs{MembraneRef(ref);} \\
-      \logic{
-        \exists R, F_A \st \args{
-          (\_,\js{MembraneRef}) \pointsto F_{MR} \sep
-          alive(M, F_{MR}) \sep MRset_M(R:Ls,T') \sep {} \\
-          MRef_{R}(M,ref,F_A,S,T') \sep ref \dotin \loc \sep \rv \doteq F_A
-        }
-      } \\
-      \\
       \tjs{var MembraneRef = function(ref) \{} \\
         \indblock{
           \logic{
             \exists R \st \args{
-              alive(M, F_{MR}) \sep  \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+              alive(M, F_{MR}, F_K) \sep  \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
                 \und) \sep {} \\
               ref \dotin \loc \sep
               MRset_M(R:Ls,T') \sep ref \bp S \cup T' \sep \ls \doteq R:M:Ls
@@ -1803,7 +2084,7 @@ protected object during execution.
           \tjs{var access = function(field) \{...\}} \\
           \logic{
             \exists R,F_A \st \args{
-              alive(M, F_{MR}) \sep \fullobj_{MR}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+              alive(M, F_{MR}, F_K) \sep \fullobj_{MR}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
                 F_A) \sep {} \\
               \newfun_{F_A}(R:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
               \loc \sep {} \\
@@ -1817,7 +2098,7 @@ protected object during execution.
           \tjs{\}} \\
           \logic{
             \exists R,F_A \st \args{
-              alive(M, F_{MR}) \sep \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
+              alive(M, F_{MR}, F_K) \sep \fullobj_{R}(\js{ref}: ref, @this: \_, @proto: \nil, \js{access}:
                 F_A) \sep {} \\
               \newfun_{F_A}(R:M:Ls, \js{field}, \lambda_A, \_) \sep ref \dotin
               \loc \sep {} \\
@@ -1829,7 +2110,7 @@ protected object during execution.
           \step{subst} \\
           \logic{
             \exists R,F_A \st \args{
-              alive(M, F_{MR}) \sep MRset_M(R:Ls,T') \sep MRef_{R}(M,ref,F_A,S,T') \sep
+              alive(M, F_{MR}, F_K) \sep MRset_M(R:Ls,T') \sep MRef_{R}(M,ref,F_A,S,T') \sep
                 {} \\
               ref \dotin \loc \sep rv \doteq F_A \sep \ls \doteq R:M:Ls
             }
@@ -1837,42 +2118,12 @@ protected object during execution.
         }
       \tjs{\}} \\
       \\
-      \\
-      \gds{As you noted in your email you need to pick some notation for naming the function in these informal intuition-aid spec illustrations. I prefer the style above to the ``dot-equals'' style below. What's your preference?}
-      \logic{
-        alive(M, F_{MR}) \sep
-        access \doteq F_{A_1} \sep
-        MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
-        MRset(Ls,T_1) \sep {} \\
-
-        field \dotin \uvars \sep
-        (ref, field) \pointsto V \sep
-        V \dotin \loc \sep
-        V \bp S_2
-      } \\
-      \js{access(field)} \\
-      \logic{
-        \exists R_2, F_{A_2} \st \args{
-          alive(M, F_{MR}) \sep
-          access \doteq F_{A_1} \sep
-          MRef_{R_1}(M,ref,F_{A_1},S_1,T_2) \sep {} \\
-
-          MRset(R_2:Ls,T_2) \sep
-          MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep
-          \rv \doteq F_{A_2} \sep {} \\
-
-          field \dotin \uvars \sep
-          (ref, field) \pointsto V \sep
-          V \dotin \loc
-        }
-      } \\
-      \\
       \tjs{var access = function(field) \{} \\
         \indblock{
           \logic{
             \exists A \st \ls \doteq A : R_1 : M : \_ \sep
             \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
-            alive(M, F_{MR}) \sep
+            alive(M, F_{MR}, F_K) \sep
             MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
             MRset(Ls,T_1) \sep {} \\
 
@@ -1885,7 +2136,7 @@ protected object during execution.
             \indblock{
               \logic{
                 \exists A \st \ls \doteq A : R_1 : M : \_ \sep {} \\
-                alive(M, F_{MR}) \sep
+                alive(M, F_{MR}, F_K) \sep
                 MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
                 MRset_M(Ls,T_1) \sep {} \\
 
@@ -1900,7 +2151,7 @@ protected object during execution.
               \logic{
                 \exists A,R_2,F_{A_2} \st \args {
                   \ls \doteq A : R_1 : M : \_ \sep
-                  alive(M, F_{MR}) \sep {} \\
+                  alive(M, F_{MR}, F_K) \sep {} \\
 
                   MRef_{R_1}(M,ref,F_{A_1},S_1,T_1) \sep
                   MRef_{R_2}(M,V,F_{A_2},S_2,T_2) \sep {} \\
@@ -1921,7 +2172,7 @@ protected object during execution.
                 \ls \doteq A : R_1 : M : \_ \sep
                 \fullobj_A(\js{field}: field, @proto:\nil, @this:\_) \sep {} \\
 
-                alive(M, F_{MR}) \sep
+                alive(M, F_{MR}, F_K) \sep
                 MRef_{R_1}(M,ref,F_{A_1},S_1,T_2) \sep {} \\
 
                 MRset(R_2:Ls,T_2) \sep
@@ -1937,7 +2188,8 @@ protected object during execution.
       \tjs{\}}
     \end{array}
   \]
-  \caption{Proof \emph{outlines} for the nested \js{MembraneRef} and \js{access} functions}
+  \caption{Proof outlines for the nested \js{MembraneRef} and \js{access} functions}
+  \label{fig:proof:membraneref}
 \end{figure}
 \chapter{Evaluation}
 \chapter{Conclusions \& Future Work}
@@ -2384,252 +2636,6 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \staterule{(Disjunction)}
     {\tr{P_1}{\js{e}}{Q_1} \quad \tr{P_2}{\js{e}}{Q_2}}
     {\tr{P_1 \lor P_2}{\js{e}}{Q_1 \lor Q_2}}
-
 \end{display}
-
-\chapter{Proofs}
-\subsection{Revocable Reference}
-Used to provide a restricted execution context with a reference to an object
-that may be revoked by the provider.
-\emph{Note: By itself, this is not safe, since accessed references are returned
-  raw. See next section, Membrane, for solution.}
-
-
-Proofs are given in Figures~\ref{rr-main}-\ref{rr-access}.
-
-% RevocableRef body call
-%
-% I've generally unwrapped all \scope, \proto, \getValue operations down to
-%   their requirements
-% Introduction of new elements into an existing backpointer set seems clumsy
-% There must be better ways of generating these proofs other than by hand?
-\begin{adjustbox}{width=\textwidth,height=\textheight,keepaspectratio,rotate=0,caption=Caretaker main body proof,label=rr-main,figure}
-  $\begin{array}{l}
-    \jsvar{RevocableRef = function(ref) \{}\\
-    \indblock{
-      \logic{
-        % function
-        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
-        % ar
-          \exists L \st \ls \doteq L:Ls \sep {} \\
-          \fullobj_L\left(
-            \begin{array}{l}
-              \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
-              \js{protected}: \und,\js{access}: \und,\js{kill}: \und %  and defs()
-            \end{array}
-          \right) \sep {} \\
-        % bp
-          L \bp \{\} \sep V \bp s_1 \cup \{(L,\js{ref})\} \sep
-          \lop \bp s_3 \sep \lfp \bp s_4 \sep
-          \scopeBps(Ls, ss)
-      } \\
-      \step{Frame/elim/cons ($V \bp s_1 \impl V \bp s_1 \cup s_2$)} \\
-      \logic{
-        % var(protected,ref), assign(@frozen)
-          \obj_L(\js{protected}: \und, \js{ref}: V, @frozen: \false) \sep {} \\
-        % assign
-          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\} \sep \ls\doteq{L:Ls}
-      } \\
-      \jsvar{protected = ref;} \\
-      \logic{
-        % var *2
-          \obj_L(\js{protected}: V, \js{ref}: V, @frozen: \false) \sep {} \\
-        % assign
-          V \bp s_1 \cup \{(L,\js{ref}), (L, \js{protected})\}\sep \ls\doteq{L:Ls}
-      } \\
-      \step{Frames/cons} \\
-      \logic{
-        % var(access), assign(@frozen)
-          \obj_L(\js{access}: \und, @frozen: \false) \sep {} \\
-        % fun pre
-        \lop \bp s_3 \sep \lfp \bp s_4 \sep
-        L \bp \{\} \sep \scopeBps(Ls,ss) \sep \ls\doteq{L:Ls}
-      } \\
-      \jsvar{access = function(field) \{b_a\};} \\
-      \logic{
-        \exists A, A_p \st \left(\begin{array}{l}
-          % var, assign
-          \obj_L(\js{access}: A, @frozen: \false) \sep
-            A \bp s_7 \sep s_7 \doteq \{(L, \js{access})\} \sep {} \\
-          % fun pre
-          \lop \bp s_5 \sep s_5 \doteq s_3 \cup \{(A_p, @proto)\} \sep \lfp \bp s_6 \sep s_6 \doteq s_4
-            \cup \{(A, @proto)\} \sep {} \\
-            L \bp \{(A,@scope)\} \sep \scopeBpsUpd(Ls, ss, ss_1, \{(A,@scope)\}) \sep {} \\
-          % fun post
-          \fullobj_{A_p}(@proto: \lop) \sep A_p \bp \{(A, \js{prototype})\} \sep {}\\
-          \newfun_A(\ls, \js{field}, b_a, A_p)
-        \end{array}\right) \sep \ls\doteq{L:Ls}
-      } \\
-      \step{Frames/cons} \\
-      \logic{
-        % var(access), assign(@frozen)
-          \obj_L(\js{kill}: \und, @frozen: \false) \sep {} \\
-        % fun pre
-        \lop \bp s_5 \sep \lfp \bp s_6 \sep
-        L \bp \{(A, @scope)\} \sep \scopeBpsUpd(Ls, ss_1) \sep \ls\doteq{L:Ls}
-      } \\
-      \jsvar{kill = function() \{b_k\};} \\
-      \logic{
-        \exists K, K_p \st
-        \left(\begin{array}{l}
-          % var, assign
-          \obj_L(\js{kill}: K, @frozen: \false) \sep
-            K \bp s_8 \sep s_8 \doteq \{(L, \js{kill})\} \sep {} \\
-          % fun pre
-          \lop \bp s_9 \sep s_9 \doteq s_5 \cup \{(K_p, @proto)\} \sep \lfp \bp s_6
-            \cup \{(K, @proto)\} \sep {} \\
-            L \bp \{(A,@scope),(K,@scope)\} \sep {} \\
-            \scopeBpsUpd(Ls, ss_1, ss_2, \{(K,@scope)\}) \sep {} \\
-          % fun post
-          \fullobj_{K_p}(@proto: \lop) \sep K_p \bp \{(K, \js{prototype})\} \sep {} \\
-          \newfun_K(\ls, \_, b_k, K_p)
-        \end{array}\right)\sep \ls\doteq{L:Ls}
-      } \\
-      \step{Frames} \\
-      \logic{
-        \obj_L(\js{access}:A, \js{kill}:K) \sep
-        A \bp s_7 \sep K \bp s_8 \sep \lop \bp s_9 \sep \ls \doteq L : Ls
-      } \\
-      \js{return\ \{access: access, kill: kill\};} \\
-      \logic{
-        \exists O \st
-        \left(\begin{array}{l}
-          \obj_L(\js{access}:A, \js{kill}:K) \sep {} \\
-          \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
-          A \bp s_7 \cup \{(O, \js{access}\} \sep K \bp s_8 \cup \{(O, \js{kill})\}
-            \sep {} \\
-          \lop \bp s_9 \cup \{(O,@proto)\} \sep O \bp \{\} \sep \rv \doteq O
-        \end{array}\right)
-        \sep \ls \doteq L : Ls
-      } \\
-      \step{Frames} \\
-      \logic{
-        \obj_R(@body: \lambda\js{ref}.\{\dots\} , @scope: Ls) \sep {} \\
-        \exists L, A, A_p, K, K_p, O \st {} \\
-        \fullobj_L\left(\begin{array}{l}
-          \js{ref}: V,@this: \_,@proto: \nil,@frozen: \false,\\
-          \js{protected}: V,\js{access}: A,\js{kill}: K
-        \end{array}\right) \sep {} \\
-        \fullobj_{A_p}(@proto: \lop) \sep \fullobj_{K_p}(@proto: \lop) \sep {} \\
-        \newfun_A(\ls,\js{field},b_a,A_p) \sep \newfun_K(\ls,\_,b_k,K_p) \sep {} \\
-        \fullobj_O(@proto: \lop, \js{access}: A, \js{kill}: K) \sep {} \\
-
-        \lop \bp s_3 \cup \{(A_p,@proto),(K_p,@proto),(O,@proto)\} \sep {} \\
-        \lfp \bp s_4 \cup \{(A,@proto),(K,@proto)\} \sep {} \\
-        A   \bp \{(L,\js{access}),(O,\js{access})\} \sep
-        A_p \bp \{(A,\js{prototype}) \sep {} \\
-        K   \bp \{(L,\js{kill}),(O,\js{kill})\} \sep
-        K_p \bp \{(K,\js{prototype}) \sep {} \\
-        V   \bp s_1 \cup \{(L,\js{ref}),(L,\js{protected})\} \sep {} \\
-        \scopeBpsUpd(Ls,ss,ss_2,\{(A,@scope),(K,@scope))\}) \sep {} \\
-        L   \bp \{(A,@scope),(K,@scope)\} \sep
-        O   \bp \{\} \sep
-
-        \rv \doteq O \sep \ls \doteq L : Ls
-      }
-    }
-    \js{\}}
-  \end{array}$
-\end{adjustbox}
-
-% RevocableRef#kill body call
-\begin{figure}
-\[
-  \begin{array}{l}
-    \jsvar{kill = function() \{} \\
-    \indblock{
-      \logic{
-        (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
-        \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
-        \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
-        \obj_L(\js{protected}: V, @frozen: \false)
-      } \\
-      \step{Frame/exists} \\
-      \logic{
-        obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
-        obj_L(\js{protected}: V, @frozen: \false) \sep {} \\
-        \ls \doteq L':L:Ls
-      } \\
-      \js{protected = null;} \\
-      \logic{
-        obj_{L'}(\js{protected}: \none, @proto: \nil) \sep {} \\
-        obj_L(\js{protected}: \nil, @frozen: \false) \sep {} \\
-        \ls \doteq L':L:Ls \sep \rv \doteq \nil
-      } \\
-      \step{Frame/exists} \\
-      \logic{
-        (K, @body) \mapsto \lambda \_.\{b_k\} \sep (K, @scope) \mapsto L:Ls \sep {} \\
-        \exists L' \st \ls \doteq L' : L : Ls \sep L' \bp \{\} \sep {} \\
-        \fullobj_{L'}(@proto:\nil, @frozen:\false, @this:\_) \sep {} \\
-        \obj_L(\js{protected}: \nil, @frozen: \false) \sep \rv \doteq \nil
-      }
-    }
-    \js{\}}
-  \end{array}
-\]
-\caption{RevocableReference kill function body}
-\label{rr-kill}
-\end{figure}
-
-\begin{figure}
-% RevocableRef#access body call
-\[
-  \begin{array}{l}
-    \jsvar{access = function(field) \{} \\
-    \indblock{
-      \logic{
-        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
-          (A, @scope) \mapsto L:Ls \sep {} \\
-        \exists L' \st \ls \doteq L' : L : Ls \sep
-          L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
-        \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
-          \sep {} \\
-        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
-          \sep X \dotin \uvars
-      } \\
-      \step{Frame/exists} \\
-      \logic{
-        \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
-        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
-          \sep {} \\
-        X \dotin \uvars \sep \ls \doteq L':L:Ls
-      } \\
-      \js{return\ protected[field];} \\
-      \logic{
-        \obj_{L'}(\js{protected}: \none, @proto: \nil, \js{field}: X) \sep {} \\
-        (L, \js{protected}) \mapsto P \sep
-        P \not\doteq \nil \sep P \dotin \loc \sep {} \\
-        X \dotin \uvars \sep \ls \doteq L':L:Ls \sep \rv \doteq \fld{P}{X}
-      } \\
-      \step{Frame/exists} \\
-      \logic{
-        (A, @body) \mapsto \lambda \js{field}.\{b_a\} \sep
-          (A, @scope) \mapsto L:Ls \sep {} \\
-        \exists L' \st \ls \doteq L' : L : Ls \sep
-          L' \bp \{\} \sep \bpGen(X, L', \js{field}, s) \sep {} \\
-        \fullobj_{L'}(@this: \_, @proto: \nil, @frozen: \false, \js{field}: X)
-          \sep {} \\
-        (L, \js{protected}) \mapsto P \sep P \not\doteq \nil \sep P \dotin \loc
-          \sep X \dotin \uvars \sep \rv \doteq \fld{P}{X}
-      }
-    }
-    \js{\}}
-  \end{array}
-\]
-\caption{RevocableReference access function body}
-\label{rr-access}
-\end{figure}
-
-\TODO{Extend to writing to objects via the proxy. Take careful note of
-  \href{https://mail.mozilla.org/pipermail/es-discuss/2011-November/017981.html}
-{Nov-11 es-discuss thread} (theft of \js{protected} by using \js{\_\_proto\_\_}
-or through redefining/hiding a \emph{trusted prototypical} method (eg on Array))}
-
-\COMMENT{Idea: Pre-set $\lop \bp \loc \times \vars$, since anything can
-potentially point at our frozen language globals. How does this interact with
-the consequence rule? (I'd guess that without an explicit $(a,b) \not\pointsto
-\lop$, then we cannot remove it from the set?) This is inspired by the use of
-$\top$ in Abstract Interpretation...}
-
 
 \end{document}
