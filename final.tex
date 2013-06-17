@@ -1468,8 +1468,53 @@ value for the expression.
     is reachability from this object to privileged objects that should be
     checked by axioms that verify security properties.
 
-(Freeze) Boring
-(Def) Describe auxDef.
+  \staterule{(Freeze)}
+    {
+      \tr{P}{\js{e}}{Q \sep \rv \doteq V_1 \sep (V_2, @frozen) \pointsto V_3} \\
+      Q = \getValue(Ls,V_1,V_2) \sep S
+    }
+    {\tr{P}{\js{freeze(e)}}{Q \sep (V_2, @frozen) \pointsto \true \sep \rv \doteq V_2}}
+
+    The rule for Freeze is straightforward, it simply requires permission to the
+    @frozen internal field of the object being frozen, and asserts that it is
+    set to true in the postcondition.
+
+  \staterule{(Recusive freeze)}
+    {
+      \tr{P}{\js{e}}{Q \sep \rv \doteq V_2 \sep \auxDefGet(V_2, \{\})} \\
+      Q = \getValue(Ls,V_1,V_2) \sep S
+    }
+    {\tr{P}{\js{def(e)}}{Q \sep \rv \doteq V_2 \sep \auxDefSet(V_2, \{\}, \true)}}
+
+  Similar to the freeze expression, the recursive freeze requires permission to
+  access the @frozen field on accessible objects. It achieves this through use
+  of the $\auxDefGet$ and $\auxDefSet$ predicates:
+  \begin{align*}
+    \auxDefGet(V,s) & \triangleq V \notdotin \loc \lor V \dotin s \\
+    \auxDefGet(V,s) & \triangleq V \notdotin s \land (V, @frozen) \pointsto \_
+      \sep (\bigsepish_{x_n \in \uvars} (V,x_n) \pointsto V' \sepish
+      \auxDefGet(V', s\cup\{V\})) \\
+    \auxDefSet(V,s,b) & \triangleq V \notdotin \loc \lor V \dotin s \\
+    \auxDefSet(V,s,b) & \triangleq V \notdotin s \land (V, @frozen) \pointsto b
+      \sep (\bigsepish_{x_n \in \uvars} (V,x_n) \pointsto V' \sepish
+      \auxDefSet(V', s\cup\{V\}, b))
+  \end{align*}
+  These predicates traverse the user-accessible fields of the given object, $V$,
+  recursively. In the case of the $\auxDefGet$ predicate, to assert that the
+  @frozen field is present in the footprint of the precondition, and in the case
+  of $\auxDefSet$ that the @frozen field is set to $b$.
+
+  Termination of the predicate is ensured by collecting traversed objects into
+  the set $s$ for the recursive calls, the recursive definition cannot be
+  satisfied if the same location is encountered a second time.
+
+  The sepish operator, $\sepish$, must be used to collect the heap cells into a
+  single assertion as although we guarantee to terminate on the second traversal
+  of a loop, we must also take into account heap structures that have the same
+  object reachable via different paths, for example the object \js{\{a:l,b:l\}}
+  would be unsatisfiable under the predicates if $\sep$ were used. Use of
+  $\sepish$ is sound in the update case, since the updates are consistent, the
+  same value is written to all the overlapping heap cells.
 
 \chapter{Program Proofs}
 \section{Caretaker}
@@ -1662,11 +1707,11 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s} \\
   \jaxiom{\auxDefGet(V,s)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
     s} \\
-  \jaxiom{\auxDefGet(V,s)}{(V, @frozen) \pointsto \_ \sep (\bigsepish_{x_n \in
+  \jaxiom{\auxDefGet(V,s)}{V \notdotin s \land (V, @frozen) \pointsto \_ \sep (\bigsepish_{x_n \in
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefGet(V', s\cup\{V\}))} \\
   \jaxiom{\auxDefSet(V,s,b)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
     s} \\
-  \jaxiom{\auxDefSet(V,s,b)}{(V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
+  \jaxiom{\auxDefSet(V,s,b)}{V \notdotin s \land (V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefSet(V', s\cup\{V\}, b))} \\
   \jaxiom{\ReadWrite(L)}{(L, @frozen) \pointsto \false} \\
   \jaxiom{\decls(X,L,\js{e})}{\js{x_1},...,\js{x_n} \quad \text{where }

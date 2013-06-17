@@ -532,11 +532,11 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s} \\
   \jaxiom{\auxDefGet(V,s)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
     s} \\
-  \jaxiom{\auxDefGet(V,s)}{(V, @frozen) \pointsto \_ \sep (\bigsepish_{x_n \in
+  \jaxiom{\auxDefGet(V,s)}{V \notdotin s \land (V, @frozen) \pointsto \_ \sep (\bigsepish_{x_n \in
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefGet(V', s\cup\{V\}))} \\
   \jaxiom{\auxDefSet(V,s,b)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
     s} \\
-  \jaxiom{\auxDefSet(V,s,b)}{(V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
+  \jaxiom{\auxDefSet(V,s,b)}{V \notdotin s \land (V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefSet(V', s\cup\{V\}, b))} \\
   \jaxiom{\ReadWrite(L)}{(L, @frozen) \pointsto \false} \\
   \jaxiom{\decls(X,L,\js{e})}{\js{x_1},...,\js{x_n} \quad \text{where }
