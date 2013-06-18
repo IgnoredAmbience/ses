@@ -1109,14 +1109,14 @@ and satisfies the expression's precondition $P$; and it is a subheap of the
 entire heap $h \disju h_f$, then the evaluation will not fault and if it
 terminates, will terminate with a subheap $h'$ that satisfies the expression's
 postcondition $Q$. Or, more simply:
-\[ (h, h \disju h_f, L, \env \satisfies P) \land h, L, \js{e} \leadsto h', v
-  \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
+\[ (h, h \disju h_f, L, (\env\setminus\rv) \satisfies P) \land h, L, \js{e} \leadsto h', v
+  \impl (h', h' \disju h_f, L, [\env|\rv\takes v] \satisfies Q) \]
 
 As we are using the fault-avoiding Hoare triple semantics, the expression must
 not fault if it is evaluated in a state that satisfies the triple's
 precondition. We must also define a fault avoidance property to be able to
 verify that this is the case:
-\[ h, h_g, L, \env \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
+\[ h, h_g, L, (\env\setminus\rv) \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
 
 We also define the Safety Monotonicity and Frame properties, which guarantee
 that the operational semantics and separation logic reasoning framework are
