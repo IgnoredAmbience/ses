@@ -296,8 +296,6 @@
   within the heap. For example $(x \mapsto 4, y) \sep (y \mapsto 3, x)$ is
   permissible and required to be able to build complex data structures.
   
-  \TODO{diagrams}
-
   $x \mapsto -$ is shorthand meaning that there is some value stored at heap
   location $x$.
 
@@ -437,8 +435,6 @@
   JavaScript program logic. However, a considerable number of complex predicates
   were required to accurately model the variable store and scoping rules.
 
-  \TODO{diagram}
-
   A JavaScript object is identified by a location $l \in \loc$, each object may
   have fields $x \in \vars$ which map to values $v \in \vals$. The heap is
   represented by the partial function of locations and fields to
@@ -472,7 +468,6 @@
   field is modified on the \emph{scope object} for the prototype chain in which the
   variable was found -- this is so that the prototypical variable is overridden,
   but not overwritten.
-  \TODO{both the above examples need diagrams}
 
   SES is an object-capability style of language, objects are considered to hold
   capabilities to privileged functionality or information. Because of this, it
@@ -2230,8 +2225,8 @@ figures~\ref{fig:proof:membrane} and \ref{fig:proof:membraneref}.
 \end{figure}
 
 \section{Example use of Caretaker and Membrane}
-Assume we want to allow the untrusted program read access to \js{cookies} until
-they are modified by the main code in \js{updateCookies}.
+Assume we want to allow an untrusted program read access to \js{cookies} until
+potentially sensitive data is stored in them by \js{updateCookies}.
 
 \begin{verbatim}
 cookies.password = '';
@@ -2260,17 +2255,27 @@ passed into it as the \js{cookies} parameter of the \emph{imports} object.
 Note that \js{maliciousCode} is unable to access any of the global variables
 such as \js{userPassword}.
 
-An example body for \js{maliciousCode} could be:
-\begin{verbatim}doEvilStuff(cookies('password'));\end{verbatim}
+This specification for \js{maliciousCode} is \emph{maximally malicious}. The
+$chaos$ predicate traverses every path that can be followed from $l$, and does
+not specify what changes have been made.
+\[
+  \begin{array}{l}
+    \logic{\ls \doteq [l] \sep traverse(l)} \\
+    \js{maliciousCode();} \\
+    \logic{\ls \doteq [l] \sep chaos(l)}
+  \end{array}
+\]
+Despite this malicious specification of \js{maliciousCode}, we can prove that the
+global password field remains untouched.
 
-It is possible to specify a general verification condition that priveliged
+To do this, we specify a general verification condition that privileged
 objects are not passed to the untrusted code, by ensuring that the imports
 object is not reachable by traversing $\bp$ assertions from the privileged
 objects.
 
 In cases where untrusted code is allowed restricted access to privileged
 objects, there will be an object which is only pointed to by @scope fields
-of a (some) function(s). In this case, the priviledged object is protected
+of a (some) function(s). In this case, the privileged object is protected
 according to the specifications of those function(s).
 
 For example, a backpointer path for the \js{cookies} object is:
@@ -2281,6 +2286,7 @@ For example, a backpointer path for the \js{cookies} object is:
 \end{align*}
 From the middle line we can see that the cookies are protected by the membrane's
 access function.
+
 
 \chapter{Evaluation}
 The nature of this project means that it is somewhat hard to evaluate the
@@ -2441,7 +2447,7 @@ These properties are usually very subtle, such as ensuring that the
 language-defined data structures and primitives do not inadvertently allow for
 pointer leakage or covert channels of communication within the language.
 
-As an indirect result of this project a potential bug has been discovered in the
+As an indirect result of this project a potential bug~\cite{es6-bug} has been discovered in the
 upcoming ECMAScript specification by the ECMAScript research group at Imperial.
 This demonstrates that although the
 specification committee should now have a good insight into the security
@@ -2463,7 +2469,7 @@ extension of the existing JavaScript program logic to support variable semantics
 would be a novel research project.
 
 \section{Automated Program Verification}
-In general, program verification logics are undecidable, however because 
+In general, the problem of finding specifications for programs is undecidable, however because 
 separation logic is structural, this provides additional power for automated
 reasoning programs to leverage. Theories behind Symbolic
 Execution~\cite{symb-exec} and
@@ -2618,7 +2624,6 @@ Q)}{} \\
 \asssat{P \boxwand Q}{\forall h' \st (h',h_g[h'],L,\env \satisfies P)
     \land h \disj h'}
   {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)} %\\
-\TODO{Infinite list handling}
 \asssat{\bigsep_{x\in\{\}}P(x)}{h,h_g,L,{\env}\satisfies\lemp}{} \\
 \asssat{\bigsep_{x\in\T{set}}P(x)}{y\in\T{set} \land h,h_g,L,{\env} \satisfies
   P(y)\sep(\bigsep_{x\in(\T{set}\setminus y)}P(x))}{} \\
@@ -2655,7 +2660,6 @@ view of the heap and the framing property ($h_g = h \disju h_f$) can also be
 produced, it should be noted that the meaning is subtly different (in that $h'
 \neq h_g$ in all cases).
 
-\TODO{More Auxiliary predicates}
 \label{app:logicauxpreds}
 \begin{display}{Auxiliary Predicates}
   \jaxiom{\obj_E(E_1:E'_1,...,E_n:E'_n)}{(E,E_1) \pointsto E'_1 \sep ... \sep
