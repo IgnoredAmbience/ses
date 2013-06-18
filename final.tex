@@ -76,8 +76,7 @@
 
 \tableofcontents
 
-\chapter{Background}
-\section{Introduction}
+\chapter{Introduction}
 
 % * Clear statement of what the project is about, nature and scope to be
 %   understood by a lay reader
@@ -129,66 +128,47 @@
   it is envisaged that lapses in the encapsulation could inadvertently occur due
   to programmer error.
 
-  \FIXME{EDIT INTO SHAPE}
-  It is useful to be able to verify that a program is correct according to a
-  given specification.
+  Full program verification against a specification is a good thing -- the
+  thought processes of verification often can assist find bugs in the program or
+  potentially, in the worst case, the specification itself.
+  However, although significant progress has been made in recent years, full
+  program verification is too expensive in time to be performed on all code.
+  Often it is applied to systems where it is of high benefit, such as safety
+  critical control systems.
 
-  Hence need a logic to express the program states and the specification.
+  It is also cost-effective to verify systems and libraries, particularly those
+  in security sensitive contexts, that will underpin a wide variety of many
+  other software applications and systems. Because of the rapid growth in demand
+  for features in JavaScript, we believe that SES (or a variant of it) will soon
+  have a considerable number of users, this drives the benefit for verifying its
+  low-level libraries.
 
-  Up to now, we've got the logic to express program states and can prove
-  functional properties of programs.
+  At present, we have a program logic capable of describing the functional
+  properties of JavaScript programs, however, it is not capable of expressing
+  the security properties that SES aims to enforce. It is highly convenient to
+  reason about the security properties of a program at the same time as
+  reasoning about the functional properties of it, as very often one is
+  intrinsically linked to the other. We thus need to extend the logic to be able
+  to express both functional and security properties.
 
-  However, we're unable to express the security properties in the existing
-  separation logic system - we need to be able to reason about the entire heap,
-  separation logic forces that we only reason about a small part of the heap
-  that a given instruction touches. We could expand the footprint of
-  instructions, but this would cause separation logic to quickly lose its
-  advantages over normal boolean logics.
+  \section{Project Aims}
 
-  It is useful to be able to reason about security properties at the same time
-  as functional properties as the function of a program directly impacts which
-  security properties hold.
+  In chapter~\ref{chp:sem} we describe and specify the Syntax and Operational
+  Semantics of SES language
+  as a means to understand the language, highlight its differences from
+  JavaScript, and for direct reference whilst implementing the inference rules
+  for the Program Logic.
 
+  In chapter~\ref{chap:proglogic} we extend Separation Logic to support
+  reasoning about security properties of SES programs. We define the Hoare
+  triple for the new logic, the soundness properties between them and the
+  Operational Semantics, and produce axiomatic rules for SES instructions.
 
-  Project aims:
+  In chapter~\ref{chap:proofs} we prove some fundamental programming patterns
+  used regularly in SES programs, namely the Caretaker and Membrane patterns.
 
-  Semantics of SES - to understand the language, differences from JavaScript, in
-  style of previous ES3 semantics for direct comparison.
-
-  Add bp to Separation Logic.
-
-  Produce axiomatic rules for SES instructions including bp assertions. Again,
-  direct comparison to ES3 logic and Operational Semantics.
-
-  Prove some fundamental programming patterns used in objcap world (Caretaker,
-  Membrane)
-
-  Opted not to discuss decidability of logic, nor to prove soundness against
-  operational semantics, nor completeness... Basically nothing very formal
-  \FIXME{}
-
-% TODO: Consider following for inclusion in introduction
-
-% The language's structure already poses some interesting problems for
-% researchers producing formal models of programming languages due to its memory
-% structure.  A formal logic for ECMAScript 3 has been recently developed by
-% researchers at Imperial College. This project aims to extend this program
-% logic to effectively model the restricted execution support proposed by the
-% Secure ECMAScript language specification. This will permit proofs asserting
-% that the language constructs are secure, and that programs written using the
-% restricted execution construct do not accidentally leak private data or
-% permissions to untrusted code, especially during interactions between two
-% contexts.
-
-% The formal logic for ECMAScript 3 is based upon Separation Logic, an extension
-% of Hoare Logic which permits efficient reasoning about data contained within
-% heaps by splitting the heap into smaller discrete portions. However, to reason
-% about restricted execution, we need to reason about the \emph{entire}
-% heap. The first aim of the project is to extend Separation logic with a
-% backpointer operator to allow reasoning about which objects point to an
-% object of interest.
-
-\section{Hoare Logic}
+\chapter{Background}
+\section{Program Verification \& Hoare Logic}
   This style of reasoning about the functionality and correctness of computer
   programs was first presented in his 1969 paper ``An Axiomatic Basis for
   Computer Programming''\cite{Hoare1969Axiom}, the principles presented were
@@ -492,6 +472,7 @@
   \TODO{both the above examples need diagrams}
 
 \chapter{SES Language Syntax \& Operational Semantics}
+  \label{chp:sem}
   We now define the syntax and semantics of expressions in this model of the SES
   language. We present the English definition of each expression along with the
   Operational Semantics for the precise effect it has on the heap and program
@@ -860,7 +841,14 @@ statement is inherently \emph{non-local}. If we attempt to make such a
 statement, then at any time, we might use the frame rule to introduce an object
 which contradicts the statement we made.
 
-We extend the logic to support these sorts of statements by: reintroducing a global heap state to the
+One naive method to solve this would be to expand the footprint of instructions
+to cover all the portions of the heap that could potentially point to the object
+we wish to check is secure. However, this would quickly cause separation logic
+to lose its advantages over normal boolean logics -- the pre- and
+post-conditions for rules now no longer precisely state which portions of the
+heap are required for the command to function.
+
+We instead extend the logic to support these sorts of statements by: reintroducing a global heap state to the
 assertion satisfaction relation; redefining the existing logical operators to
 carry around the global heap state without examining it; and introducing new
 logical operators that allow us to make limited non-local assertions without
@@ -1053,6 +1041,7 @@ interactions with the spatial elements of the logic may result in unsoundness.
 
 For example, consider the following \emph{broken} proof outline:
 
+\begin{figure}[h!]
 \[
 \begin{array}{l}
   \{\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
@@ -1070,6 +1059,9 @@ For example, consider the following \emph{broken} proof outline:
   \{\js{y}\pointsto a \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
 \end{array}
 \]
+\caption{Broken proof showing requirement for $\bp$ to have a footprint}
+\label{fig:proof-bp-broken}
+\end{figure}
 
 Notice that in this \emph{broken} program proof, we appear to have proved that
 our program ensures that both \js{y} and \js{x} point to $a$ and \emph{also}
@@ -1510,6 +1502,7 @@ value for the expression.
   same value is written to all the overlapping heap cells.
 
 \chapter{Program Proofs}
+\label{chap:proofs}
 Some design patterns for programming defensively against malicious code of an
 unknown nature have been developed for use with the Restricted Evaluation
 command. We have proven the correctness of the security properties of these
@@ -2198,10 +2191,116 @@ figures~\ref{fig:proof:membrane} and \ref{fig:proof:membraneref}.
   \caption{Proof outlines for the nested \js{MembraneRef} and \js{access} functions}
   \label{fig:proof:membraneref}
 \end{figure}
+
 \chapter{Evaluation}
+The nature of this project means that it is somewhat hard to evaluate the
+efficacy of the developed logic. Nonetheless, we can judge aspects based on:
+direct comparison with other published works; discussion of the applicability of
+the extension to separation logic to other languages; 
+
+\section{Operational Semantics}
+The SES Operational Semantics were developed from a mixture of sources of
+specification material, from the original JavaScript Operational Semantics, from
+a \emph{very} loosely described informational document about SES, through to
+examination of the source code of the JavaScript implementation of SES.
+Where these sources differed, we opted to match the behaviour of the JavaScript
+implementation.
+
+Since completion of the semantics, a technical report
+accompanying~\cite{ses-semantics} was discovered to contain a well-defined
+version of the SES Operational Semantics (hereon Taly's semantics).
+
+Direct comparison of our Operational Semantics and Taly's
+showed general equivalence between the two languages albeit Taly's made fewer
+generalisations and axiomatized more of the builtin commands.
+
+Notably, the command whose precise semantics we were least sure of, the
+restricted evaluation command, was found to be equivalent to those published by
+Taly.
+
+\section{Program Logic}
+As discussed in section~\ref{sec:backpointers}, the $\bp$ operator cannot be a
+pure operator as a result of the unintentional intersection of backpointer sets
+that would occur as demonstrated in figure~\ref{fig:proof-bp-broken}. This issue
+was remedied by giving the $\bp$ a footprint in the heap.
+
+Depending on viewpoint, this solution may be considered a nice way around an
+otherwise serious issue with the logic, or a horrendous \emph{hack} that depends
+upon an internal variable defined upon the abstract heap just for the logic.
+
+Ideally, more effort should have been spent to find a more general way to
+introduce a footprint to this operator.
+
+\section{Program Proofs}
+The two program proofs presented in chapter~\ref{chap:proofs} demonstrate that
+depending upon the purpose and generation method, proof derivations can be
+either hugely verbose and hard to follow if produced mechanically with little
+abstraction, or if some simple abstractions are applied, can be followed
+relatively easily with a casual reading.
+
+Dr. Mark Miller from Google, the designer of the SES language, visited Imperial
+to give a seminar on the future of SES on the web in March 2013. We met to
+discuss verification of SES programs using this logic. We walked through the
+proof of the Caretaker pattern to ensure that the model of the language and the
+verification logic were consistent with his own understanding of the language.
+
+The meeting was beneficial as it confirmed that the model of the language and
+the logic were indeed in line with his understanding of JavaScript and SES. The
+meeting was also beneficial for revealing that the definition of an early
+version of $\scopeBps$ was highly unintuitive, although the aim was correct.
+
+\section{`Groundwork'}
+It may have been noted by the reader that although we have defined
+\js{freeze}, \js{def}, \js{reval}, and $\boxwand$, they are not actually
+extensively used in this project.
+
+\js{freeze} and \js{def} were defined for use for passing immutable interfaces
+to untrusted code. Their definition and axiomatization was driven by an aim
+to prove the makeContractHost algorithm\cite{contract-host-algo}. Unfortunately,
+this aim was dropped when it transpired that earlier, \emph{easier} program
+proofs would take far longer than expected to produce. It is hoped that a proof
+could be developed before the presentation of this project.
+
+\js{reval} is mentioned in passing during the discussion of the Caretaker and
+Membrane proofs, using a combination of them and \js{reval} guarantees the
+isolation properties proven on these design patterns. Untrusted code that is
+executed outside of a \js{reval} command can trivially reach the protected
+object by traversing the heap structure from the global object.
+
+The $\boxwand$ logical operator was produced with the knowledge that the
+conventional $\wand$ operator is used to generate a weakest precondition in the
+proof of soundness of the Assignment inference rule.
+
+\TODO{
+* Reachability over bp assertions - spider. Need to separate AR and normal objects
+- AR encapsulated by functions over them
+* Strength/invention of security properties.}
+
+
 \chapter{Conclusions \& Future Work}
 \section{Conclusions}
+
 \section{Future Work}
+Magic wand madness
+
+Interaction of backpointer with negation, further study into the
+repurcussions/requirement of giving the backpointer a footprint.
+
+Refine model to closer match real language - ES5.1 model will help.
+
+Extend language model to support full power of the DrSES framework - modules,
+and distribution
+
+Further proofs in the object capability literature - the sealable reference, and
+eventually the makeContractHost.
+
+Extend separation logic to clearly express boundaries between trusted/untrusted
+shared heap?
+
+Comparison with techniques for abstract interpretation (data flow tracking),
+ownership types.
+
+Verification of JS-based SES implementation
 
 \bibliography{bibliography}
 \bibliographystyle{plainnat}
