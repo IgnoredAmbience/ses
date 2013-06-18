@@ -2304,34 +2304,116 @@ proof of soundness of the Assignment inference rule.
 \TODO{
 * Reachability over bp assertions - spider. Need to separate AR and normal objects
 - AR encapsulated by functions over them
-* Strength/invention of security properties.}
+* Strength/invention of security properties.
+* Note regarding other use of backpointers, }
 
 
 \chapter{Conclusions \& Future Work}
 \section{Conclusions}
 
 \section{Future Work}
-\TODO{}
-Magic wand madness
+There are many directions in which work on the SES language and verification
+logic can be pursued to follow the developments of the JavaScript language, the
+distributed variant of SES, or to improve and understand the logic further.
 
-Interaction of backpointer with negation, further study into the
-repurcussions/requirement of giving the backpointer a footprint.
+\subsection{Extend the SES Language Model}
+This model of the SES language was based upon old and generalised ES3 semantics,
+in order to demonstrate the extensions to the logic in a simple way.
+However, a project is underway within the Reliable Web research group to
+precisely specify the ES5.1 specification.
+Properly formalising this model of SES on top of these new semantics using the
+same theorem proving tools would give a boost to the accuracy of the logic and
+provide benefits from the tooling that is being built around these semantics and
+logic.
 
-Refine model to closer match real language - ES5.1 model will help.
+The SES language is only one portion of a bigger plan for web programming, with
+the emergence of JavaScript on the server, there is a demand for communications
+primitives that are easier to use. One extreme of this is the extension of the
+object model of the language across the network to other machines. This is
+possible through a syntax-transparent communication library. In this case there
+is a definite motivation for the SES component of DrSES.
 
-Extend language model to support full power of the DrSES framework - modules,
-and distribution
+This new, distributed language poses new issues in program verification since
+communication also has to be considered. A potential method for reasoning about
+programs written in this style may involve a fusion of the SES logic with a
+system suitable for reasoning about communications such as Session Types.
 
-Further proofs in the object capability literature - the sealable reference, and
-eventually the makeContractHost.
+And finally, there's always a large number of other interesting algorithms to
+verify, Sealable References are another common sample program often used in
+research papers into object capability-style languages. As a challenge during
+his visit, he posed us to prove all the algorithms he uses in his presentations
+-- several of these would prove quite a challenge as they rely on complex
+cascades of callback functions.
 
-Extend separation logic to clearly express boundaries between trusted/untrusted
-shared heap?
+\subsection{Logic}
+After the project had begun, we noted that there was newly published
+material~\cite{Ley-Wild2013SAS} that also introduces non-local heap state to the
+logical assertion satisfaction relations. However, the paper does not warrant
+the use of $\wand$, so they left it undefined in their logic.
 
-Comparison with techniques for abstract interpretation (data flow tracking),
-ownership types.
+We believe there is further research to be made into the definitions of $\wand$
+and $\boxwand$ in the presence of non-local heap state. We consider that it may
+be possible to define a more general version of the wand to support all of its
+common use cases as well as maintaining the right-adjoint property.
 
-Verification of JS-based SES implementation
+We have not considered how the new operators act in the presence of negation, it
+is already considered that negation acts in unintuitive ways in separation
+logic. It may be interesting to further see how the backpointer reacts under
+negation.
+
+If we can extend the logic to support some aspects of non-locality, can we
+add another tier to the heap states to reduce the coarseness of the local vs.
+global reasoning. For example, is it possible to split the heap into three state
+environments of local, trusted, untrusted? What further operators would we
+require to express useful assertions in this logic?
+
+\subsection{Verification of the JavaScript-based SES implementation}
+The implementation of SES as a layer on top of JavaScript also poses its own
+interesting problems. SES inherently depends upon the JavaScript specification
+as its basis, but the JavaScript specification process is also directed to
+maintaining the properties required to enable SES to be implemented securely.
+These properties are usually very subtle, such as ensuring that the
+language-defined data structures and primitives do not inadvertently allow for
+pointer leakage or covert channels of communication within the language.
+
+As an indirect result of this project a potential bug has been discovered in the
+upcoming ECMAScript specification by the ECMAScript research group at Imperial.
+This demonstrates that although the
+specification committee should now have a good insight into the security
+implications of the language's design decisions, errors are still being made as
+a result of a poor, informal description of the security properties that ought
+to hold for the language. With a formal specification of these properties, we
+could prove that the formally specified language definitely does hold these
+properties.
+
+A proof that the SES implementation is correct is currently well beyond the
+capabilities of the JavaScript program logic, as the SES implementation reasons
+about the particular implementation-specific semantics of the JavaScript engine
+on which it is run, and attempts to fix any semantics that it deems unsafe.
+
+Program logics to date assume that there is one correct semantics for a language
+under which a program runs, JavaScript poses the unique possibility where a
+program may run under similar, but subtly different semantics. Research into
+extension of the existing JavaScript program logic to support variable semantics
+would be a novel research project.
+
+\subsection{Comparisons with Other Techniques}
+Considerable amounts of research has been performed into dynamic information
+flow analysis for JavaScript programs through instrumentation of the
+interpreter~\cite{js-ifa}. Abstract interpretation for information flow analysis
+on JavaScript has also been attempted~\cite{js-ifa2} successfully.
+It was noted
+during the construction of figure~\ref{rr-main} that the building of the
+backpointer sets `felt' very much like the execution of abstract interpretation
+algorithms as discussed (and practiced) in the 4th Year
+Course~\cite{prog-anal,popa}. Drawing a more formal comparison between the two
+techniques may assist in the development or adoption of already-existing
+techniques from the Abstract Interpretation field into this.
+
+It has been suggested~\cite{pubsdoc:rolesForOwners} that Ownership Types would
+be a suitable means of verifying the security properties of SES. It would be
+interesting to see if Ownership Types for this purpose can be expressed using
+the logic developed in the course of this project.
 
 \bibliography{bibliography}
 \bibliographystyle{plainnat}
