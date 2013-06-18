@@ -823,7 +823,7 @@ this case.
 Recursively calls freeze on all objects reachable
 via user-defined fields from the given object.
 
-We use a new auxilary function, $\auxDef$ here to handle the recursion onto
+We use a new auxiliary function, $\auxDef$ here to handle the recursion onto
 fields of the object, whilst avoiding non-termination due to cyclical object
 graphs. It is defined as:
 \[
@@ -1147,7 +1147,7 @@ favour of more targeted real-world examples.
 
 \subsection{Inference Rules}
 \label{sec:infrules}
-Inference rules for hoare triples are similar in nature to those for operational
+Inference rules for Hoare triples are similar in nature to those for operational
 semantics. Derivation of the pre- and post-conditions for the Hoare triple of a
 given expression usually requires the recursive derivation of its
 subexpressions, along with some structural operations on their intermediary
@@ -1495,7 +1495,7 @@ value for the expression.
     @frozen internal field of the object being frozen, and asserts that it is
     set to true in the postcondition.
 
-  \staterule{(Recusive freeze)}
+  \staterule{(Recursive freeze)}
     {
       \tr{P}{\js{e}}{Q \sep \rv \doteq V_2 \sep \auxDefGet(V_2, \{\})} \\
       Q = \getValue(Ls,V_1,V_2) \sep S
@@ -1607,7 +1607,7 @@ longer function, the post-condition of \js{kill} includes $(L, \js{protected})
 \pointsto \nil$. The pre-condition of \js{access} requires that $(L,
 \js{protected}) \pointsto P \sep P \not\doteq \nil$. Finally, we note that from
 the postcondition of \js{RevocableRef} that the only references to $L$ are
-$(A, @scope)$ and $(K, @scope)$, namely the externally-inacessable scope chains
+$(A, @scope)$ and $(K, @scope)$, namely the externally-inaccessible scope chains
 of the \js{access} and \js{kill} functions. We have already verified that these
 functions are correct, so the property holds.
 
@@ -1866,9 +1866,9 @@ approach than we did for the considerably simpler Caretaker. We begin by
 defining predicates that will help us simplify the desired specifications for
 the Membrane functionality.
 
-We begin by defining the assertion for an instance of a Membane, along with the
+We begin by defining the assertion for an instance of a Membrane, along with the
 more refined definitions of an alive and a dead membrane. These definitions
-encapsulate the Membrane's activation record, $M$, on which the killswitch and
+encapsulate the Membrane's activation record, $M$, on which the kill switch and
 supporting functions are initially defined, one of which is the MembraneRef
 constructor, $F_{MR}$, which is used recursively by the Membrane implementation.
 \begin{align*}
@@ -2308,7 +2308,7 @@ version of the SES Operational Semantics (hereon Taly's semantics).
 
 Direct comparison of our Operational Semantics and Taly's
 showed general equivalence between the two languages albeit Taly's made fewer
-generalisations and axiomatized more of the builtin commands.
+generalisations and axiomatized more of the built-in commands.
 
 Notably, the command whose precise semantics we were least sure of, the
 restricted evaluation command, was found to be equivalent to those published by
@@ -2530,7 +2530,7 @@ the logic developed in the course of this project.
 \chapter{Operational Semantics}
 \label{app:opsems}
 \newcommand{\auxf}[2]{#1 & \triangleq & #2}
-\begin{display}{Auxillary Functions}
+\begin{display}{Auxiliary Functions}
   $\begin{array}{lcl}
   \auxf{\obj(l,l')}{l \pointsto \{@proto: l', @frozen: \false\}}\\
   \auxf{\istrue(v)}{v\not\in\{0,\emptystr,\nil,\und,\false\}}\\
@@ -3115,7 +3115,7 @@ Frame property:
     {\tr{P}{\js{freeze(e)}}{Q \sep (V_2, @frozen) \pointsto \true \sep \rv \doteq V_2}}
   \vg
 
-  \staterule{(Recusive freeze)}
+  \staterule{(Recursive freeze)}
     {
       \tr{P}{\js{e}}{Q \sep \rv \doteq V_2 \sep \auxDefGet(V_2, \{\})} \\
       Q = \getValue(Ls,V_1,V_2) \sep S
