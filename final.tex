@@ -941,49 +941,42 @@ as follows:
 It means that if the heap is extended by a disjoint portion that satisfies $P$,
 then the resulting heap will satisfy $Q$.
 
-* Also the right adjoint of $\sep$:
+The magic wand is generally used for the generation of weakest preconditions of
+a command. Our extension to Separation Logic shows that there are two cases of
+weakest precondition generation.
+
+The first of these is when the weakest
+precondition is extending the heap footprint with
+information consistent with the heap, for example the weakest precondition for
+object creation of the form $P \wand Q$ would have the object asserted in $Q$,
+and the footprint of the subexpressions used to populate the object's fields in
+$P$.
+
+The second case is when the weakest precondition is used for speculating or
+\emph{hypothesising} new values in the existing heap. For example, in the
+weakest precondition for the overwriting assignment.
+
+The magic wand operator is traditionally defined to be the right adjoint of $\sep$:
 \newcommand{\entails}{\vdash}
 \[
 P \sep Q \entails R \text{ iff } P \entails Q \wand R
 \]
-% I think these two things may be equivalent - but I think staying at the logic
-% level has two advantages:
-%   1) I think it's easier to understand
-%   2) It still makes sense when you have both local /and/ global heaps in the model.
-% \[
-%   h \disju h' \satisfies P \sep Q \impl R \text{ iff } h \satisfies P \impl Q
-%   \wand R
-% \]
-* Used for extending footprint of heap
-    ...for example, in the weakest precondition of object creation.
 
-* Used for speculating/hypothesising different values in the existing heap
-    ...for example, in the weakest precondition of over-writing assignment.
-
-    ...or in the proof of the store predicate over-writing assignment case.
-
-* Weakest preconditions of commands
-
-* We claim that both uses are incompatible under a global view of the heap
-
-    .... no - the incompatibility is between the adjoint property and the
-    hypothesising use of the wand. If we define the adjoint wand in our context,
-    we get the footprint-extending wand, but not the hypothesising one.
-
-Since separation logic usually defines  $\wand$
+Since separation logic usually defines $\wand$
 as follows:
 \[
   h \satisfies P \wand Q \iff \forall h' \st (h' \satisfies P) \land h \disj
     h' \impl (h \disju h' \satisfies Q)
 \]
 
-We might \emph{naively} define $\wand$ in our context like so:
+We might define $\wand$ in our context to preserve the right adjoint property like so:
 \[
   h,h_g \satisfies P \wand Q \iff \forall h' \st (h',h_g \satisfies P) \land h \disj
     h' \impl (h \disju h',h_g \satisfies Q)
 \]
 
-Now consider $x \pointsto 1 \sep (x \pointsto 2 \wand Q)$
+Now consider $x \pointsto 1 \sep (x \pointsto 2 \wand Q)$, an instance of the
+hypothesising weakest precondition noted earlier.
 
  In regular separation logic, this assertion is satisfiable. Consider the heap
  $x:1$ as follows:
@@ -1028,8 +1021,10 @@ satisfied.
 \text{iff } & x:1,x:1 \satisfies x \pointsto 1 \land x:2,x:2 \satisfies x \pointsto 2 \land (x:2 \disju \lemp,x:2) \satisfies Q
 \end{align*}
 
-\TODO{Need to find a complementary example to show why right-adjoint no longer
-holds}
+% TODO: Can we include this?
+%The box-wand obviously does not hold the right adjoint property as a result of
+%the heap update operation applied to the satisfaction rule of the $P$
+%sub-assertion, which is not present in the $\sep$ rule.
 
 \subsection{Backpointer}
 \label{sec:backpointers}
@@ -1094,12 +1089,6 @@ shenanigans, we insist that two backpointer assertions about the same location
 cannot be separated. The mechanism we use to enforce this requirement is a
 notional internal field $@bp$ on each SES object. This field is the footprint of
 any backpointer assertions about that object.
-
-\TODO{Need a more concrete example of how this could come about. I'm still not
-  entirely happy with this -- I suspect it comes from a lack of familiarity with
-  how pure assertions behave within Separation Logic (but I guess a part of this
-  project is to figure out exactly that!...)}
-\gds{here you go}
 
 \section{Hoare Triples}
 Recall Section~\ref{subsec:programreasoning} where Hoare reasoning was introduced, in
