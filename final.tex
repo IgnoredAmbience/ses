@@ -286,16 +286,17 @@
   which can be thought of as splitting the heap into two disjoint portions, in
   which $P$ holds in one and $Q$ the other. To denote the contents of the
   heap, the $\mapsto$ operator is also introduced to relate heap locations with
-  values, $(x \mapsto 4, y)$ denotes that the pair of the value $4$ and a pointer
-  to the heap location $y$ is stored in the heap location $x$.
+  values, $(x \mapsto 4)$ denotes that the value $4$ is stored in the heap
+  location $x$. It is often the case in languages where the heap is directly
+  mapped to memory that locations are integers, so the notation $(x \mapsto 4,
+  y)$ is shorthand for $(x \mapsto 4) \sep (x+1 \mapsto y)$.
 
   The separating conjunction only enforces disjointedness of the storage
   locations of values, it is permitted to point to other heap locations from
   within the heap. For example $(x \mapsto 4, y) \sep (y \mapsto 3, x)$ is
   permissible and required to be able to build complex data structures.
-
-  \TODO{Make heap cells single value}
-  \TODO{diagram of (x -> 4, y) * (y -> 3, x)}
+  
+  \TODO{diagrams}
 
   $x \mapsto -$ is shorthand meaning that there is some value stored at heap
   location $x$.
@@ -350,11 +351,10 @@
     $\begin{array}{ll}
       \stateaxiom{(Update)}{\tr{x \mapsto -} {x := v} {x \mapsto v}} &
       \stateaxiom{(Delete)}{\tr{x \mapsto -} {\js{delete}(x)} {\emp}} \\
-      \stateaxiom{(Allocate)}{\tr{x \doteq v'} {x := v} {x \mapsto v[v'/x]}} &
+      \stateaxiom{(Allocate)}{\tr{\emp} {x := new()} {\exists L \st x=L \land L \mapsto\_}} &
       \stateaxiom{(Lookup)}{\tr{x \mapsto v} {y := [x]} {y = v \land x \mapsto v}} \\
     \end{array}$
   \end{display}
-\gds{I'm used to seeing Allocate given as $\tr{\emp} {x := new()} {\exists L \st x=L \land L \mapsto\_}$. The $\exists$ is important, because otherwise we can use the frame rule to ``prove'' that we know already something about the allocated address.}
   These axioms may be expressed in other ways, for example, in a form suitable
   for backwards reasoning, or with use of existential quantifiers.
 
@@ -442,7 +442,11 @@
   A JavaScript object is identified by a location $l \in \loc$, each object may
   have fields $x \in \vars$ which map to values $v \in \vals$. The heap is
   represented by the partial function of locations and fields to
-  values, $H \in \loc \times \vars \partialfunc \vals$.
+  values, $H \in \loc \times \vars \partialfunc \vals$. For example, $(x, y)
+  \pointsto z$ means that the object in location $x$, has a field named $y$
+  which points to the location $z$. Note that unlike the original Separation
+  Logic semantics, tuples of values are not supported, since the heap locations
+  are now unordered.
 
   Field names are subdivided into user fields $\uvars$ and internal fields
   $\ivars$ (prefixed by an @ symbol). No internal fields are permitted to be
@@ -468,8 +472,16 @@
   field is modified on the \emph{scope object} for the prototype chain in which the
   variable was found -- this is so that the prototypical variable is overridden,
   but not overwritten.
-
   \TODO{both the above examples need diagrams}
+
+  Although locations are values that are stored in the heap, they
+  may not be directly referred to by user programs. This means that
+  references to objects are not forgeable. This is a key security concept in the
+  SES language: an object must be passed a reference to another object to be
+  able to access it.
+  Since all functions (including standard libraries and resources) are
+  themselves objects, the concept of access extends to one of privilege when a
+  security-sensitive interface needs to be protected.
 
 \chapter{SES Language Syntax \& Operational Semantics}
   \label{chp:sem}
@@ -514,16 +526,6 @@
   Numbers, strings, booleans and the special values of \und and \nil are the
   only primitive values.
 
-  \FIXME{This paragraph should \emph{partially} go somewhere else}
-  Although locations are values that are stored in the heap, they
-  may not be directly referred to by user programs. This means that
-  references to objects are not forgable. This is a key security concept in the
-  SES language: an object must be passed a reference to another object to be
-  able to access it.
-  Since all functions (including standard libraries and resources) are
-  themselves objects, the concept of access extends to one of privilege when a
-  security-sensitive interface needs to be protected.
-
   We model SES as an expression-based language, the full language follows
   JavaScript's Strict Mode parsing and variable declaration rules. For this
   project, we assume that all programs proved additionally pass these checks.
@@ -546,10 +548,6 @@
   \section{Operational Semantics}
   \label{sec:opsems}
 
-  \TODO{Include/discuss my new axioms}
-  \TODO{Discuss methods for obtaining details of semantics for new functionality
-  of semantics for new/existing operations}
-
   We now describe the semantics of each expression given in the syntax, both
   informally in English, and formally with the big-step operational semantics
   rule, which precisely describes how the program state is modified by execution
@@ -571,10 +569,15 @@
   Appendix~\ref{app:opsems} and described above in
   Section~\ref{sec:intro:js:datastructure}. Recall that $\getValue$ is used to
   dereferencing a JavaScript or SES reference value.
-  As the dereferencing of references returned by subexpressions into values is a
+  As the execution of a subexpression followed by the dereferencing of its
+  return reference into a value is a
   common activity, $\gevalsto$ is defined as shorthand for this:
   \[ H,L,\js{e} \gevalsto H',v \triangleq \exists r. (H,L,\js{e} \evalsto H',r
   \wedge \getValue(H',r) = v) \]
+
+  The semantics here were derived from a number of sources, we used the
+  JavaScript program logic~\cite{gms-popl} as the baseline for all commands.
+  Deviations from this are noted with the appropriate command.
 
   \subsection{Structural Expressions}
   \label{subsec:structuralexpressions}
@@ -624,9 +627,7 @@
   The conditional expression evaluates the first sub-expression, if it evaluates
   to \js{true} when cast to a boolean then the second
   sub-expression is evaluated and result returned, otherwise the third
-  sub-expression is evaluated and result returned. This is the standard
-  definition.
-
+  sub-expression is evaluated and result returned.
 
   \staterule{(While true)}
   {H,L,\js{e_1} \gevalsto H'', v \quad \istrue(v) \\
@@ -652,7 +653,8 @@
   object and the field is returned.
 
   If the scope object cannot be found, fail to evaluate -- this
-  behaviour differs from JS, which would return the reference
+  behaviour follows the ES5.1 Strict standard, a considerable difference from
+  ES5.1 Non-Strict or earlier JS, which return the reference
   $\fld{\nil}{\js{x}}$.  JS assigned write attempts to the \nil object to the
   \emph{global} object -- this posed an obvious isolation problem.
   This new behaviour enforces that all variables must be declared before use.
@@ -683,7 +685,7 @@
 
   Assigns the value on the right hand side to the subexpression evaluating to a
   reference on the left. The object being assigned to must be writable (see
-  later).
+  definition of Freeze).
 
   Assignments to undeclared variables are forbidden (enforced by the Variable
   rule).
@@ -694,7 +696,6 @@
       H_{i-1},L,\js{e_i}\gevalsto H_i',v_i \\
       H_i = H_i' [ (l,\js{x_i}) \pointsto v_i]\end{array}\right)}
     {H,L,\js{\{x_1:e_1,\dots,x_n:e_n\}} \evalsto H_n,l}
-  \nopagebreak
 
   The Object Construction syntax produces a new object at the new location $l$,
   with fields named \js{x_1, \ldots, x_n} which map to the values of expressions
@@ -778,6 +779,9 @@ problematic because functions can easily be aliased off of the object on which
 they appear to be defined. For this reason the code \js{g = ob.f ; ob.f()}
 may behave significantly differently from the code \js{g = ob.f ; g()}
 
+These semantics match ES5.1 Strict mode semantics and also agree with the
+JS-based implementation of the SES language.
+
   \subsection{SES-specific Expressions}
 
   \staterule{(Restricted evaluation)}
@@ -805,9 +809,12 @@ the final statement of the source to be executed.
 
 Makes the provided object read-only. This prevents field additions,
 modifications and deletions.
-Note that the ES5 spec has a bug, meaning that frozen fields on an object's
-prototype are not permitted to be overridden, some browsers opt to ``fix'' the spec bug.
-This bug does not occur in these semantics.
+
+This command is not present in the previous JS program logic. It is a primitive
+specified in the ES5 spec, however this spec has a bug, meaning that frozen
+fields on an object's prototype are not permitted to be overridden.
+Most browsers opt to ``fix'' the spec bug, however, we follow the ES5 spec in
+this case.
 
   \staterule{(Recursive freeze)}
   {H,L,\js{e} \gevalsto H'', l \\
@@ -816,6 +823,23 @@ This bug does not occur in these semantics.
 
 Recursively calls freeze on all objects reachable
 via user-defined fields from the given object.
+
+We use a new auxilary function, $\auxDef$ here to handle the recursion onto
+fields of the object, whilst avoiding non-termination due to cyclical object
+graphs. It is defined as:
+\[
+  \auxDef(H,l,s) \triangleq \begin{cases}
+    \emp & l \in s \lor l \not\in \loc \\
+    (l,@frozen) \mapsto \true \cup \bigcup_{(l,x_n) \in H, x_n \in \uvars}
+      \auxDef(H,H(l,x_n),s \cup\{l\}) & \mbox{otherwise} \\
+  \end{cases}
+\]
+
+The Def command is defined in SES as a function that uses Freeze and the
+\js{for..in} syntax to loop over fields on the object. We have not chosen to
+model this syntax for technical reasons\footnote{The ES specification for
+\js{for..in} is non-deterministic! (Even between two consecutive executions of
+the same loop under the same conditions!)}.
 
 \chapter{Program Logics}
 \label{chap:proglogic}
@@ -2281,6 +2305,7 @@ proof of soundness of the Assignment inference rule.
 \section{Conclusions}
 
 \section{Future Work}
+\TODO{}
 Magic wand madness
 
 Interaction of backpointer with negation, further study into the
