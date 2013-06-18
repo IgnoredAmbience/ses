@@ -2301,31 +2301,14 @@ The $\boxwand$ logical operator was produced with the knowledge that the
 conventional $\wand$ operator is used to generate a weakest precondition in the
 proof of soundness of the Assignment inference rule.
 
-\section{Decidability}
-In general, program verification logics are undecidable, however because 
-separation logic is structural, this provides additional power for automated
-reasoning programs to leverage. Theories behind Symbolic
-Execution~\cite{symb-exec} and
-Biabduction~\cite{1480917} for separation logic were developed by O'Hearn et al.
-as a means of analysing the shapes of footprints of assertions.
-
-Applications of these methods have shown them to be suitable
-for use in practical and scalable automated reasoning tools for many languages
-including C and Java~\cite{smallf,slayerp,spacep,1449782}.
-
-It is anticipated that such theory can be applied to the JavaScript separation
-logic to provide realistic tools for automated JavaScript verification.
-
-
-\TODO{
-* Reachability over bp assertions - spider. Need to separate AR and normal objects
-- AR encapsulated by functions over them
-* Strength/invention of security properties.
-* Note regarding other use of backpointers, }
-
-
 \chapter{Conclusions \& Future Work}
 \section{Conclusions}
+We have specified the semantics of a model of the SES language.
+
+We have shown the extensions that need to be made to Separation Logic to reason
+about non-local security properties of a program. 
+
+
 
 \section{Future Work}
 There are many directions in which work on the SES language and verification
@@ -2412,6 +2395,21 @@ under which a program runs, JavaScript poses the unique possibility where a
 program may run under similar, but subtly different semantics. Research into
 extension of the existing JavaScript program logic to support variable semantics
 would be a novel research project.
+
+\section{Automated Program Verification}
+In general, program verification logics are undecidable, however because 
+separation logic is structural, this provides additional power for automated
+reasoning programs to leverage. Theories behind Symbolic
+Execution~\cite{symb-exec} and
+Biabduction~\cite{1480917} for separation logic were developed by O'Hearn et al.
+as a means of analysing the shapes of footprints of assertions.
+
+Applications of these methods have shown them to be suitable
+for use in practical and scalable automated reasoning tools for many languages
+including C and Java~\cite{smallf,slayerp,spacep,1449782}.
+
+It is anticipated that such theory can be applied to the JavaScript separation
+logic to provide realistic tools for automated JavaScript verification.
 
 \subsection{Comparisons with Other Techniques}
 Considerable amounts of research has been performed into dynamic information
