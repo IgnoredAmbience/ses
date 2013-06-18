@@ -474,6 +474,10 @@
   but not overwritten.
   \TODO{both the above examples need diagrams}
 
+  SES is an object-capability style of language, objects are considered to hold
+  capabilities to privileged functionality or information. Because of this, it
+  is essential that the language does not provide the ability to access
+  arbitrary memory locations.
   Although locations are values that are stored in the heap, they
   may not be directly referred to by user programs. This means that
   references to objects are not forgeable. This is a key security concept in the
@@ -858,8 +862,11 @@ expression in the syntax of the language.
 
 \section{Extending Separation Logic}
 \label{sec:extendingseplog}
+As previously discussed in section~\ref{sec:intro:js:datastructure}, SES is an
+object capability language where references to objects are not forgeable.
 To reason about the security properties of SES programs, we need to be able to
-assert that only trusted objects contain references to sensitive data.
+assert that only trusted objects contain references to sensitive data or
+functionality. 
 Separation logic is unable to make statements like this, since the
 statement is inherently \emph{non-local}. If we attempt to make such a
 statement, then at any time, we might use the frame rule to introduce an object
@@ -1557,7 +1564,7 @@ code, their verification is critical to guaranteeing security of any program
 that wishes to share data and privileged functions with untrusted code.
 
 We also demonstrate two styles of proofs, the first demonstrating the logic as
-being extremely precise with a mechanical-style of assertion generation, the
+being extremely precise with a symbolic execution style of assertion generation, the
 second showing that the logic is also able to provide more succinct proofs that
 highlight only the key aspects of evaluation.
 
@@ -2012,7 +2019,7 @@ the object protected by the MRef and it must point to an object.
 Proof outlines for these specifications are shown in
 figures~\ref{fig:proof:membrane} and \ref{fig:proof:membraneref}.
 
-\begin{figure}[b]
+\begin{figure}
   \[
     \begin{array}{l}
       \tjs{var Membrane = function(ref) \{} \\
@@ -2222,6 +2229,59 @@ figures~\ref{fig:proof:membrane} and \ref{fig:proof:membraneref}.
   \label{fig:proof:membraneref}
 \end{figure}
 
+\section{Example use of Caretaker and Membrane}
+Assume we want to allow the untrusted program read access to \js{cookies} until
+they are modified by the main code in \js{updateCookies}.
+
+\begin{verbatim}
+cookies.password = '';
+var cookieMembrane = Membrane(cookies);
+var updateCookies = function(name, value) {
+  cookieMembrane.kill();
+  cookies[name] = value;
+}
+
+reval(maliciousCode, {cookies: cookieMembrane.access});
+if (userHasEnteredPassword) {
+  updateCookies('password', userPassword);
+}
+\end{verbatim}
+
+The malicious code is able to access the cookies through the
+\js{cookieMembrane.access} function%
+\footnote{
+  Note that one disadvantage with the Membrane is that the field accessor now has
+  function-call syntax. The upcoming ES6 standard has a \emph{Proxies} feature
+  that allows for intercepting standard syntax on an object and redirecting the
+  input to a custom event handler. This will help make Membrane access functions
+  \emph{transparent} to the user
+}
+passed into it as the \js{cookies} parameter of the \emph{imports} object.
+Note that \js{maliciousCode} is unable to access any of the global variables
+such as \js{userPassword}.
+
+An example body for \js{maliciousCode} could be:
+\begin{verbatim}doEvilStuff(cookies('password'));\end{verbatim}
+
+It is possible to specify a general verification condition that priveliged
+objects are not passed to the untrusted code, by ensuring that the imports
+object is not reachable by traversing $\bp$ assertions from the privileged
+objects.
+
+In cases where untrusted code is allowed restricted access to privileged
+objects, there will be an object which is only pointed to by @scope fields
+of a (some) function(s). In this case, the priviledged object is protected
+according to the specifications of those function(s).
+
+For example, a backpointer path for the \js{cookies} object is:
+\begin{align*}
+  cookies \bp & \{(l_g, \js{cookies}), (membraneref, \js{ref})\} \sep {} \\
+  membrane \bp & \{(access, @scope)\} \sep {} \\
+  access \bp & \{(imports, \js{cookies})\}
+\end{align*}
+From the middle line we can see that the cookies are protected by the membrane's
+access function.
+
 \chapter{Evaluation}
 The nature of this project means that it is somewhat hard to evaluate the
 efficacy of the developed logic. Nonetheless, we can judge aspects based on:
@@ -2303,12 +2363,18 @@ proof of soundness of the Assignment inference rule.
 
 \chapter{Conclusions \& Future Work}
 \section{Conclusions}
-We have specified the semantics of a model of the SES language.
-
-We have shown the extensions that need to be made to Separation Logic to reason
-about non-local security properties of a program. 
-
-
+\begin{itemize}
+  \item We have specified the semantics of a model of the SES language.
+  \item We have produced the first program logic for SES
+  \item We have produced the first separation logic-based program logic that can
+    reason about object capability security through backpointers
+  \item We have produced the first proofs for some object capability programs
+  \item We have shown that proofs in the program logic match closely match the
+    intuitions of a programmer who has extensively studied the language and
+    program
+  \item And, along the way, we have discovered the duality of uses for the wand
+    operator
+\end{itemize}
 
 \section{Future Work}
 There are many directions in which work on the SES language and verification
