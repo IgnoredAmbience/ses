@@ -1101,28 +1101,45 @@ precondition, $\js{e}$ is the subexpression, and $Q$ is the
 postcondition that results from evaluating $\js{e}$ in a state that satisfies $P$.
 
 It is necessary that we relate the Hoare triples to the Operational Semantics of
-the language defined earlier. We define this soundness property as:
-\TODO{explain it}
+the language defined earlier.
+
+The first of these properties is the soundness property, it specifies that if
+the command \js{e} is evaluated in a heap $h$, such that $h$ is the footprint of
+and satisfies the expression's precondition $P$; and it is a subheap of the
+entire heap $h \disju h_f$, then the evaluation will not fault and if it
+terminates, will terminate with a subheap $h'$ that satisfies the expression's
+postcondition $Q$. Or, more simply:
 \[ (h, h \disju h_f, L, \env \satisfies P) \land h, L, \js{e} \leadsto h', v
   \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
 
-As we are using the fault-avoiding Hoare triple semantics, we must also define a
-fault avoidance property to be able to verify that this is the case:
+As we are using the fault-avoiding Hoare triple semantics, the expression must
+not fault if it is evaluated in a state that satisfies the triple's
+precondition. We must also define a fault avoidance property to be able to
+verify that this is the case:
 \[ h, h_g, L, \env \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
 
-We also define the safety monotonicity and frame properties, which guarantee
+We also define the Safety Monotonicity and Frame properties, which guarantee
 that the operational semantics and separation logic reasoning framework are
 consistent with regard to the spatial reasoning about the heap.
-Safety monotonicity:
+
+Safety Monotonicity states that if an expression evaluates without fault from a
+state that satisfies the precondition, then disjointly extending the heap will
+not cause the expression to fault.
 \[ (h, h_g, L, \env \satisfies P) \land h \disj h' \land h, L, \js{e} \not\leadsto
   \fault \land h\subseteq h_g \impl h \disju h', L, \js{e} \not\leadsto \fault \]
-Frame property:
+
+The Frame property states that if an expression is evaluated from a state with
+heap $h$ without faulting to produce $h_2$, then the same expression is
+evaluated from the same state but with the heap $h \disju h'$, to produce the
+heap $h'_2$, then the second evaluation will not have touched any part of $h'$,
+namely that $h'_2 = h_2 \land h'$:
 \[ (h, h_g, L, \env \satisfies P) \land h, L, \js{e} \not\leadsto \fault \land
   h \disju h', L, \js{e} \leadsto h_2' \land h\subseteq h_g\impl h, L, \js{e} \leadsto h_2 \land
   h_2' = h_2 \disju h' \]
 
-Ideally, we would prove these properties hold of the operational semantics and
-program logic. These results generally provide little new intuition about the
+Ideally, we would prove that each of these properties hold for each pair of the
+operational semantics and program logic rules.
+These results generally provide little new intuition about the
 semantics or logic, so this exercise has been omitted from this project, in
 favour of more targeted real-world examples.
 
