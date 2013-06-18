@@ -2505,6 +2505,28 @@ the logic developed in the course of this project.
 \bibliographystyle{plainnat}
 
 \appendix
+\chapter{Notation}
+\begin{display}{Notation: Sorts and Constants.}
+\entry{H {\;\in\;} \loc\times\vars\rightharpoonup\vals}{Heaps.}\\[\gap]
+\entry{l {\;\in\;} \locb\triangleq \loc\cup\{\nil\}}{Locations.}\\[\gap]
+\entry{L {\;\in\;} \scopechains\triangleq \loc^n}{Scope chains.}\\[\gap]
+\entry{\lgo}{Global object.}\\[\gap]
+\entry{\lop}{\js{Object.prototype}.}\\[\gap]
+\entry{\left\{\begin{array}{l}\protop,\thisp,\\
+             \fscopep,\bodyp,@bp\end{array}\right\}\in\ivars}{Internal variables.}\\[\gap]
+\entry{x\in\vars\triangleq \ivars\disju\uvars}{Variables.}\\[\gap]
+\entry{\js x\in\uvars\subseteq \Strings}{User variables.}\\[\gap]
+\entry{\njs{r} {\;\in\;} \valsr \triangleq \vals\cup \refs}{Return values.}\\[\gap]
+\entry{\njs{v} {\;\in\;} \vals \triangleq \uvals\cup\locb\cup \scopechains \cup \sortfun}{Semantic values.}\\[\gap]
+\entry{\js{v} {\;\in\;} \uvals\triangleq \sortnum\cup \Strings \cup \sortundef \cup \{\nil\}}{User values.}\\[\gap]
+\entry{\js{n} {\;\in\;} \sortnum}{Numbers.}\\[\gap]
+\entry{\js{m} {\;\in\;} \Strings}{Strings.}\\[\gap]
+\entry{\und {\;\in\;} \sortundef}{Undefined.}\\[\gap]
+\entry{l\sv\js{x} {\;\in\;} \refs}{References.}\\[\gap]
+\entry{\lambda\js{x.e} {\;\in\;} \sortfun}{Function code.}\\[\gap]
+\entry{\js{e} {\;\in\;} \sortexp}{Expressions.}
+\end{display}
+
 \chapter{Operational Semantics}
 \label{app:opsems}
 \newcommand{\auxf}[2]{#1 & \triangleq & #2}
@@ -2571,14 +2593,230 @@ the logic developed in the course of this project.
     \jrule{\getValue(H,\fld{l}{\js{x}})}{H(l',\js{x})}{\proto(H,l,\js{x}) = l'\\ l\neq \nil}
   \end{display}
 
+\begin{display}{Operational semantics: $H,L,\js e \evalsto H',v$}
+  Dereferencing notation: $H,L,\js{e} \gevalsto H',v \triangleq \exists r. (H,L,\js{e} \evalsto H',r \wedge \getValue(H',r) = v)$.
+\vg
+
+  \stateaxiom{(Value)}
+  {H,L,\js{v} \evalsto H,v}
+\vg
+
+  \stateaxiom{(Variable declaration)}
+  {H,L,\jsvar{x} \evalsto H,\und}
+\vg
+
+  \staterule{(Object creation)}
+    {H_0 = H \disju \obj(l,\lop)\\
+     \forall i\in 1..n \st \left(\begin{array}{l}
+      H_{i-1},L,\js{e_i}\gevalsto H_i',v_i \\
+      H_i = H_i' [ (l,\js{x_i}) \pointsto v_i]\end{array}\right)}
+    {H,L,\js{\{x_1:e_1,\dots,x_n:e_n\}} \evalsto H_n,l}
+\vg
+
+  \staterule{(Sequence)}
+    {H,L,\js{e_1} \evalsto H'',r' \\
+     H'',L,\js{e_2} \evalsto H',r}
+   {H,L,\js{e_1; e_2} \evalsto H',r}
+\vg
+
+  \staterule{(Binary operator)}
+    {H,L,\js{e_1} \gevalsto H'',v_1 \\
+     H'',L,\js{e_2} \gevalsto H',v_2\\
+     v_1 \oplus v_2 = v}
+   {H,L,\js{e_1 \oplus e_2} \evalsto H',v}
+\vg
+
+  \staterule{(Conditional true)}
+  {H,L,\js{e_1} \gevalsto H'',v \quad \istrue(v) \\
+   H'',L,\js{e_2} \evalsto H',r}
+  {H,L,\js{if(e_1)\{e_2\} else \{e_3\}} \evalsto H',r}
+\qquad
+
+  \staterule{(Conditional false)}
+  {H,L,\js{e_1} \gevalsto H'',v \quad \isfalse(v) \\
+   H'',L,\js{e_3} \evalsto H',r}
+  {H,L,\js{if(e_1)\{e_2\} else \{e_3\}} \evalsto H',r}
+\vg
+
+  \staterule{(While true)}
+  {H,L,\js{e_1} \gevalsto H'', v \quad \istrue(v) \\
+   H'',L,e_2\js{;while(e_1)\{e_2\}} \evalsto H', v''}
+  {H,L,\js{while(e_1)\{e_2\}} \evalsto H',\und}
+\qquad
+
+  \staterule{(While false)}
+  {H,L,\js{e_1} \gevalsto H', v \quad \isfalse(v)}
+  {H,L,\js{while(e_1)\{e_2\}} \evalsto H',\und}
+\vg
+
+  % l' \neq \nil condition given in ES5-8.7.2.3.a Strict-mode null SetValue (and
+  % all-mode GetValue)
+  \staterule{(Variable)}
+    {\scope(H,L,x) = l' \quad l' \neq \nil}
+    {H,L,\js x \evalsto H, \fld{l'}{x}}
+\vg
+
+  \staterule{(Member access)}
+  {H,L,\js e \gevalsto H',l' \\
+   l' \neq \nil}
+  {H,L,\js{e.x} \evalsto H', \fld{l'}{x}}
+\qquad
+
+  \staterule{(Computed member access)}
+  {H,L,\js{e_1} \gevalsto H'',l' \\
+   l' \neq \nil \\
+   H'',L,\js{e_2} \evalsto H', x}
+  {H,L,\js{e_1[e_2]} \evalsto H',\fld{l'}{x}}
+\vg
+
+  \staterule{(Assignment)}
+  {H,L,\js{e_1} \evalsto H_1,\fld{l}{x} \qquad
+   \ReadWrite(H_1, l) \\
+   H_1,L,\js{e_2} \gevalsto H_2, v \\
+   H' = H_2[(l,x) \pointsto v]}
+  {H,L,\js{e_1 = e_2} \evalsto H', v}
+\vg
+
+  \staterule{(Function creation)}
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',L,\js{x},\js{e},l)}
+  {H,L,\jsfun{x}{e} \evalsto H',l'}
+\vg
+
+  \staterule{(Named function creation)}
+  {H' = H \disju \obj(l,\lop) \disju \fun(l',l_1 \cons L,\js{x},\js{e},l) \disju
+    l_1 \pointsto \{@proto:\nil, y:l'\}}
+  {H,L,\jsfun[y]{x}{e} \evalsto H',l'}
+\vg
+
+%\COMMENT{There's no need to $\proto$ in this now that we've disallowed prototype
+%  chains from scope lists (we hit the base AR before we need to start
+%  traversing) (Also assume that $\lgo$ has $@this$ set directly) We can also drop
+%  $\getValue$ to just use $\scope$?}
+  \staterule{(This)}
+  {\scope(H,L,@this)=l \\
+   (l,@this) \pointsto l'}
+  {H,L,\js{this} \evalsto H,l'}
+\vg
+
+  \staterule{(Function call)}
+  {H,L,\js{e_1} \evalsto H_1,r_1\qquad
+   \pickThis(H_1,r_1)=l_2\qquad
+   \getValue(H_1,r_1)=l_1\\
+   H_1(l_1,@body)=\lambda \js{x.e_3}\qquad
+   H_1(l_1,@scope)= L'\\
+   H_1,L,\js{e_2} \gevalsto H_2,v\\
+   H_3 = H_2\disju\act(l,\js x,v,\js{e_3},l_2) \\
+   H_3,l \cons L',\js{e_3} \gevalsto H',v'}
+  {H,L,\js{e_1(e_2)} \evalsto H',v'}
+\vg
+
+  \staterule{(Object construction)}
+  {H,L,\js{e_1} \gevalsto H_1,l_1 \qquad
+   l_1\neq \nil\qquad
+   H_1(l_1,@body)=\lambda \js{x.e_3}\\
+   H_1(l_1,@scope)= L'\qquad
+   H_1(l_1,\js{prototype})= v\\
+   H_1,L,\js{e_2} \gevalsto H_2,v_1  \qquad
+   l_2 = \objOrGlob(v) \\
+   H_3 = H_2\disju \obj(l_3,l_2) \disju\act(l,\js x,v_1,\js{e_3},l_3)\\
+   H_3,l \cons L',\js{e_3} \gevalsto H',v_2\qquad
+   \getBase(l_3,v_2) = l'}
+  {H,L,\jsnew{e_1}{e_2} \evalsto H',l'}
+\vg
+
+  \staterule{(Restricted evaluation)}
+  {H,L,\js{e_1} \gevalsto H_1,v \qquad
+   \js{e_3} = \parse(v) \\
+   H_1,L,\js{e_2} \gevalsto H_2, l \\
+   H_3 = H_2 \disju l' \pointsto \{@this:l, @proto:\nil\} \disju
+     \defs(\_, l', \js{e_3}) \\
+   H_3, l' \cons [l], \js{e_3} \gevalsto H',v }
+  {H,L,\js{reval(e_1, e_2)} \evalsto H',v}
+\vg
+
+  \staterule{(Freeze)}
+  {H,L,\js{e} \gevalsto H'', l\\
+   H' = H''[(l, @frozen) \pointsto \true]}
+  {H,L,\js{freeze(e)} \evalsto H', l}
+\vg
+
+  \staterule{(Recursive freeze)}
+  {H,L,\js{e} \gevalsto H'', l \\
+   H' = H''[\auxDef(H'', l, \{\})]}
+  {H,L,\js{def(e)} \evalsto H', l}
+\end{display}
+
 \chapter{Program Logic}
 \newcommand{\defline}[2]{#1 & \qquad & \text{#2}\\}
-\begin{display}{Definitions}
-  $\begin{array}{lll}
-    \defline{h,h_g \in}{Abstract heap}
-    \defline{h,h_g,L,\env \satisfies P}{Satisfaction relation}
-    \defline{\tr{P}{\js{x}}{Q}}{Hoare triple}
-  \end{array}$
+\begin{display}{Notation: Sorts and Constants}
+%
+\entry{\env\in\lvars \rightharpoonup \lvals}{Logical environment.}\\[\gap]
+\entry{\V{v}\in\lvals}{Logical values.}\\[\gap]
+\entry{\V{X}\in\lvars}{Logical variables.}\\[\gap]
+\entry{\E{E}}{Logical expressions.}\\[\gap]
+\entry{\eval{\Expr}^L_{\env}}{Logical evaluation.}\\[\gap]
+\entry{av\in\avals \triangleq \vals \cup \{\none\}
+}{Abstract values.}\\[\gap]
+\entry{h \in (\loc\times\vars) \rightharpoonup\avals}{Abstract heap.}\\[\gap]
+\entry{\heval{h}(l,x)}{Heap evaluation.}\\[\gap]
+\entry{P}{Logical assertion.}\\[\gap]
+\entry{\T{set}}{Generic set.}\\[\gap]
+\entry{h,h_g,L,{\env} \satisfies P}{Satisfaction relation.}\\[\gap]
+\entry{\tr P{\js e}Q}{Hoare triple.}\\[\gap]
+%
+\end{display}
+\begin{display}{Abstract Values and Abstract Heap.}
+$av\in\avals \defeq v \pipe \none$\qquad\qquad\qquad\qquad\qquad\qquad\quad
+$h : (\loc\times\vars) \rightharpoonup\avals$\\[\gap]
+$\heval{h}(l,x) \triangleq h(l,x) \text{ iff } (l,x) \in \domain(h) \land h(l,x) \not= \none$
+\end{display}
+%
+\begin{display}{Logical Expressions and Evaluation: $\eval{\Expr}^L_{\env}$.}
+~~~$ \V{v}\in\lvals \defeq e \pipe l\sv x \pipe av \pipe L $\qquad\qquad\qquad\qquad\qquad\quad
+$ \env:\lvars \rightharpoonup \lvals$ \\[\gap]
+$\begin{array}{rll}
+  \Expr \defeq & \V X& \text{Logical variables} \\
+  & \pipe \ls & \text{Scope list} \\
+  & \pipe \V{v} & \text{Logical values} \\
+  &\pipe \Expr \oplus \Expr%\pipe \Expr - \Expr\pipe \Expr * \Expr\pipe \Expr / \Expr & \text{Arithmetic}\\
+  %&\pipe \Expr . \Expr 
+        & \text{Binary Operators} \\  
+  &\pipe \Expr \cons \Expr &\text{List cons} \\
+%  &\pipe \Expr \in \T{set} & \text{Expression Type Checking}\\
+  & \pipe \Expr \sv \Expr & \text{Reference construction}\\
+  & \pipe \lambda\Expr.\Expr & \text{Lambda values}
+\end{array}$\\[\gap]
+%
+~~~\jaxiom{\eval{\V{v}}^L_{\env}}{\V{v}}
+\rsep
+%
+\jaxiom
+{\eval{\ls}^L_{\env}}{ L }
+\rsep
+\jaxiom{\eval{\V{X}}^L_{\env}  }{{\env}(\V{X})}
+\\[\gap]
+
+
+\jrule
+{\eval{{\Expr_1}\cons{\Expr_2}}^L_{\env} }{ \eval{{\Expr_1}}^L_{\env} \cons \List}
+{\eval{{\Expr_2}}^L_{\env} = \List }
+\rsep
+%
+\jrule
+{\eval{{\Expr_1}\sv{\Expr_2}}^L_{\env}  }{ \eval{{\Expr_1}}^L_{\env} \sv \eval{{\Expr_2}}^L_{\env}}
+{\eval{{\Expr_1}}^L_{\env} = l' \land \eval{{\Expr_2}}^L_{\env}=\js{x}}
+\\[\gap]
+
+
+\jrule
+{\eval{{\Expr_1}\oplus{\Expr_2}}^L_{\env}  }{ v\primop v'}
+{\eval{\Expr_1}^L_{\env} = v \land \eval{\Expr_2}^L_{\env} = v'}
+\rsep
+%
+\jrule
+{  \eval{\lambda{\Expr_1}.{\Expr_2}}^L_{\env}  }{  \lambda\eval{{\Expr_1}}^L_{\env}.\eval{{\Expr_2}}^L_{\env}}
+{ \eval{{\Expr_1}}^L_{\env}=\js{x} }
+%
 \end{display}
 
 \newcommand{\asrtline}[3][\pipe]{#1 & #2 & \text{#3}\\}
@@ -2623,7 +2861,7 @@ Q)}{} \\
 %P \boxwand Q & \triangleq & P \wand P ? Q }\\
 \asssat{P \boxwand Q}{\forall h' \st (h',h_g[h'],L,\env \satisfies P)
     \land h \disj h'}
-  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)} %\\
+  {\impl (h \disju h', h_g[h'], L, \env \satisfies Q)} \\
 \asssat{\bigsep_{x\in\{\}}P(x)}{h,h_g,L,{\env}\satisfies\lemp}{} \\
 \asssat{\bigsep_{x\in\T{set}}P(x)}{y\in\T{set} \land h,h_g,L,{\env} \satisfies
   P(y)\sep(\bigsep_{x\in(\T{set}\setminus y)}P(x))}{} \\
@@ -2639,14 +2877,13 @@ Q)}{} \\
 \asssat{\forall\V X \st P}{\forall \V{v} \st h,h_g,L,[{\env} | \V X\takes \V{v}]
   \satisfies P}{}
 \end{display}
-\section{Hoare Triples}
-Definition:
+\paragraph{Definition of Hoare triple and soundness properties}
 \[ \tr{P}{\js{e}}{Q} \]
 Soundness:
-\[ (h, h \disju h_f, L, \env \satisfies P) \land h, L, \js{e} \leadsto h', v
-  \impl (h', h' \disju h_f, L, \env \satisfies Q) \]
+\[ (h, h \disju h_f, L, (\env\setminus\rv) \satisfies P) \land h, L, \js{e} \leadsto h', v
+  \impl (h', h' \disju h_f, L, [\env|\rv\takes v] \satisfies Q) \]
 Fault avoidance:
-\[ h, h_g, L, \env \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
+\[ h, h_g, L, (\env\setminus\rv) \satisfies P \land h\subseteq h_g \impl h, L, \js{e} \not\leadsto \fault \]
 Safety monotonicity:
 \[ (h, h_g, L, \env \satisfies P) \land h \disj h' \land h, L, \js{e} \not\leadsto
   \fault \land h\subseteq h_g \impl h \disju h', L, \js{e} \not\leadsto \fault \]
@@ -2654,11 +2891,6 @@ Frame property:
 \[ (h, h_g, L, \env \satisfies P) \land h, L, \js{e} \not\leadsto \fault \land
   h \disju h', L, \js{e} \leadsto h_2' \land h\subseteq h_g\impl h, L, \js{e} \leadsto h_2 \land
   h_2' = h_2 \disju h' \]
-
-An alternative formulation which emphasises the relationship between the global
-view of the heap and the framing property ($h_g = h \disju h_f$) can also be
-produced, it should be noted that the meaning is subtly different (in that $h'
-\neq h_g$ in all cases).
 
 \label{app:logicauxpreds}
 \begin{display}{Auxiliary Predicates}
@@ -2679,11 +2911,10 @@ produced, it should be noted that the meaning is subtly different (in that $h'
   \jaxiom{\scopeBps(Ls, s)}{\scopeBpsUpd(Ls, s, s, \{\})} \\
   \jaxiom{\bpGen(V,\_,\_,\_)}{V \notdotin \loc} \\
   \jaxiom{\bpGen(V,L,x,s)}{V \dotin \loc \sep V \bp \{(L,x)\} \cup s} \\
-  \jaxiom{\auxDefGet(V,s)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
-    s} \\
+  \jaxiom{\auxDefGet(V,s)}{V \notdotin \loc \lor V \dotin s} \\
   \jaxiom{\auxDefGet(V,s)}{V \notdotin s \land (V, @frozen) \pointsto \_ \sep (\bigsepish_{x_n \in
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefGet(V', s\cup\{V\}))} \\
-  \jaxiom{\auxDefSet(V,s,b)}{\lemp \quad \mbox{if } V \notdotin \loc \lor V \dotin
+  \jaxiom{\auxDefSet(V,s,b)}{V \notdotin \loc \lor V \dotin
     s} \\
   \jaxiom{\auxDefSet(V,s,b)}{V \notdotin s \land (V, @frozen) \pointsto b \sep (\bigsepish_{x_n \in
     \uvars} (V,x_n) \pointsto V' \sepish \auxDefSet(V', s\cup\{V\}, b))} \\
