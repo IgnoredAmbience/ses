@@ -1,0 +1,47 @@
+* Background (10min)
+  * Verification is good
+  * Verify important code -- security sensitive, key libraries.
+  * JavaScript increasingly commonly used for /applications/.
+  * SES
+    * JavaScript, but with secuirty features
+      * Suitable for OCap programming style
+        * Objects can only be accessed by passed references, exemplify later
+      * Restricted evaluation
+        * Permits code sandboxing but allows for imports of objects into the
+          sandbox
+    * (And I've provided an operational semantics for it, but that's boring)
+    * Example use case - Membrane
+      * Object reference protected by scope of function closed over it
+      * Function closure not interrogable by syntax outside of function
+      *  Diagram [o|->o]
+      * Access at top - important part of code
+      * Killswitch one particular application of membrane - explain last.
+  * SL
+    * * = /\ with disjointness
+    * -* = magic!
+    * Frame rule + fault avoiding hoare triples (allows frame rule to work)
+    * AGgain use diagram to motivate - show reversal of arrows, frame on an
+      illegal arrow in sec sense.
+    -> Limitations
+    
+* The Project (10min)
+  * Modifying SL
+    * 'reintroduce globality' - need to be careful re consistency
+      * h |= P
+      * h,h_g |= P
+    * New operators
+      * <-
+      * Brief touch on wand issue -|*|
+  * Logic Inference rules
+    * Mention based upon opsems
+  * Membrane proof
+    * Discuss Membrane predicate abstractions
+    * Show Membrane specs
+      * Explain with help of drawing boxes around the relevant parts of the
+        diagram
+        * Represent membrane AR with box at top of dividing line
+        * Label boxes drawn with stuff from spec.
+    * Discuss security property of Membrane
+* Wrap-up (4m)
+  * Slide 7.1, less wordy
+
