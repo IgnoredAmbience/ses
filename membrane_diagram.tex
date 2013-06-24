@@ -1,40 +1,73 @@
-\documentclass[a4paper]{minimal}
+\documentclass[xcolor=x11names,compress]{beamer}
+
+\usepackage{graphicx}
+
+%% Beamer Layout %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\useoutertheme[subsection=false,shadow]{miniframes}
+\useinnertheme{default}
+\usefonttheme{serif}
+\usepackage{palatino}
+
+\setbeamerfont{title like}{shape=\scshape}
+\setbeamerfont{frametitle}{shape=\scshape}
+
+\setbeamercolor*{lower separation line head}{bg=DeepSkyBlue4} 
+\setbeamercolor*{normal text}{fg=black,bg=white} 
+\setbeamercolor*{alerted text}{fg=red} 
+\setbeamercolor*{example text}{fg=black} 
+\setbeamercolor*{structure}{fg=black} 
+ 
+\setbeamercolor*{palette tertiary}{fg=black,bg=black!10} 
+\setbeamercolor*{palette quaternary}{fg=black,bg=black!10} 
+
+\renewcommand{\(}{\begin{columns}}
+\renewcommand{\)}{\end{columns}}
+\newcommand{\<}[1]{\begin{column}{#1}}
+\renewcommand{\>}{\end{column}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{tikz}
 \usetikzlibrary{arrows}
 \usetikzlibrary{decorations.pathmorphing} % wiggly line
 \usetikzlibrary{positioning} % relative positioning
 \usetikzlibrary{fit} % box fitting
 
+\usepackage{adjustbox}
+
 \begin{document}
+\begin{frame}[fragile]
+\begin{columns}[c]
+\column{.4\textwidth}
+\begin{adjustbox}{width=\textwidth,keepaspectratio}
 \begin{tikzpicture}[
-    object/.style={circle, minimum size=5mm},
+    object/.style={circle, minimum size=5mm, inner sep=0},
     trusted/.style={object, draw=green!20!black, fill=green!20!white},
     untrusted/.style={object, draw=red!40!black, fill=red!20},
-    membrane/.style={object, draw=blue, fill=blue!20, minimum size=2mm},
+    membranec/.style={draw=blue, fill=blue!20},
+    membrane/.style={object, membranec, minimum size=2mm},
     arrow/.style={thick, >=stealth'},
     pre/.style={arrow, <-},
     post/.style={arrow, ->}
   ]
-  \draw[clip,rounded corners=10] (-1,0) rectangle (7,4.5);
-  \node[trusted] (global) at (5,3) {};
-  \node[trusted] (a) at (4,2) {}
+  \draw[clip,rounded corners=10, use as bounding box] (0,0.5) rectangle (5.5,4.5);
+  \node[trusted] (global) at (4,3) {$a$};
+  \node[trusted] (a) at (3,2) {$b$}
     edge [pre,bend left] (global);
-  \node[trusted] (b) at (6,2) {}
+  \node[trusted] (b) at (5,2) {$g$}
     edge [post,bend right] (global)
     edge [post] (a);
-  \node[trusted] (c) at (5,1) {}
+  \node[trusted] (c) at (4,1) {}
     edge [pre] (global);
 
-  \draw[membrane,decorate,decoration=snake,fill=none] (3,0) -- (3,10);
-  \node[membrane,rectangle] (membrane) at (3,4) {Membrane};
-  \node[membrane,rectangle] (kill) at (5,4) {\texttt{kill}}
+  \draw[membrane,decorate,decoration=snake,fill=none] (2,0) -- (2,10);
+  \node[membranec,rectangle] (membrane) at (2,4) {Membrane};
+  \node[membranec,rectangle] (kill) at (4,4) {\texttt{kill}}
     edge [post] (membrane)
     edge[pre,bend left] (b);
-  \node[membrane] (ma) at (3,3) {}
+  \node[membrane] (ma) at (2,3) {}
     edge [post] (global);
-  \node[membrane] (mb) at (3,2) {}
+  \node[membrane] (mb) at (2,2) {}
     edge[post] (a);
-  \node[membrane] (mc) at (3,1) {}
+  \node[membrane] (mc) at (2,1) {}
     edge [post] (c);
 
   \node[untrusted] (ua) at (0.5,3) {}
@@ -44,6 +77,30 @@
     edge [post] (ua)
     edge [post] (mc);
 \end{tikzpicture}
-\end{document}
+\end{adjustbox}
+\column{.6\textwidth}
+{\scriptsize
+\begin{verbatim}
+var Membrane = function(ref) {
+  var MembraneRef = function(ref) {
+    var access = function(field) {
+      if(!killed) {
+        return MembraneRef(ref[field]);
+      }
+    }
+    if(primitive(ref)) { return ref; }
+    else { return access; }
+  }
 
+  var access = MembraneRef(ref);
+
+  var killed = false;
+  var kill = function(){ killed = true; }
+  return {access: access, kill: kill};
+}
+\end{verbatim}
+}
+\end{columns}
+\end{frame}
+\end{document}
 

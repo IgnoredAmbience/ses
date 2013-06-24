@@ -6,6 +6,9 @@
     * JavaScript, but with secuirty features
       * Suitable for OCap programming style
         * Objects can only be accessed by passed references, exemplify later
+        * Code (Functions) are first class objects -- accessed in same way as
+          data, we therefore can reason about permissions to data and operations
+          in the same way! (Unlike other languages with fixed code/symbol tabs)
       * Restricted evaluation
         * Permits code sandboxing but allows for imports of objects into the
           sandbox
