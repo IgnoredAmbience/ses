@@ -32,9 +32,17 @@
 \usetikzlibrary{fit} % box fitting
 
 \usepackage{adjustbox}
+\usepackage{amsmath}
+\usepackage{stmaryrd}
+\usepackage{wasysym}
+\usepackage{etoolbox}
+\usepackage{separationlogic}
 
 \begin{document}
-\begin{frame}[fragile]
+\begin{frame}
+\end{frame}
+
+\begin{frame}[fragile]{Membrane}
 \begin{columns}[c]
 \column{.4\textwidth}
 \begin{adjustbox}{width=\textwidth,keepaspectratio}
@@ -67,15 +75,16 @@
     edge [post] (global);
   \node[membrane] (mb) at (2,2) {}
     edge[post] (a);
-  \node[membrane] (mc) at (2,1) {}
-    edge [post] (c);
 
   \node[untrusted] (ua) at (0.5,3) {}
     edge [post] (ma)
     edge [post,bend right] (mb);
   \node[untrusted] (ub) at (0.5,1) {}
-    edge [post] (ua)
-    edge [post] (mc);
+    edge [post] (ua);
+
+  \node[membrane] (mc) at (2,1) {}
+    edge [post] (c)
+    edge [pre] (ub);
 \end{tikzpicture}
 \end{adjustbox}
 \column{.6\textwidth}
@@ -96,11 +105,32 @@ var Membrane = function(ref) {
 
   var killed = false;
   var kill = function(){ killed = true; }
+
   return {access: access, kill: kill};
 }
 \end{verbatim}
 }
 \end{columns}
+\end{frame}
+
+\begin{frame}
+\[
+\begin{array}{l}
+  \{\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
+  \text{[Consequence]}\\
+  \{(\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x}\}) \sep (a \bp \{\js{x}\} \land \emp) \}\\
+  \text{[Frame off]}\\
+  \{\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
+  \text{[Consequence]}\\
+  \{\js{y}\pointsto\_ \sep \js{x} \pointsto a \land a \bp \{\js{x},\js{y}\} \}\\
+  \js{y = x;}\\
+  \{\js{y}\pointsto a \sep \js{x} \pointsto a \land a \bp \{\js{x},\js{y}\} \}\\
+  \text{[Frame on]}\\
+  \{(\js{y}\pointsto a \sep \js{x} \pointsto a \land a \bp \{\js{x},\js{y}\}) \sep (a \bp \{\js{x}\} \land \emp) \}\\
+  \text{[Consequence]}\\
+  \{\js{y}\pointsto a \sep \js{x} \pointsto a \land a \bp \{\js{x}\} \}\\
+\end{array}
+\]
 \end{frame}
 \end{document}
 
