@@ -2538,7 +2538,7 @@ the logic developed in the course of this project.
   \auxf{\fun(l',L,\js x,\js e,l)}{l'\mapsto\{@proto: \lfp, \js{prototype}:
         l, @scope: L, @body: \lambda \js{x.e}, @frozen: \false\}}\\
   \auxf{\pickThis(H, \fld{l}{x})}{l \phantom{\und} \quad
-        \text{if } (l,@this) \in \dom(H)}\\
+        \text{if } (l,@this) \not\in \dom(H)}\\
   \auxf{\pickThis(H, r)}{\und \phantom{l} \quad \text{otherwise}}\\
   \auxf{\objOrGlob(l)}{l\phantom{_{op}} \quad l\in \loc}\\
   \auxf{\objOrGlob(v)}{\lop \quad v\not\in\loc}\\
